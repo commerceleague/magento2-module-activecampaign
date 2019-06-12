@@ -1,0 +1,14 @@
+{
+    "activecampaign_contact": {
+        "column": {
+            "contact_id": true,
+            "customer_id": true,
+            "external_id": true,
+            "email": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ACTIVECAMPAIGN_CONTACT_CUSTOMER_ID_CUSTOMER_ENTITY_ENTITY_ID": true
+        }
+    }
+}

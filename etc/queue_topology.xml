@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
+	<exchange name="magento-db" type="topic" connection="db">
+		<binding id="defaultBinding" topic="activecampaign.contact.create_update" destinationType="queue" destination="activecampaign_contact_create_update" />
+	</exchange>
+</config>
