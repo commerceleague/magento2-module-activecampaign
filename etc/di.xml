@@ -15,4 +15,7 @@
 			</argument>
 		</arguments>
 	</type>
+	<type name="Magento\Customer\Model\ResourceModel\CustomerRepository">
+		<plugin name="activeCampaignContactCreateUpdatePlugin" type="CommerceLeague\ActiveCampaign\Plugin\Customer\CreateUpdateContactPlugin"  />
+	</type>
 </config>

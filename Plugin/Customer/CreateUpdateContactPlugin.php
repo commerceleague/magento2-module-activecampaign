@@ -2,24 +2,24 @@
 declare(strict_types=1);
 /**
  */
-namespace CommerceLeague\ActiveCampaign\Observer\Customer;
+namespace CommerceLeague\ActiveCampaign\Plugin\Customer;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
-use CommerceLeague\ActiveCampaign\Model\ContactFactory;
 use CommerceLeague\ActiveCampaign\Model\Contact;
-use Magento\Customer\Model\Customer;
+use CommerceLeague\ActiveCampaign\Model\ContactFactory;
+use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Customer\Model\ResourceModel\CustomerRepository as Subject;
 use Magento\Framework\DataObject\Copy as ObjectCopyService;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Model\AbstractModel;
 
 /**
- * Class RemoveContactObserver
+ * Class CreateUpdateContactPlugin
  */
-class CreateUpdateContactObserver implements ObserverInterface
+class CreateUpdateContactPlugin
 {
     /**
      * @var ContactRepositoryInterface
@@ -68,13 +68,12 @@ class CreateUpdateContactObserver implements ObserverInterface
     }
 
     /**
-     * @inheritDoc
+     * @param Subject $subject
+     * @param CustomerInterface|AbstractModel $customer
+     * @return CustomerInterface
      */
-    public function execute(Observer $observer)
+    public function afterSave(Subject $subject, CustomerInterface $customer): CustomerInterface
     {
-        /** @var Customer $customer */
-        $customer = $observer->getEvent()->getData('customer');
-
         try {
             $contact = $this->contactRepository->getByCustomerId($customer->getId());
         } catch (NoSuchEntityException $e) {
@@ -95,5 +94,7 @@ class CreateUpdateContactObserver implements ObserverInterface
         } catch (CouldNotSaveException $e) {
             $this->logger->critical($e);
         }
+
+        return $customer;
     }
 }

@@ -2,25 +2,24 @@
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Test\Unit\Observer\Customer;
+namespace CommerceLeague\ActiveCampaign\Test\Unit\Plugin\Customer;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
 use CommerceLeague\ActiveCampaign\Model\Contact;
 use CommerceLeague\ActiveCampaign\Model\ContactFactory;
-use CommerceLeague\ActiveCampaign\Observer\Customer\CreateUpdateContactObserver;
-use Magento\Customer\Model\Customer;
-use Magento\Framework\Event;
-use Magento\Framework\Event\Observer;
+use CommerceLeague\ActiveCampaign\Plugin\Customer\CreateUpdateContactPlugin;
+use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Customer\Model\ResourceModel\CustomerRepository;
+use Magento\Framework\DataObject\Copy as ObjectCopyService;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Phrase;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Magento\Framework\DataObject\Copy as ObjectCopyService;
 
-class CreateUpdateContactObserverTest extends TestCase
+class CreateUpdateContactPluginTest extends TestCase
 {
     /**
      * @var MockObject|ContactRepositoryInterface
@@ -53,24 +52,19 @@ class CreateUpdateContactObserverTest extends TestCase
     protected $logger;
 
     /**
-     * @var MockObject|Observer
+     * @var MockObject|CustomerRepository
      */
-    protected $observer;
+    protected $subject;
 
     /**
-     * @var MockObject|Event
-     */
-    protected $event;
-
-    /**
-     * @var MockObject|Customer
+     * @var MockObject|CustomerInterface
      */
     protected $customer;
 
     /**
-     * @var CreateUpdateContactObserver
+     * @var CreateUpdateContactPlugin
      */
-    protected $createUpdateContactObserver;
+    protected $createUpdateContactPlugin;
 
     protected function setUp()
     {
@@ -97,20 +91,13 @@ class CreateUpdateContactObserverTest extends TestCase
 
         $this->logger = $this->createMock(Logger::class);
 
-        $this->observer = $this
-            ->getMockBuilder(Observer::class)
+        $this->subject = $this->getMockBuilder(CustomerRepository::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
 
-        $this->event = $this
-            ->getMockBuilder(Event::class)
-            ->setMethods(['getData'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->customer = $this->createMock(CustomerInterface::class);
 
-        $this->customer = $this->createMock(Customer::class);
-
-        $this->createUpdateContactObserver = new CreateUpdateContactObserver(
+        $this->createUpdateContactPlugin = new CreateUpdateContactPlugin(
             $this->contactRepository,
             $this->contactFactory,
             $this->objectCopyService,
@@ -119,18 +106,9 @@ class CreateUpdateContactObserverTest extends TestCase
         );
     }
 
-    public function testExecuteGetsContactFromRepository()
+    public function testAfterSaveGetsContactFromRepository()
     {
         $customerId = 123;
-
-        $this->observer->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($this->event);
-
-        $this->event->expects($this->once())
-            ->method('getData')
-            ->with('customer')
-            ->willReturn($this->customer);
 
         $this->customer->expects($this->once())
             ->method('getId')
@@ -153,21 +131,12 @@ class CreateUpdateContactObserverTest extends TestCase
                 $this->contact
             );
 
-        $this->createUpdateContactObserver->execute($this->observer);
+        $this->createUpdateContactPlugin->afterSave($this->subject, $this->customer);
     }
 
-    public function testExecuteCreatesNewContact()
+    public function testAfterSaveCreatesNewContact()
     {
         $customerId = 123;
-
-        $this->observer->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($this->event);
-
-        $this->event->expects($this->once())
-            ->method('getData')
-            ->with('customer')
-            ->willReturn($this->customer);
 
         $this->customer->expects($this->once())
             ->method('getId')
@@ -191,20 +160,11 @@ class CreateUpdateContactObserverTest extends TestCase
                 $this->contact
             );
 
-        $this->createUpdateContactObserver->execute($this->observer);
+        $this->createUpdateContactPlugin->afterSave($this->subject, $this->customer);
     }
 
-    public function testExecuteLogsException()
+    public function testAfterSaveLogsException()
     {
-        $this->observer->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($this->event);
-
-        $this->event->expects($this->once())
-            ->method('getData')
-            ->with('customer')
-            ->willReturn($this->customer);
-
         $this->contactRepository->expects($this->once())
             ->method('getByCustomerId')
             ->willReturn($this->contact);
@@ -229,6 +189,6 @@ class CreateUpdateContactObserverTest extends TestCase
             ->method('critical')
             ->with($exception);
 
-        $this->createUpdateContactObserver->execute($this->observer);
+        $this->createUpdateContactPlugin->afterSave($this->subject, $this->customer);
     }
 }

@@ -2,7 +2,7 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:DataObject/etc/fieldset.xsd">
 	<scope id="global">
 		<fieldset id="activecampaign_convert_customer">
-			<field name="entity_id">
+			<field name="id">
 				<aspect name="to_contact" targetField="customer_id" />
 			</field>
 			<field name="email">
