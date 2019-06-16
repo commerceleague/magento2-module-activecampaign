@@ -15,7 +15,8 @@
 			</argument>
 		</arguments>
 	</type>
-	<type name="Magento\Customer\Model\ResourceModel\CustomerRepository">
+	<type name="Magento\Customer\Model\ResourceModel\Customer">
 		<plugin name="activeCampaignContactCreateUpdatePlugin" type="CommerceLeague\ActiveCampaign\Plugin\Customer\CreateUpdateContactPlugin"  />
+		<plugin name="activeCampaignContactRemovePlugin" type="CommerceLeague\ActiveCampaign\Plugin\Customer\RemoveContactPlugin" />
 	</type>
 </config>

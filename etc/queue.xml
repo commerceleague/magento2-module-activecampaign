@@ -3,4 +3,7 @@
 	<broker topic="activecampaign.contact.create_update" exchange="magento-db" type="db">
 		<queue name="activecampaign_contact_create_update" consumer="activeCampaignContactCreateUpdate"/>
 	</broker>
+	<broker topic="activecampaign.contact.remove" exchange="magento-db" type="db">
+		<queue name="activecampaign_contact_remove" consumer="activeCampaignContactRemove"/>
+	</broker>
 </config>

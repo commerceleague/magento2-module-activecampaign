@@ -9,8 +9,8 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
 use CommerceLeague\ActiveCampaign\Model\Contact;
 use CommerceLeague\ActiveCampaign\Model\ContactFactory;
-use Magento\Customer\Api\Data\CustomerInterface;
-use Magento\Customer\Model\ResourceModel\CustomerRepository as Subject;
+use Magento\Customer\Model\Customer;
+use Magento\Customer\Model\ResourceModel\Customer as Subject;
 use Magento\Framework\DataObject\Copy as ObjectCopyService;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -69,13 +69,16 @@ class CreateUpdateContactPlugin
 
     /**
      * @param Subject $subject
-     * @param CustomerInterface|AbstractModel $customer
-     * @return CustomerInterface
+     * @param callable $proceed
+     * @param AbstractModel|Customer $object
+     * @return Subject
      */
-    public function afterSave(Subject $subject, CustomerInterface $customer): CustomerInterface
+    public function aroundSave(Subject $subject, callable $proceed, AbstractModel $object)
     {
+        $proceed($object);
+
         try {
-            $contact = $this->contactRepository->getByCustomerId($customer->getId());
+            $contact = $this->contactRepository->getByCustomerId($object->getId());
         } catch (NoSuchEntityException $e) {
             /** @var Contact $contact */
             $contact = $this->contactFactory->create();
@@ -84,7 +87,7 @@ class CreateUpdateContactPlugin
         $this->objectCopyService->copyFieldsetToTarget(
             'activecampaign_convert_customer',
             'to_contact',
-            $customer,
+            $object,
             $contact
         );
 
@@ -95,6 +98,6 @@ class CreateUpdateContactPlugin
             $this->logger->critical($e);
         }
 
-        return $customer;
+        return $subject;
     }
 }

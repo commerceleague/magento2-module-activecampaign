@@ -10,14 +10,14 @@ use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
 use CommerceLeague\ActiveCampaign\Model\Contact;
 use CommerceLeague\ActiveCampaign\Model\ContactFactory;
 use CommerceLeague\ActiveCampaign\Plugin\Customer\CreateUpdateContactPlugin;
-use Magento\Customer\Api\Data\CustomerInterface;
-use Magento\Customer\Model\ResourceModel\CustomerRepository;
+use Magento\Customer\Model\Customer;
 use Magento\Framework\DataObject\Copy as ObjectCopyService;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Phrase;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Magento\Customer\Model\ResourceModel\Customer as Subject;
 
 class CreateUpdateContactPluginTest extends TestCase
 {
@@ -52,12 +52,12 @@ class CreateUpdateContactPluginTest extends TestCase
     protected $logger;
 
     /**
-     * @var MockObject|CustomerRepository
+     * @var MockObject|Subject
      */
     protected $subject;
 
     /**
-     * @var MockObject|CustomerInterface
+     * @var MockObject|Customer
      */
     protected $customer;
 
@@ -91,11 +91,11 @@ class CreateUpdateContactPluginTest extends TestCase
 
         $this->logger = $this->createMock(Logger::class);
 
-        $this->subject = $this->getMockBuilder(CustomerRepository::class)
+        $this->subject = $this->getMockBuilder(Subject::class)
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
 
-        $this->customer = $this->createMock(CustomerInterface::class);
+        $this->customer = $this->createMock(Customer::class);
 
         $this->createUpdateContactPlugin = new CreateUpdateContactPlugin(
             $this->contactRepository,
@@ -131,7 +131,18 @@ class CreateUpdateContactPluginTest extends TestCase
                 $this->contact
             );
 
-        $this->createUpdateContactPlugin->afterSave($this->subject, $this->customer);
+        $isProceedCalled = false;
+
+        $proceed = function () use (&$isProceedCalled) {
+            $isProceedCalled = true;
+        };
+
+        $this->assertSame(
+            $this->subject,
+            $this->createUpdateContactPlugin->aroundSave($this->subject, $proceed, $this->customer)
+        );
+
+        $this->assertTrue($isProceedCalled);
     }
 
     public function testAfterSaveCreatesNewContact()
@@ -160,7 +171,18 @@ class CreateUpdateContactPluginTest extends TestCase
                 $this->contact
             );
 
-        $this->createUpdateContactPlugin->afterSave($this->subject, $this->customer);
+        $isProceedCalled = false;
+
+        $proceed = function () use (&$isProceedCalled) {
+            $isProceedCalled = true;
+        };
+
+        $this->assertSame(
+            $this->subject,
+            $this->createUpdateContactPlugin->aroundSave($this->subject, $proceed, $this->customer)
+        );
+
+        $this->assertTrue($isProceedCalled);
     }
 
     public function testAfterSaveLogsException()
@@ -189,6 +211,17 @@ class CreateUpdateContactPluginTest extends TestCase
             ->method('critical')
             ->with($exception);
 
-        $this->createUpdateContactPlugin->afterSave($this->subject, $this->customer);
+        $isProceedCalled = false;
+
+        $proceed = function () use (&$isProceedCalled) {
+            $isProceedCalled = true;
+        };
+
+        $this->assertSame(
+            $this->subject,
+            $this->createUpdateContactPlugin->aroundSave($this->subject, $proceed, $this->customer)
+        );
+
+        $this->assertTrue($isProceedCalled);
     }
 }

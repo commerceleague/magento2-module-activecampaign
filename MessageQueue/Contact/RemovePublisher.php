@@ -8,11 +8,11 @@ use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
- * Class CreateUpdatePublisher
+ * Class RemovePublisher
  */
-class CreateUpdatePublisher
+class RemovePublisher
 {
-    public const TOPIC_NAME = 'activecampaign.contact.create_update';
+    public const TOPIC_NAME = 'activecampaign.contact.remove';
 
     /**
      * @var PublisherInterface
@@ -35,3 +35,4 @@ class CreateUpdatePublisher
         $this->publisher->publish(self::TOPIC_NAME, $contact);
     }
 }
+
