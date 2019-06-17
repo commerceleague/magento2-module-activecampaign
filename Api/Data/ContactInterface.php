@@ -12,7 +12,7 @@ interface ContactInterface
 {
     public const CONTACT_ID = 'contact_id';
     public const CUSTOMER_ID = 'customer_id';
-    public const EXTERNAL_ID = 'external_id';
+    public const ACTIVE_CAMPAIGN_ID = 'active_campaign_id';
     public const EMAIL = 'email';
 
     /**
@@ -40,13 +40,13 @@ interface ContactInterface
     /**
      * @return int|null
      */
-    public function getExternalId();
+    public function getActiveCampaignId();
 
     /**
-     * @param int $externalId
+     * @param int $activeCampaignId
      * @return ContactInterface
      */
-    public function setExternalId($externalId): self;
+    public function setActiveCampaignId($activeCampaignId): self;
 
     /**
      * @return string|null

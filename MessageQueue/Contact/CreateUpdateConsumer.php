@@ -4,18 +4,19 @@ declare(strict_types=1);
  */
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
 
-use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
-
 /**
  * Class CreateUpdateConsumer
  */
 class CreateUpdateConsumer
 {
     /**
-     * @param ContactInterface $contact
+     * @param CreateUpdateMessage $message
      */
-    public function execute(ContactInterface $contact): void
+    public function execute(CreateUpdateMessage $message): void
     {
+        $a = 'asdf';
+
+
         // TODO::do something in here
     }
 }

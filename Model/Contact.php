@@ -56,17 +56,17 @@ class Contact extends AbstractModel implements ContactInterface
     /**
      * @inheritDoc
      */
-    public function getExternalId()
+    public function getActiveCampaignId()
     {
-        return $this->_getData(self::EXTERNAL_ID);
+        return $this->_getData(self::ACTIVE_CAMPAIGN_ID);
     }
 
     /**
      * @inheritDoc
      */
-    public function setExternalId($externalId): ContactInterface
+    public function setActiveCampaignId($activeCampaignId): ContactInterface
     {
-        return $this->setData(self::EXTERNAL_ID, $externalId);
+        return $this->setData(self::ACTIVE_CAMPAIGN_ID, $activeCampaignId);
     }
 
     /**

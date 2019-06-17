@@ -4,7 +4,6 @@ declare(strict_types=1);
  */
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
 
-use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
@@ -28,11 +27,11 @@ class RemovePublisher
     }
 
     /**
-     * @param ContactInterface $contact
+     * @param RemoveMessage $message
      */
-    public function execute(ContactInterface $contact): void
+    public function execute(RemoveMessage $message): void
     {
-        $this->publisher->publish(self::TOPIC_NAME, $contact);
+        $this->publisher->publish(self::TOPIC_NAME, $message);
     }
 }
 

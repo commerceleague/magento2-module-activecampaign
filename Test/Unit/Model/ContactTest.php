@@ -75,13 +75,13 @@ class ContactTest extends TestCase
     {
         $externalId = 123;
         $this->contact->setData(ContactInterface::EXTERNAL_ID, $externalId);
-        $this->assertEquals($externalId, $this->contact->getExternalId());
+        $this->assertEquals($externalId, $this->contact->getActiveCampaignId());
     }
 
     public function testSetExternalId()
     {
         $externalId = 123;
-        $this->contact->setExternalId($externalId);
+        $this->contact->setActiveCampaignId($externalId);
         $this->assertEquals($externalId, $this->contact->getData(ContactInterface::EXTERNAL_ID));
     }
 

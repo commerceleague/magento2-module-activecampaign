@@ -6,12 +6,13 @@ namespace CommerceLeague\ActiveCampaign\Plugin\Customer;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageFactory;
+use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessage;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
 use CommerceLeague\ActiveCampaign\Model\Contact;
 use CommerceLeague\ActiveCampaign\Model\ContactFactory;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\ResourceModel\Customer as Subject;
-use Magento\Framework\DataObject\Copy as ObjectCopyService;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
@@ -32,9 +33,9 @@ class CreateUpdateContactPlugin
     private $contactFactory;
 
     /**
-     * @var ObjectCopyService
+     * @var CreateUpdateMessageFactory
      */
-    protected $objectCopyService;
+    private $createUpdateMessageFactory;
 
     /**
      * @var CreateUpdatePublisher
@@ -49,20 +50,20 @@ class CreateUpdateContactPlugin
     /**
      * @param ContactRepositoryInterface $contactRepository
      * @param ContactFactory $contactFactory
-     * @param ObjectCopyService $objectCopyService
+     * @param CreateUpdateMessageFactory $createUpdateMessageFactory
      * @param CreateUpdatePublisher $createUpdatePublisher
      * @param Logger $logger
      */
     public function __construct(
         ContactRepositoryInterface $contactRepository,
         ContactFactory $contactFactory,
-        ObjectCopyService $objectCopyService,
+        CreateUpdateMessageFactory $createUpdateMessageFactory,
         CreateUpdatePublisher $createUpdatePublisher,
         Logger $logger
     ) {
         $this->contactRepository = $contactRepository;
         $this->contactFactory = $contactFactory;
-        $this->objectCopyService = $objectCopyService;
+        $this->createUpdateMessageFactory = $createUpdateMessageFactory;
         $this->createUpdatePublisher = $createUpdatePublisher;
         $this->logger = $logger;
     }
@@ -84,16 +85,17 @@ class CreateUpdateContactPlugin
             $contact = $this->contactFactory->create();
         }
 
-        $this->objectCopyService->copyFieldsetToTarget(
-            'activecampaign_convert_customer',
-            'to_contact',
-            $object,
-            $contact
-        );
+        $contact
+            ->setCustomerId($object->getId())
+            ->setEmail($object->getEmail());
+
+        /** @var CreateUpdateMessage $message */
+        $message = $this->createUpdateMessageFactory->create();
+        $message->setCustomerId($object->getId());
 
         try {
             $this->contactRepository->save($contact);
-            $this->createUpdatePublisher->execute($contact);
+            $this->createUpdatePublisher->execute($message);
         } catch (CouldNotSaveException $e) {
             $this->logger->critical($e);
         }

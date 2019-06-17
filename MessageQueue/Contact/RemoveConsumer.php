@@ -12,9 +12,9 @@ use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 class RemoveConsumer
 {
     /**
-     * @param ContactInterface $contact
+     * @param RemoveMessage $message
      */
-    public function execute(ContactInterface $contact): void
+    public function execute(RemoveMessage $message): void
     {
         // TODO::do something in here
     }

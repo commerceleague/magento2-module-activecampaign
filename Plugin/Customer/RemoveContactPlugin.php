@@ -6,6 +6,8 @@ namespace CommerceLeague\ActiveCampaign\Plugin\Customer;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\Contact\RemoveMessageFactory;
+use CommerceLeague\ActiveCampaign\MessageQueue\Contact\RemoveMessage;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\RemovePublisher;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\ResourceModel\Customer as Subject;
@@ -22,6 +24,11 @@ class RemoveContactPlugin
     private $contactRepository;
 
     /**
+     * @var RemoveMessageFactory
+     */
+    private $removeMessageFactory;
+
+    /**
      * @var RemovePublisher
      */
     private $removePublisher;
@@ -33,15 +40,18 @@ class RemoveContactPlugin
 
     /**
      * @param ContactRepositoryInterface $contactRepository
+     * @param RemoveMessageFactory $removeMessageFactory
      * @param RemovePublisher $removePublisher
      * @param Logger $logger
      */
     public function __construct(
         ContactRepositoryInterface $contactRepository,
+        RemoveMessageFactory $removeMessageFactory,
         RemovePublisher $removePublisher,
         Logger $logger
     ) {
         $this->contactRepository = $contactRepository;
+        $this->removeMessageFactory = $removeMessageFactory;
         $this->removePublisher = $removePublisher;
         $this->logger = $logger;
     }
@@ -62,8 +72,12 @@ class RemoveContactPlugin
 
         $proceed($object);
 
-        if (isset($contact)) {
-            $this->removePublisher->execute($contact);
+        if (isset($contact) && $contact->getActiveCampaignId() !== null) {
+            /** @var RemoveMessage $message */
+            $message = $this->removeMessageFactory->create();
+            $message->setActiveCampaignId($contact->getActiveCampaignId());
+
+            $this->removePublisher->execute($message);
         }
 
         return $subject;

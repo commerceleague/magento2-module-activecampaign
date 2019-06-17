@@ -4,7 +4,6 @@ declare(strict_types=1);
  */
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
 
-use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
@@ -28,10 +27,10 @@ class CreateUpdatePublisher
     }
 
     /**
-     * @param ContactInterface $contact
+     * @param CreateUpdateMessage $message
      */
-    public function execute(ContactInterface $contact): void
+    public function execute(CreateUpdateMessage $message): void
     {
-        $this->publisher->publish(self::TOPIC_NAME, $contact);
+        $this->publisher->publish(self::TOPIC_NAME, $message);
     }
 }
