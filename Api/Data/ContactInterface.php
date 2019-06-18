@@ -13,7 +13,6 @@ interface ContactInterface
     public const CONTACT_ID = 'contact_id';
     public const CUSTOMER_ID = 'customer_id';
     public const ACTIVE_CAMPAIGN_ID = 'active_campaign_id';
-    public const EMAIL = 'email';
 
     /**
      * @return int|null
@@ -47,15 +46,4 @@ interface ContactInterface
      * @return ContactInterface
      */
     public function setActiveCampaignId($activeCampaignId): self;
-
-    /**
-     * @return string|null
-     */
-    public function getEmail();
-
-    /**
-     * @param string $email
-     * @return ContactInterface
-     */
-    public function setEmail($email): self;
 }

@@ -3,7 +3,4 @@
 	<publisher topic="activecampaign.contact.create_update">
 		<connection name="db" exchange="magento-db" />
 	</publisher>
-	<publisher topic="activecampaign.contact.remove">
-		<connection name="db" exchange="magento-db" />
-	</publisher>
 </config>

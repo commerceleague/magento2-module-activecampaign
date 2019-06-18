@@ -23,14 +23,12 @@ interface ContactRepositoryInterface
     /**
      * @param int $contactId
      * @return Data\ContactInterface
-     * @throws NoSuchEntityException
      */
     public function getById($contactId): Data\ContactInterface;
 
     /**
      * @param int $customerId
      * @return Data\ContactInterface
-     * @throws NoSuchEntityException
      */
     public function getByCustomerId($customerId): Data\ContactInterface;
 

@@ -64,12 +64,6 @@ class ContactRepository implements ContactRepositoryInterface
         $contact = $this->contactFactory->create();
         $this->contactResource->load($contact, $contactId);
 
-        if (!$contact->getId()) {
-            throw new NoSuchEntityException(
-                __('The Contact with the "%1" ID doesn\'t exist', $contactId)
-            );
-        }
-
         return $contact;
     }
 
@@ -81,12 +75,6 @@ class ContactRepository implements ContactRepositoryInterface
         /** @var Contact $contact */
         $contact = $this->contactFactory->create();
         $this->contactResource->load($contact, $customerId, Data\ContactInterface::CUSTOMER_ID);
-
-        if (!$contact->getId()) {
-            throw new NoSuchEntityException(
-                __('The Contact with the "%1" customer ID doesn\'t exist', $customerId)
-            );
-        }
 
         return $contact;
     }
@@ -112,6 +100,14 @@ class ContactRepository implements ContactRepositoryInterface
      */
     public function deleteById($contactId): bool
     {
-        return $this->delete($this->getById($contactId));
+        $contact = $this->getById($contactId);
+
+        if (!$contact->getId()) {
+            throw new NoSuchEntityException(
+                __('The Contact with the "%1" ID doesn\'t exist', $contactId)
+            );
+        }
+
+        return $this->delete($contact);
     }
 }

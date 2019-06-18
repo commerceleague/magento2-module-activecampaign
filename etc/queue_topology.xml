@@ -2,6 +2,5 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
 	<exchange name="magento-db" type="topic" connection="db">
 		<binding id="activecampaign.contact.create_update.binding" topic="activecampaign.contact.create_update" destinationType="queue" destination="activecampaign_contact_create_update" />
-		<binding id="activecampaign.contact.remove.binding" topic="activecampaign.contact.remove" destinationType="queue" destination="activecampaign_contact_remove" />
 	</exchange>
 </config>

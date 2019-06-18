@@ -84,68 +84,20 @@ class ContactRepositoryTest extends TestCase
         $this->assertEquals($this->contact, $this->contactRepository->save($this->contact));
     }
 
-    public function testGetByIdThrowsException()
-    {
-        $contactId = 123;
-
-        $this->contactResource->expects($this->once())
-            ->method('load')
-            ->with($this->contact, $contactId)
-            ->willReturn($this->contact);
-
-        $this->contact->expects($this->once())
-            ->method('getId')
-            ->willReturn(false);
-
-        $this->expectException(NoSuchEntityException::class);
-        $this->expectExceptionMessage('The Contact with the "123" ID doesn\'t exist');
-
-        $this->contactRepository->getById($contactId);
-    }
-
     public function testGetById()
     {
         $contactId = 123;
-
-        $this->contact->expects($this->once())
-            ->method('getId')
-            ->willReturn(123);
-
         $this->assertEquals($this->contact, $this->contactRepository->getById($contactId));
-    }
-
-    public function testGetByCustomerIdThrowsException()
-    {
-        $customerId = 456;
-
-        $this->contactResource->expects($this->once())
-            ->method('load')
-            ->with($this->contact, $customerId, 'customer_id')
-            ->willReturn($this->contact);
-
-        $this->contact->expects($this->once())
-            ->method('getId')
-            ->willReturn(false);
-
-        $this->expectException(NoSuchEntityException::class);
-        $this->expectExceptionMessage('The Contact with the "456" customer ID doesn\'t exist');
-
-        $this->contactRepository->getByCustomerId($customerId);
     }
 
     public function testGetByCustomerId()
     {
-        $contactId = 123;
         $customerId = 456;
 
         $this->contactResource->expects($this->once())
             ->method('load')
             ->with($this->contact, $customerId, 'customer_id')
             ->willReturn($this->contact);
-
-        $this->contact->expects($this->once())
-            ->method('getId')
-            ->willReturn($contactId);
 
         $this->assertEquals($this->contact, $this->contactRepository->getByCustomerId($customerId));
     }

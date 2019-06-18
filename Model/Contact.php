@@ -68,20 +68,4 @@ class Contact extends AbstractModel implements ContactInterface
     {
         return $this->setData(self::ACTIVE_CAMPAIGN_ID, $activeCampaignId);
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function getEmail()
-    {
-        return $this->_getData(self::EMAIL);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function setEmail($email): ContactInterface
-    {
-        return $this->setData(self::EMAIL, $email);
-    }
 }

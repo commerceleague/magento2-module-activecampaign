@@ -71,31 +71,17 @@ class ContactTest extends TestCase
         $this->assertEquals($customerId, $this->contact->getData(ContactInterface::CUSTOMER_ID));
     }
 
-    public function testGetExternalId()
+    public function testGetActiveCampaignId()
     {
-        $externalId = 123;
-        $this->contact->setData(ContactInterface::EXTERNAL_ID, $externalId);
-        $this->assertEquals($externalId, $this->contact->getActiveCampaignId());
+        $activeCampaignId = 123;
+        $this->contact->setData(ContactInterface::ACTIVE_CAMPAIGN_ID, $activeCampaignId);
+        $this->assertEquals($activeCampaignId, $this->contact->getActiveCampaignId());
     }
 
-    public function testSetExternalId()
+    public function testSetActiveCampaignId()
     {
-        $externalId = 123;
-        $this->contact->setActiveCampaignId($externalId);
-        $this->assertEquals($externalId, $this->contact->getData(ContactInterface::EXTERNAL_ID));
-    }
-
-    public function testGetEmail()
-    {
-        $email = 'example@example.com';
-        $this->contact->setData(ContactInterface::EMAIL, $email);
-        $this->assertEquals($email, $this->contact->getEmail());
-    }
-
-    public function testSetEmail()
-    {
-        $email = 'example@example.com';
-        $this->contact->setEmail($email);
-        $this->assertEquals($email, $this->contact->getData(ContactInterface::EMAIL));
+        $activeCampaignId = 123;
+        $this->contact->setActiveCampaignId($activeCampaignId);
+        $this->assertEquals($activeCampaignId, $this->contact->getData(ContactInterface::ACTIVE_CAMPAIGN_ID));
     }
 }
