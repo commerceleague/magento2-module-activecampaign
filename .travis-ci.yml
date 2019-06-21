@@ -1,0 +1,25 @@
+language: php
+
+php:
+    - 7.2
+
+cache:
+    directories:
+        - $HOME/.composer/cache
+
+before_install:
+    - echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+    - composer self-update --no-interaction
+
+install:
+    - echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_USERNAME}\",\"password\":\"${MAGENTO_PASSWORD}\"}}}" > auth.json
+    - composer install --prefer-dist --no-interaction
+
+script:
+    - php vendor/bin/phpunit --coverage-clover=coverage.xml
+
+notifications:
+    email: false
+
+after_success:
+    - bash <(curl -s https://codecov.io/bash)
