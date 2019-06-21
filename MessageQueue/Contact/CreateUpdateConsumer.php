@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
-use CommerceLeague\ActiveCampaign\Gateway\Endpoint\ContactEndpoint;
-use CommerceLeague\ActiveCampaign\Gateway\GatewayException;
+use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use Magento\Framework\Exception\CouldNotSaveException;
 
@@ -16,9 +15,9 @@ use Magento\Framework\Exception\CouldNotSaveException;
 class CreateUpdateConsumer
 {
     /**
-     * @var ContactEndpoint
+     * @var Client
      */
-    private $contactEndpoint;
+    private $client;
 
     /**
      * @var Logger
@@ -31,18 +30,18 @@ class CreateUpdateConsumer
     private $contactRepository;
 
     /**
-     * @param ContactEndpoint $contactEndpoint
+     * @param Client $client
      * @param Logger $logger
      * @param ContactRepositoryInterface $contactRepository
      */
     public function __construct(
-        ContactEndpoint $contactEndpoint,
+        Client $client,
         Logger $logger,
         ContactRepositoryInterface $contactRepository
     ) {
-        $this->contactEndpoint = $contactEndpoint;
         $this->logger = $logger;
         $this->contactRepository = $contactRepository;
+        $this->client = $client;
     }
 
     /**
@@ -53,12 +52,7 @@ class CreateUpdateConsumer
     {
         $request = json_decode($message->getSerializedRequest(), true);
 
-        try {
-            $activeCampaignId = $this->contactEndpoint->sync($request);
-        } catch (GatewayException $e) {
-            $this->logger->error($e->getMessage());
-            return;
-        }
+        $response = $this->client->getContactApi()->upsert(['contact' => $request]);
 
         $contact = $this->contactRepository->getById($message->getContactId());
 
@@ -67,7 +61,7 @@ class CreateUpdateConsumer
             return;
         }
 
-        $contact->setActiveCampaignId($activeCampaignId);
+        $contact->setActiveCampaignId($response['contact']['id']);
 
         try {
             $this->contactRepository->save($contact);
