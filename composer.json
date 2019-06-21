@@ -6,7 +6,9 @@
     },
     "require": {
         "php": "~7.1.3||~7.2.0",
-        "magento/framework": "102.0.*"
+        "commerceleague/api-client-activecampaign": "0.1.0",
+        "magento/framework": "102.0.*",
+        "php-http/guzzle6-adapter": "^2.0"
     },
     "type": "magento2-module",
     "license": "MIT",
@@ -17,5 +19,11 @@
         "psr-4": {
             "CommerceLeague\\ActiveCampaign\\": ""
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repo.magento.com/"
+        }
+    ]
 }
