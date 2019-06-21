@@ -4,20 +4,20 @@ declare(strict_types=1);
  */
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
 
+use CommerceLeague\ActiveCampaign\MessageQueue\SerializedRequestAwareInterface;
+use CommerceLeague\ActiveCampaign\MessageQueue\SerializedRequestAwareTrait;
+
 /**
  * Class CreateUpdateConsumerMessage
  */
-class CreateUpdateMessage
+class CreateUpdateMessage implements SerializedRequestAwareInterface
 {
+    use SerializedRequestAwareTrait;
+
     /**
      * @var int
      */
     private $contactId;
-
-    /**
-     * @var string
-     */
-    private $serializedRequest;
 
     /**
      * @return int
@@ -38,33 +38,15 @@ class CreateUpdateMessage
     }
 
     /**
-     * @return string
-     */
-    public function getSerializedRequest(): string
-    {
-        return $this->serializedRequest;
-    }
-
-    /**
-     * @param string $serializedRequest
-     * @return $this
-     */
-    public function setSerializedRequest(string $serializedRequest): self
-    {
-        $this->serializedRequest = $serializedRequest;
-        return $this;
-    }
-
-    /**
      * @param int $contactId
-     * @param string $serializedRequest
+     * @param array $request
      * @return CreateUpdateMessage
      */
-    public static function build(int $contactId, string $serializedRequest): self
+    public static function build(int $contactId, array $request): self
     {
         $message = new self();
-        $message->contactId = $contactId;
-        $message->serializedRequest = $serializedRequest;
+        $message->setContactId($contactId);
+        $message->setRequest($request);
 
         return $message;
     }

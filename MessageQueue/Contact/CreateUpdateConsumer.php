@@ -7,6 +7,7 @@ namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
 
 /**
@@ -46,13 +47,15 @@ class CreateUpdateConsumer
 
     /**
      * @param CreateUpdateMessage $message
-     * @throws \Zend_Http_Client_Exception
      */
     public function consume(CreateUpdateMessage $message): void
     {
-        $request = json_decode($message->getSerializedRequest(), true);
-
-        $response = $this->client->getContactApi()->upsert(['contact' => $request]);
+        try {
+            $apiResponse = $this->client->getContactApi()->upsert(['contact' => $message->getRequest()]);
+        } catch (HttpException $e) {
+            $this->logger->error($e->getMessage());
+            return;
+        }
 
         $contact = $this->contactRepository->getById($message->getContactId());
 
@@ -61,7 +64,7 @@ class CreateUpdateConsumer
             return;
         }
 
-        $contact->setActiveCampaignId($response['contact']['id']);
+        $contact->setActiveCampaignId($apiResponse['contact']['id']);
 
         try {
             $this->contactRepository->save($contact);
