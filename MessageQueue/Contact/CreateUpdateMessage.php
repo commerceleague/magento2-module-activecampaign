@@ -4,47 +4,68 @@ declare(strict_types=1);
  */
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
 
-use Magento\Framework\Api\AbstractSimpleObject;
-
 /**
  * Class CreateUpdateConsumerMessage
  */
-class CreateUpdateMessage extends AbstractSimpleObject
+class CreateUpdateMessage
 {
-    private const CONTACT_ID = 'contact_id';
-    private const SERIALIZED_REQUEST = 'serialized_request';
+    /**
+     * @var int
+     */
+    private $contactId;
 
     /**
-     * @return int|null
+     * @var string
      */
-    public function getContactId(): ?int
+    private $serializedRequest;
+
+    /**
+     * @return int
+     */
+    public function getContactId(): int
     {
-        return $this->_get(self::CONTACT_ID);
+        return $this->contactId;
     }
 
     /**
      * @param int $contactId
-     * @return CreateUpdateMessage
+     * @return $this
      */
     public function setContactId(int $contactId): self
     {
-        return $this->setData(self::CONTACT_ID, $contactId);
+        $this->contactId = $contactId;
+        return $this;
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getSerializedRequest(): ?string
+    public function getSerializedRequest(): string
     {
-        return $this->_get(self::SERIALIZED_REQUEST);
+        return $this->serializedRequest;
     }
 
     /**
      * @param string $serializedRequest
-     * @return CreateUpdateMessage
+     * @return $this
      */
     public function setSerializedRequest(string $serializedRequest): self
     {
-        return $this->setData(self::SERIALIZED_REQUEST, $serializedRequest);
+        $this->serializedRequest = $serializedRequest;
+        return $this;
+    }
+
+    /**
+     * @param int $contactId
+     * @param string $serializedRequest
+     * @return CreateUpdateMessage
+     */
+    public static function build(int $contactId, string $serializedRequest): self
+    {
+        $message = new self();
+        $message->contactId = $contactId;
+        $message->serializedRequest = $serializedRequest;
+
+        return $message;
     }
 }

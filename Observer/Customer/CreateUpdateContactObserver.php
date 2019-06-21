@@ -45,11 +45,6 @@ class CreateUpdateContactObserver implements ObserverInterface
     private $logger;
 
     /**
-     * @var CreateUpdateMessageFactory
-     */
-    private $createUpdateMessageFactory;
-
-    /**
      * @var PublisherInterface
      */
     private $publisher;
@@ -59,7 +54,6 @@ class CreateUpdateContactObserver implements ObserverInterface
      * @param ContactRepositoryInterface $contactRepository
      * @param DataObjectCopy $dataObjectCopy
      * @param Logger $logger
-     * @param CreateUpdateMessageFactory $createUpdateMessageFactory
      * @param PublisherInterface $publisher
      */
     public function __construct(
@@ -67,14 +61,12 @@ class CreateUpdateContactObserver implements ObserverInterface
         ContactRepositoryInterface $contactRepository,
         DataObjectCopy $dataObjectCopy,
         Logger $logger,
-        CreateUpdateMessageFactory $createUpdateMessageFactory,
         PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
         $this->contactRepository = $contactRepository;
         $this->dataObjectCopy = $dataObjectCopy;
         $this->logger = $logger;
-        $this->createUpdateMessageFactory = $createUpdateMessageFactory;
         $this->publisher = $publisher;
     }
 
@@ -140,11 +132,9 @@ class CreateUpdateContactObserver implements ObserverInterface
             $customer
         );
 
-        /** @var CreateUpdateMessage $message */
-        $message = $this->createUpdateMessageFactory->create();
-
-        $message->setContactId((int)$contactModel->getId())->setSerializedRequest(json_encode($request));
-
-        return $message;
+        return CreateUpdateMessage::build(
+            (int)$contactModel->getId(),
+            json_encode($request)
+        );
     }
 }
