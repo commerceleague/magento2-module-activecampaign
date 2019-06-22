@@ -46,7 +46,7 @@ class CreateUpdateMessage implements SerializedRequestAwareInterface
     {
         $message = new self();
         $message->setContactId($contactId);
-        $message->setRequest($request);
+        $message->setSerializedRequest(json_encode($request));
 
         return $message;
     }

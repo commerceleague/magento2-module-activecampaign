@@ -50,17 +50,19 @@ class CreateUpdateConsumer
      */
     public function consume(CreateUpdateMessage $message): void
     {
-        try {
-            $apiResponse = $this->client->getContactApi()->upsert(['contact' => $message->getRequest()]);
-        } catch (HttpException $e) {
-            $this->logger->error($e->getMessage());
-            return;
-        }
-
         $contact = $this->contactRepository->getById($message->getContactId());
 
         if (!$contact->getId()) {
-            $this->logger->error(__('Unable to find contact with id "%s".', $message->getContactId()));
+            $this->logger->error(__('Unable to find contact with id "%1".', $message->getContactId()));
+            return;
+        }
+
+        $request = json_decode($message->getSerializedRequest(), true);
+
+        try {
+            $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
+        } catch (HttpException $e) {
+            $this->logger->error($e->getMessage());
             return;
         }
 

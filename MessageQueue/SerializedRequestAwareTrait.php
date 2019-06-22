@@ -31,22 +31,4 @@ trait SerializedRequestAwareTrait
         $this->serializedRequest = $serializedRequest;
         return $this;
     }
-
-    /**
-     * @return array
-     */
-    public function getRequest(): array
-    {
-        return json_decode($this->serializedRequest, true);
-    }
-
-    /**
-     * @param array $request
-     * @return SerializedRequestAwareTrait
-     */
-    public function setRequest(array $request)
-    {
-        $this->serializedRequest = json_encode($request);
-        return $this;
-    }
 }

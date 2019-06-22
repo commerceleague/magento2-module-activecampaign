@@ -19,15 +19,4 @@ interface SerializedRequestAwareInterface
      * @return SerializedRequestAwareInterface
      */
     public function setSerializedRequest(string $serializedRequest);
-
-    /**
-     * @return array
-     */
-    public function getRequest(): array;
-
-    /**
-     * @param array $request
-     * @return SerializedRequestAwareInterface
-     */
-    public function setRequest(array $request);
 }

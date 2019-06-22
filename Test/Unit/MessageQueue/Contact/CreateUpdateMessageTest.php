@@ -25,14 +25,6 @@ class CreateUpdateMessageTest extends TestCase
         $this->assertEquals($serializedRequest, $createUpdateMessage->getSerializedRequest());
     }
 
-    public function testGetSetRequest()
-    {
-        $request = ['request'];
-        $createUpdateMessage = new CreateUpdateMessage();
-        $createUpdateMessage->setRequest($request);
-        $this->assertEquals($request, $createUpdateMessage->getRequest());
-    }
-
     public function testBuild()
     {
         $contactId = 123;
@@ -40,6 +32,6 @@ class CreateUpdateMessageTest extends TestCase
         $createUpdateMessage = CreateUpdateMessage::build($contactId, $request);
 
         $this->assertEquals($contactId, $createUpdateMessage->getContactId());
-        $this->assertEquals($request, $createUpdateMessage->getRequest());
+        $this->assertEquals(json_encode($request), $createUpdateMessage->getSerializedRequest());
     }
 }
