@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
-use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class Config
@@ -19,23 +17,6 @@ class Config extends AbstractHelper
     private const XML_PATH_EVENT_TRACKING_ENABLED = 'activecampaign/event_tracking/enabled';
     private const XML_PATH_EVENT_TRACKING_ID = 'activecampaign/event_tracking/id';
     private const XML_PATH_EVENT_TRACKING_KEY = 'activecampaign/event_tracking/key';
-
-    /**
-     * @var StoreManagerInterface
-     */
-    private $storeManager;
-
-    /**
-     * @param Context $context
-     * @param StoreManagerInterface $storeManager
-     */
-    public function __construct(
-        Context $context,
-        StoreManagerInterface $storeManager
-    ) {
-        $this->storeManager = $storeManager;
-        parent::__construct($context);
-    }
 
     /**
      * @return bool
