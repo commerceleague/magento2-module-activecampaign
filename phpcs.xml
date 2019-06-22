@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<ruleset name="ruleset">
+	<file>Api</file>
+	<file>Gateway</file>
+	<file>Helper</file>
+	<file>Logger</file>
+	<file>MessageQueue</file>
+	<file>Model</file>
+	<file>Observer</file>
+	<file>Service</file>
+	<file>Setup</file>
+	<exclude-pattern>Test/*</exclude-pattern>
+	<rule ref="Magento2">
+		<exclude name="Magento2.Functions.StaticFunction" />
+	</rule>
+</ruleset>

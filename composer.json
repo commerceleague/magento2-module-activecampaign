@@ -30,6 +30,7 @@
         }
     ],
     "require-dev": {
+        "magento/magento-coding-standard": "^3.0",
         "phpunit/phpunit": "~6.5.0"
     }
 }

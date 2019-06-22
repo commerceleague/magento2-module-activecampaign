@@ -15,8 +15,13 @@ install:
     - echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_USERNAME}\",\"password\":\"${MAGENTO_PASSWORD}\"}}}" > auth.json
     - composer install --prefer-dist --no-interaction
 
+before_script:
+    - php vendor/bin/phpcs --config-set installed_paths vendor/magento/magento-coding-standard
+    - php vendor/bin/phpcs --config-set php7.0_path $(which php)
+
 script:
     - php vendor/bin/phpunit --coverage-clover=coverage.xml
+    - php vendor/bin/phpcs --extensions=php
 
 notifications:
     email: false
