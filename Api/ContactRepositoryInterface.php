@@ -4,6 +4,7 @@ declare(strict_types=1);
  */
 namespace CommerceLeague\ActiveCampaign\Api;
 
+use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -31,6 +32,13 @@ interface ContactRepositoryInterface
      * @return Data\ContactInterface
      */
     public function getByCustomerId($customerId): Data\ContactInterface;
+
+    /**
+     * @param Customer $customer
+     * @return Data\ContactInterface
+     * @throws CouldNotSaveException
+     */
+    public function getOrCreateByCustomer(Customer $customer): Data\ContactInterface;
 
     /**
      * @param Data\ContactInterface $contact

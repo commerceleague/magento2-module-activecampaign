@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
 	<event name="customer_save_after">
-		<observer name="activecampaign_create_update_contact" instance="CommerceLeague\ActiveCampaign\Observer\Customer\CreateUpdateContactObserver" />
+		<observer name="activecampaign_customer_save_after" instance="CommerceLeague\ActiveCampaign\Observer\CustomerSaveAfterObserver" />
 	</event>
 </config>

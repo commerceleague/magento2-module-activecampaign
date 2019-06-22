@@ -6,6 +6,7 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Model;
 
 use CommerceLeague\ActiveCampaign\Model\Contact;
 use CommerceLeague\ActiveCampaign\Model\ContactRepository;
+use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -22,14 +23,19 @@ class ContactRepositoryTest extends TestCase
     protected $contactResource;
 
     /**
+     * @var MockObject|Contact
+     */
+    protected $contact;
+
+    /**
      * @var MockObject|ContactFactory
      */
     protected $contactFactory;
 
     /**
-     * @var MockObject|Contact
+     * @var MockObject|Customer
      */
-    protected $contact;
+    protected $customer;
 
     /**
      * @var ContactRepository
@@ -54,6 +60,10 @@ class ContactRepositoryTest extends TestCase
         $this->contactFactory->expects($this->any())
             ->method('create')
             ->willReturn($this->contact);
+
+        $this->customer = $this->getMockBuilder(Customer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->contactRepository = new ContactRepository(
             $this->contactResource,
@@ -102,6 +112,64 @@ class ContactRepositoryTest extends TestCase
         $this->assertEquals($this->contact, $this->contactRepository->getByCustomerId($customerId));
     }
 
+    public function testGetOrCreateByCustomerCreatesContact()
+    {
+        $customerId = 456;
+
+        $this->customer->expects($this->any())
+            ->method('getId')
+            ->willReturn($customerId);
+
+        $this->contactResource->expects($this->once())
+            ->method('load')
+            ->with($this->contact, $customerId, 'customer_id')
+            ->willReturn($this->contact);
+
+        $this->contact->expects($this->once())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->contact->expects($this->once())
+            ->method('setCustomerId')
+            ->with($customerId)
+            ->willReturnSelf();
+
+        $this->contactResource->expects($this->once())
+            ->method('save')
+            ->with($this->contact)
+            ->willReturnSelf();
+
+        $this->assertSame($this->contact, $this->contactRepository->getOrCreateByCustomer($this->customer));
+    }
+
+    public function testGetOrCreateByCustomerLoadsContact()
+    {
+        $customerId = 456;
+        $contactId = 678;
+
+        $this->customer->expects($this->any())
+            ->method('getId')
+            ->willReturn($customerId);
+
+        $this->contactResource->expects($this->once())
+            ->method('load')
+            ->with($this->contact, $customerId, 'customer_id')
+            ->willReturn($this->contact);
+
+        $this->contact->expects($this->once())
+            ->method('getId')
+            ->willReturn($contactId);
+
+        $this->contact->expects($this->never())
+            ->method('setCustomerId');
+
+        $this->contactResource->expects($this->never())
+            ->method('save');
+
+        $this->assertSame($this->contact, $this->contactRepository->getOrCreateByCustomer($this->customer));
+    }
+
+
     public function testDeleteThrowsException()
     {
         $this->contactResource->expects($this->once())
@@ -131,7 +199,29 @@ class ContactRepositoryTest extends TestCase
 
         $this->contact->expects($this->once())
             ->method('getId')
-            ->willReturn(true);
+            ->willReturn(null);
+
+        $this->contactResource->expects($this->once())
+            ->method('load')
+            ->with($this->contact, $contactId)
+            ->willReturn($this->contact);
+
+        $this->contactResource->expects($this->never())
+            ->method('delete');
+
+        $this->expectException(NoSuchEntityException::class);
+        $this->expectExceptionMessage('The Contact with the "123" ID doesn\'t exist');
+
+        $this->contactRepository->deleteById($contactId);
+    }
+
+    public function testDeleteById()
+    {
+        $contactId = 123;
+
+        $this->contact->expects($this->once())
+            ->method('getId')
+            ->willReturn($contactId);
 
         $this->contactResource->expects($this->once())
             ->method('load')

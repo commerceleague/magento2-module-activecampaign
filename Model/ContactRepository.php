@@ -7,6 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Model;
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact as ContactResource;
+use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -75,6 +76,21 @@ class ContactRepository implements ContactRepositoryInterface
         /** @var Contact $contact */
         $contact = $this->contactFactory->create();
         $this->contactResource->load($contact, $customerId, Data\ContactInterface::CUSTOMER_ID);
+
+        return $contact;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getOrCreateByCustomer(Customer $customer): Data\ContactInterface
+    {
+        $contact = $this->getByCustomerId($customer->getId());
+
+        if (!$contact->getId()) {
+            $contact->setCustomerId($customer->getId());
+            $this->save($contact);
+        }
 
         return $contact;
     }

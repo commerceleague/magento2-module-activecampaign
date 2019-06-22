@@ -24,6 +24,7 @@
 			<directory suffix=".php">MessageQueue</directory>
 			<directory suffix=".php">Model</directory>
 			<directory suffix=".php">Observer</directory>
+			<directory suffix=".php">Service</directory>
 			<directory suffix=".php">Setup</directory>
 		</whitelist>
 	</filter>
