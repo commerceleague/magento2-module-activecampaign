@@ -11,8 +11,20 @@
 		stopOnFailure="false"
 		syntaxCheck="false">
 	
-	
 	<testsuite>
 		<directory suffix="Test.php">Test/Unit</directory>
 	</testsuite>
+	
+	<filter>
+		<whitelist>
+			<directory suffix=".php">Api</directory>
+			<directory suffix=".php">Gateway</directory>
+			<directory suffix=".php">Helper</directory>
+			<directory suffix=".php">Logger</directory>
+			<directory suffix=".php">MessageQueue</directory>
+			<directory suffix=".php">Model</directory>
+			<directory suffix=".php">Observer</directory>
+			<directory suffix=".php">Setup</directory>
+		</whitelist>
+	</filter>
 </phpunit>
