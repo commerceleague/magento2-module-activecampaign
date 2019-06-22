@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fcfbb922e0a349e7b71dcb84473d23f5",
+    "content-hash": "a18eb5de42459f62fd3cc82278fafc74",
     "packages": [
         {
             "name": "colinmollenhour/credis",
@@ -805,6 +805,34 @@
             "autoload": {
                 "psr-4": {
                     "Magento\\Framework\\": ""
+                },
+                "files": [
+                    "registration.php"
+                ]
+            },
+            "license": [
+                "OSL-3.0",
+                "AFL-3.0"
+            ],
+            "description": "N/A"
+        },
+        {
+            "name": "magento/framework-message-queue",
+            "version": "100.3.1",
+            "dist": {
+                "type": "zip",
+                "url": "https://repo.magento.com/archives/magento/framework-message-queue/magento-framework-message-queue-100.3.1.0.zip",
+                "reference": null,
+                "shasum": "51901caed892f2e26241677df2f72deaa010a1a3"
+            },
+            "require": {
+                "magento/framework": "102.0.*",
+                "php": "~7.1.3||~7.2.0"
+            },
+            "type": "magento2-library",
+            "autoload": {
+                "psr-4": {
+                    "Magento\\Framework\\MessageQueue\\": ""
                 },
                 "files": [
                     "registration.php"

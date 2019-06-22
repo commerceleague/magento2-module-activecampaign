@@ -9,6 +9,7 @@
         "commerceleague/api-client-activecampaign": "0.1.0",
         "http-interop/http-factory-guzzle": "^1.0",
         "magento/framework": "102.0.*",
+        "magento/framework-message-queue": "100.3.1",
         "magento/module-customer": "102.0.*",
         "php-http/guzzle6-adapter": "^2.0"
     },

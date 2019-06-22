@@ -74,12 +74,12 @@ class CreateUpdateContactObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        /** @var Customer $customer */
-        $customer = $observer->getEvent()->getData('customer');
-
         if (!$this->configHelper->isApiEnabled()) {
             return;
         }
+
+        /** @var Customer $customer */
+        $customer = $observer->getEvent()->getData('customer');
 
         try {
             $contactModel = $this->getOrCreateContactModel($customer);
