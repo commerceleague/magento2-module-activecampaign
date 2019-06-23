@@ -10,5 +10,6 @@ namespace CommerceLeague\ActiveCampaign\Setup;
  */
 interface SchemaInterface
 {
+    public const CONNECTION_TABLE = 'activecampaign_connection';
     public const CONTACT_TABLE = 'activecampaign_contact';
 }

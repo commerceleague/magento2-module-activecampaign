@@ -18,6 +18,7 @@
 	<filter>
 		<whitelist>
 			<directory suffix=".php">Api</directory>
+			<directory suffix=".php">Controller</directory>
 			<directory suffix=".php">Gateway</directory>
 			<directory suffix=".php">Helper</directory>
 			<directory suffix=".php">Logger</directory>
@@ -26,6 +27,7 @@
 			<directory suffix=".php">Observer</directory>
 			<directory suffix=".php">Service</directory>
 			<directory suffix=".php">Setup</directory>
+			<directory suffix=".php">Ui</directory>
 		</whitelist>
 	</filter>
 </phpunit>

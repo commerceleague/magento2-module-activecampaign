@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+	<menu>
+		<add id="CommerceLeague_ActiveCampaign::main" title="ActiveCampaign" module="CommerceLeague_ActiveCampaign" sortOrder="100" parent="Magento_Backend::marketing" resource="CommerceLeague_ActiveCampaign::main" />
+		<add id="CommerceLeague_ActiveCampaign::connection" title="Connections" module="CommerceLeague_ActiveCampaign" sortOrder="10" parent="CommerceLeague_ActiveCampaign::main" resource="CommerceLeague_ActiveCampaign::connection" action="activecampaign/connection"/>
+	</menu>
+</config>
