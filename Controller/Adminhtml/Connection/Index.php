@@ -7,13 +7,14 @@ namespace CommerceLeague\ActiveCampaign\Controller\Adminhtml\Connection;
 
 use CommerceLeague\ActiveCampaign\Controller\Adminhtml\AbstractConnection;
 use Magento\Backend\App\Action;
+use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\View\Result\PageFactory as ResultPageFactory;
 use Magento\Framework\View\Result\Page as ResultPage;
 
 /**
  * Class Index
  */
-class Index extends AbstractConnection
+class Index extends AbstractConnection implements HttpGetActionInterface
 {
     /**
      * @var ResultPageFactory

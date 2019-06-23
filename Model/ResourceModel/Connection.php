@@ -19,6 +19,6 @@ class Connection extends AbstractDb
      */
     protected function _construct()
     {
-        $this->_init(SchemaInterface::CONTACT_TABLE, ConnectionInterface::CONNECTION_ID);
+        $this->_init(SchemaInterface::CONNECTION_TABLE, ConnectionInterface::CONNECTION_ID);
     }
 }

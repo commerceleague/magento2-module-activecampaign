@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+	<argument name="data" xsi:type="array">
+		<item name="js_config" xsi:type="array">
+			<item name="provider" xsi:type="string">activecampaign_connection_form.activecampaign_connection_form_data_source</item>
+		</item>
+		<item name="label" xsi:type="string" translate="true">General Information</item>
+		<item name="template" xsi:type="string">templates/form/collapsible</item>
+	</argument>
+	<settings>
+		<buttons>
+			<button name="save" class="CommerceLeague\ActiveCampaign\Block\Adminhtml\Connection\Edit\SaveButton"/>
+			<button name="delete" class="CommerceLeague\ActiveCampaign\Block\Adminhtml\Connection\Edit\DeleteButton"/>
+			<button name="back" class="CommerceLeague\ActiveCampaign\Block\Adminhtml\Connection\Edit\BackButton"/>
+		</buttons>
+		<namespace>activecampaign_connection_form</namespace>
+		<dataScope>data</dataScope>
+		<deps>
+			<dep>activecampaign_connection_form.activecampaign_connection_form_data_source</dep>
+		</deps>
+	</settings>
+	<dataSource name="activecampaign_connection_form_data_source">
+		<argument name="data" xsi:type="array">
+			<item name="js_config" xsi:type="array">
+				<item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+			</item>
+		</argument>
+		<settings>
+			<submitUrl path="activecampaign/connection/save"/>
+		</settings>
+		<dataProvider class="CommerceLeague\ActiveCampaign\Ui\DataProvider\Connection\Form\DataProvider" name="activecampaign_connection_form_data_source">
+			<settings>
+				<requestFieldName>connection_id</requestFieldName>
+				<primaryFieldName>connection_id</primaryFieldName>
+			</settings>
+		</dataProvider>
+	</dataSource>
+	<fieldset name="general">
+		<settings>
+			<label/>
+		</settings>
+		<field name="connection_id" formElement="input">
+			<argument name="data" xsi:type="array">
+				<item name="config" xsi:type="array">
+					<item name="source" xsi:type="string">connection</item>
+				</item>
+			</argument>
+			<settings>
+				<dataType>text</dataType>
+				<visible>false</visible>
+				<dataScope>connection_id</dataScope>
+			</settings>
+		</field>
+		<field name="name" sortOrder="10" formElement="input">
+			<argument name="data" xsi:type="array">
+				<item name="config" xsi:type="array">
+					<item name="source" xsi:type="string">connection</item>
+				</item>
+			</argument>
+			<settings>
+				<validation>
+					<rule name="required-entry" xsi:type="boolean">true</rule>
+				</validation>
+				<dataType>text</dataType>
+				<label translate="true">Name</label>
+				<dataScope>name</dataScope>
+			</settings>
+		</field>
+		<field name="logo_url" sortOrder="20" formElement="input">
+			<argument name="data" xsi:type="array">
+				<item name="config" xsi:type="array">
+					<item name="source" xsi:type="string">connection</item>
+				</item>
+			</argument>
+			<settings>
+				<validation>
+					<rule name="required-entry" xsi:type="boolean">true</rule>
+					<rule name="validate-url" xsi:type="boolean">true</rule>
+				</validation>
+				<dataType>text</dataType>
+				<label translate="true">Logo Url</label>
+				<dataScope>logo_url</dataScope>
+			</settings>
+		</field>
+		<field name="link_url" sortOrder="30" formElement="input">
+			<argument name="data" xsi:type="array">
+				<item name="config" xsi:type="array">
+					<item name="source" xsi:type="string">connection</item>
+				</item>
+			</argument>
+			<settings>
+				<validation>
+					<rule name="required-entry" xsi:type="boolean">true</rule>
+					<rule name="validate-url" xsi:type="boolean">true</rule>
+				</validation>
+				<dataType>text</dataType>
+				<label translate="true">Link Url</label>
+				<dataScope>link_url</dataScope>
+			</settings>
+		</field>
+	</fieldset>
+</form>

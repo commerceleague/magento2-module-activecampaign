@@ -6,10 +6,19 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Model;
 
 use CommerceLeague\ActiveCampaign\Api\Data\ConnectionInterface;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Connection as ConnectionResource;
 use Magento\Framework\Model\AbstractModel;
 
 class Connection extends AbstractModel implements ConnectionInterface
 {
+    /**
+     * @inheritDoc
+     */
+    protected function _construct()
+    {
+        $this->_init(ConnectionResource::class);
+    }
+
     /**
      * @inheritDoc
      */
