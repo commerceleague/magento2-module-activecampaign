@@ -12,6 +12,7 @@ use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
+use Magento\Newsletter\Model\Subscriber;
 
 /**
  * Class ContactRepository
@@ -71,11 +72,11 @@ class ContactRepository implements ContactRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function getByCustomerId($customerId): Data\ContactInterface
+    public function getByEmail($email): Data\ContactInterface
     {
         /** @var Contact $contact */
         $contact = $this->contactFactory->create();
-        $this->contactResource->load($contact, $customerId, Data\ContactInterface::CUSTOMER_ID);
+        $this->contactResource->load($contact, $email, Data\ContactInterface::EMAIL);
 
         return $contact;
     }
@@ -85,10 +86,25 @@ class ContactRepository implements ContactRepositoryInterface
      */
     public function getOrCreateByCustomer(Customer $customer): Data\ContactInterface
     {
-        $contact = $this->getByCustomerId($customer->getId());
+        $contact = $this->getByEmail($customer->getData('email'));
 
         if (!$contact->getId()) {
-            $contact->setCustomerId($customer->getId());
+            $contact->setEmail($customer->getData('email'));
+            $this->save($contact);
+        }
+
+        return $contact;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getOrCreateBySubscriber(Subscriber $subscriber): Data\ContactInterface
+    {
+        $contact = $this->getByEmail($subscriber->getEmail());
+
+        if (!$contact->getId()) {
+            $contact->setEmail($subscriber->getEmail());
             $this->save($contact);
         }
 

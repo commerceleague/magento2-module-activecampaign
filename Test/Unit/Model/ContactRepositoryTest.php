@@ -10,6 +10,7 @@ use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Newsletter\Model\Subscriber;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact as ContactResource;
@@ -38,6 +39,11 @@ class ContactRepositoryTest extends TestCase
     protected $customer;
 
     /**
+     * @var MockObject|Subscriber
+     */
+    protected $subscriber;
+
+    /**
      * @var ContactRepository
      */
     protected $contactRepository;
@@ -62,6 +68,10 @@ class ContactRepositoryTest extends TestCase
             ->willReturn($this->contact);
 
         $this->customer = $this->getMockBuilder(Customer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->subscriber = $this->getMockBuilder(Subscriber::class)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -100,29 +110,18 @@ class ContactRepositoryTest extends TestCase
         $this->assertEquals($this->contact, $this->contactRepository->getById($contactId));
     }
 
-    public function testGetByCustomerId()
-    {
-        $customerId = 456;
-
-        $this->contactResource->expects($this->once())
-            ->method('load')
-            ->with($this->contact, $customerId, 'customer_id')
-            ->willReturn($this->contact);
-
-        $this->assertEquals($this->contact, $this->contactRepository->getByCustomerId($customerId));
-    }
-
     public function testGetOrCreateByCustomerCreatesContact()
     {
-        $customerId = 456;
+        $email = 'email@example.com';
 
         $this->customer->expects($this->any())
-            ->method('getId')
-            ->willReturn($customerId);
+            ->method('getData')
+            ->with('email')
+            ->willReturn($email);
 
         $this->contactResource->expects($this->once())
             ->method('load')
-            ->with($this->contact, $customerId, 'customer_id')
+            ->with($this->contact, $email, 'email')
             ->willReturn($this->contact);
 
         $this->contact->expects($this->once())
@@ -130,8 +129,8 @@ class ContactRepositoryTest extends TestCase
             ->willReturn(null);
 
         $this->contact->expects($this->once())
-            ->method('setCustomerId')
-            ->with($customerId)
+            ->method('setEmail')
+            ->with($email)
             ->willReturnSelf();
 
         $this->contactResource->expects($this->once())
@@ -144,16 +143,17 @@ class ContactRepositoryTest extends TestCase
 
     public function testGetOrCreateByCustomerLoadsContact()
     {
-        $customerId = 456;
         $contactId = 678;
+        $email = 'email@example.com';
 
         $this->customer->expects($this->any())
-            ->method('getId')
-            ->willReturn($customerId);
+            ->method('getData')
+            ->with('email')
+            ->willReturn($email);
 
         $this->contactResource->expects($this->once())
             ->method('load')
-            ->with($this->contact, $customerId, 'customer_id')
+            ->with($this->contact, $email, 'email')
             ->willReturn($this->contact);
 
         $this->contact->expects($this->once())
@@ -161,12 +161,70 @@ class ContactRepositoryTest extends TestCase
             ->willReturn($contactId);
 
         $this->contact->expects($this->never())
-            ->method('setCustomerId');
+            ->method('setEmail');
 
         $this->contactResource->expects($this->never())
             ->method('save');
 
         $this->assertSame($this->contact, $this->contactRepository->getOrCreateByCustomer($this->customer));
+    }
+
+    public function testGetOrCreateBySubscriberCreatesContact()
+    {
+        $email = 'email@example.com';
+
+        $this->subscriber->expects($this->any())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactResource->expects($this->once())
+            ->method('load')
+            ->with($this->contact, $email, 'email')
+            ->willReturn($this->contact);
+
+        $this->contact->expects($this->once())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->contact->expects($this->once())
+            ->method('setEmail')
+            ->with($email)
+            ->willReturnSelf();
+
+        $this->contactResource->expects($this->once())
+            ->method('save')
+            ->with($this->contact)
+            ->willReturnSelf();
+
+        $this->assertSame($this->contact, $this->contactRepository->getOrCreateBySubscriber($this->subscriber));
+    }
+
+
+    public function testGetOrCreateBySubscriberLoadsContact()
+    {
+        $contactId = 678;
+        $email = 'email@example.com';
+
+        $this->subscriber->expects($this->any())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactResource->expects($this->once())
+            ->method('load')
+            ->with($this->contact, $email, 'email')
+            ->willReturn($this->contact);
+
+        $this->contact->expects($this->once())
+            ->method('getId')
+            ->willReturn($contactId);
+
+        $this->contact->expects($this->never())
+            ->method('setEmail');
+
+        $this->contactResource->expects($this->never())
+            ->method('save');
+
+        $this->assertSame($this->contact, $this->contactRepository->getOrCreateBySubscriber($this->subscriber));
     }
 
 

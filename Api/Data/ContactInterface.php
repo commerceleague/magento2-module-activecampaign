@@ -11,7 +11,7 @@ namespace CommerceLeague\ActiveCampaign\Api\Data;
 interface ContactInterface
 {
     public const CONTACT_ID = 'contact_id';
-    public const CUSTOMER_ID = 'customer_id';
+    public const EMAIL = 'email';
     public const ACTIVE_CAMPAIGN_ID = 'active_campaign_id';
 
     /**
@@ -26,15 +26,15 @@ interface ContactInterface
     public function setId($id);
 
     /**
-     * @return int|null
+     * @return string|null
      */
-    public function getCustomerId();
+    public function getEmail();
 
     /**
-     * @param int $customerId
+     * @param string $email
      * @return ContactInterface
      */
-    public function setCustomerId($customerId): self;
+    public function setEmail($email): self;
 
     /**
      * @return int|null

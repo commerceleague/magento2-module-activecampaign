@@ -4,16 +4,11 @@
 	<table name="activecampaign_contact" resource="default" engine="innodb" comment="ActiveCampaign Contact Table">
 		<column xsi:type="int" name="contact_id" padding="10" unsigned="true" nullable="false" identity="true"
 		        comment="Entity Id"/>
-		<column xsi:type="int" name="customer_id" padding="10" unsigned="true" nullable="false" identity="false"
-		        comment="Customer Id"/>
+		<column xsi:type="varchar" name="email" nullable="true" length="255" comment="Email"/>
 		<column xsi:type="int" name="active_campaign_id" padding="10" unsigned="true" nullable="true" identity="false"
 		        comment="Active Campaign Id"/>
 		<constraint xsi:type="primary" referenceId="PRIMARY">
 			<column name="contact_id"/>
 		</constraint>
-		<constraint xsi:type="foreign" referenceId="ACTIVECAMPAIGN_CONTACT_CUSTOMER_ID_CUSTOMER_ENTITY_ENTITY_ID"
-		            table="activecampaign_contact"
-		            column="customer_id" referenceTable="customer_entity" referenceColumn="entity_id"
-		            onDelete="CASCADE"/>
 	</table>
 </schema>

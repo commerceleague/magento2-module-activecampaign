@@ -57,18 +57,18 @@ class ContactTest extends TestCase
         $this->assertEquals($contactId, $this->contact->getData(ContactInterface::CONTACT_ID));
     }
 
-    public function testGetCustomerId()
+    public function testGetEmail()
     {
-        $customerId = 123;
-        $this->contact->setData(ContactInterface::CUSTOMER_ID, $customerId);
-        $this->assertEquals($customerId, $this->contact->getCustomerId());
+        $email = 'example@example.com';
+        $this->contact->setData(ContactInterface::EMAIL, $email);
+        $this->assertEquals($email, $this->contact->getEmail());
     }
 
-    public function testSetCustomerId()
+    public function testSetEmail()
     {
-        $customerId = 123;
-        $this->contact->setCustomerId($customerId);
-        $this->assertEquals($customerId, $this->contact->getData(ContactInterface::CUSTOMER_ID));
+        $email = 'example@example.com';
+        $this->contact->setEmail($email);
+        $this->assertEquals($email, $this->contact->getData(ContactInterface::EMAIL));
     }
 
     public function testGetActiveCampaignId()

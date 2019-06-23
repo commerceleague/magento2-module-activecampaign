@@ -40,17 +40,17 @@ class Contact extends AbstractModel implements ContactInterface
     /**
      * @inheritDoc
      */
-    public function getCustomerId()
+    public function getEmail()
     {
-        return $this->_getData(self::CUSTOMER_ID);
+        return $this->_getData(self::EMAIL);
     }
 
     /**
      * @inheritDoc
      */
-    public function setCustomerId($customerId): ContactInterface
+    public function setEmail($email): ContactInterface
     {
-        return $this->setData(self::CUSTOMER_ID, $customerId);
+        return $this->setData(self::EMAIL, $email);
     }
 
     /**

@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessage;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotSaveException;
+use Magento\Newsletter\Model\Subscriber;
 
 /**
  * Class CreateUpdateContactService
@@ -59,7 +60,7 @@ class CreateUpdateContactService
     /**
      * @param Customer $customer
      */
-    public function execute(Customer $customer): void
+    public function executeWithCustomer(Customer $customer): void
     {
         try {
             $contact = $this->contactRepository->getOrCreateByCustomer($customer);
@@ -70,7 +71,27 @@ class CreateUpdateContactService
 
         $message = CreateUpdateMessage::build(
             (int)$contact->getId(),
-            $this->contactRequestBuilder->build($customer)
+            $this->contactRequestBuilder->buildWithCustomer($customer)
+        );
+
+        $this->createUpdatePublisher->publish($message);
+    }
+
+    /**
+     * @param Subscriber $subscriber
+     */
+    public function executeWithSubscriber(Subscriber $subscriber): void
+    {
+        try {
+            $contact = $this->contactRepository->getOrCreateBySubscriber($subscriber);
+        } catch (CouldNotSaveException $e) {
+            $this->logger->critical($e);
+            return;
+        }
+
+        $message = CreateUpdateMessage::build(
+            (int)$contact->getId(),
+            $this->contactRequestBuilder->buildWithSubscriber($subscriber)
         );
 
         $this->createUpdatePublisher->publish($message);

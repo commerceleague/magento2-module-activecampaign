@@ -8,6 +8,7 @@ use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Newsletter\Model\Subscriber;
 
 /**
  * Interface ContactRepositoryInterface
@@ -28,10 +29,10 @@ interface ContactRepositoryInterface
     public function getById($contactId): Data\ContactInterface;
 
     /**
-     * @param int $customerId
+     * @param string $email
      * @return Data\ContactInterface
      */
-    public function getByCustomerId($customerId): Data\ContactInterface;
+    public function getByEmail($email): Data\ContactInterface;
 
     /**
      * @param Customer $customer
@@ -39,6 +40,13 @@ interface ContactRepositoryInterface
      * @throws CouldNotSaveException
      */
     public function getOrCreateByCustomer(Customer $customer): Data\ContactInterface;
+
+    /**
+     * @param Subscriber $subscriber
+     * @return Data\ContactInterface
+     * @throws CouldNotSaveException
+     */
+    public function getOrCreateBySubscriber(Subscriber $subscriber): Data\ContactInterface;
 
     /**
      * @param Data\ContactInterface $contact

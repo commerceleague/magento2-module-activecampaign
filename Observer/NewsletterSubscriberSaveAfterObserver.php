@@ -2,18 +2,19 @@
 declare(strict_types=1);
 /**
  */
+
 namespace CommerceLeague\ActiveCampaign\Observer;
 
-use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Service\Contact\CreateUpdateContactService;
-use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Newsletter\Model\Subscriber;
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 
 /**
- * Class CustomerSaveAfterObserver
+ * Class NewsletterSubscriberSaveAfterObserver
  */
-class CustomerSaveAfterObserver implements ObserverInterface
+class NewsletterSubscriberSaveAfterObserver implements ObserverInterface
 {
     /**
      * @var ConfigHelper
@@ -38,7 +39,7 @@ class CustomerSaveAfterObserver implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
+     * @inheritDoc
      */
     public function execute(Observer $observer)
     {
@@ -46,8 +47,8 @@ class CustomerSaveAfterObserver implements ObserverInterface
             return;
         }
 
-        /** @var Customer $customer */
-        $customer = $observer->getEvent()->getData('customer');
-        $this->createUpdateContactService->executeWithCustomer($customer);
+        /** @var Subscriber $subscriber */
+        $subscriber = $observer->getEvent()->getData('subscriber');
+        $this->createUpdateContactService->executeWithSubscriber($subscriber);
     }
 }

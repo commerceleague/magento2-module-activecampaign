@@ -4,6 +4,7 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactRequestBuilder;
 use Magento\Customer\Model\Customer;
+use Magento\Newsletter\Model\Subscriber;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -17,6 +18,11 @@ class ContactRequestBuilderTest extends TestCase
     protected $customer;
 
     /**
+     * @var MockObject|Subscriber
+     */
+    protected $subscriber;
+
+    /**
      * @var ContactRequestBuilder
      */
     protected $contactRequestBuilder;
@@ -24,10 +30,11 @@ class ContactRequestBuilderTest extends TestCase
     protected function setUp()
     {
         $this->customer = $this->createMock(Customer::class);
+        $this->subscriber = $this->createMock(Subscriber::class);
         $this->contactRequestBuilder = new ContactRequestBuilder();
     }
 
-    public function testBuild()
+    public function testBuildWithCustomer()
     {
         $email = 'email@example.com';
         $firstName = 'John';
@@ -57,7 +64,23 @@ class ContactRequestBuilderTest extends TestCase
                 'firstName' => $firstName,
                 'lastName' => $lasName
             ],
-            $this->contactRequestBuilder->build($this->customer)
+            $this->contactRequestBuilder->buildWithCustomer($this->customer)
+        );
+    }
+
+    public function testBuildWithSubscriber()
+    {
+        $email = 'email@example.com';
+
+        $this->subscriber->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->assertEquals(
+            [
+                'email' => $email
+            ],
+            $this->contactRequestBuilder->buildWithSubscriber($this->subscriber)
         );
     }
 }

@@ -3,4 +3,7 @@
 	<event name="customer_save_after">
 		<observer name="activecampaign_customer_save_after" instance="CommerceLeague\ActiveCampaign\Observer\CustomerSaveAfterObserver" />
 	</event>
+	<event name="newsletter_subscriber_save_after">
+		<observer name="activecampaign_newsletter_subscriber_save_after" instance="CommerceLeague\ActiveCampaign\Observer\NewsletterSubscriberSaveAfterObserver" />
+	</event>
 </config>
