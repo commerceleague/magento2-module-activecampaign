@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0367ebdac809456b129712f9087b8d4a",
+    "content-hash": "968f68c801067c0f1e4967f1bed80192",
     "packages": [
         {
             "name": "colinmollenhour/credis",
@@ -85,16 +85,16 @@
         },
         {
             "name": "commerceleague/api-client-activecampaign",
-            "version": "0.1.0",
+            "version": "0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/commerceleague/api-client-activecampaign.git",
-                "reference": "f21ed56bc977e0417c9889dbd369c34853430245"
+                "reference": "a903cbea6b0c4c6b0e520bdb8a7eb05703024e28"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/commerceleague/api-client-activecampaign/zipball/f21ed56bc977e0417c9889dbd369c34853430245",
-                "reference": "f21ed56bc977e0417c9889dbd369c34853430245",
+                "url": "https://api.github.com/repos/commerceleague/api-client-activecampaign/zipball/a903cbea6b0c4c6b0e520bdb8a7eb05703024e28",
+                "reference": "a903cbea6b0c4c6b0e520bdb8a7eb05703024e28",
                 "shasum": ""
             },
             "require": {
@@ -126,7 +126,7 @@
                 "MIT"
             ],
             "description": "N/A",
-            "time": "2019-06-20T20:36:28+00:00"
+            "time": "2019-06-26T07:59:14+00:00"
         },
         {
             "name": "composer/ca-bundle",
