@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
     "content-hash": "02aa7ea7184a64bf324350121aaf7e62",
@@ -85,20 +85,20 @@
         },
         {
             "name": "commerceleague/api-client-activecampaign",
-            "version": "0.2.0",
+            "version": "0.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/commerceleague/api-client-activecampaign.git",
-                "reference": "a903cbea6b0c4c6b0e520bdb8a7eb05703024e28"
+                "reference": "6cd6f9f100e672dad17649c1e114818315e13836"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/commerceleague/api-client-activecampaign/zipball/a903cbea6b0c4c6b0e520bdb8a7eb05703024e28",
-                "reference": "a903cbea6b0c4c6b0e520bdb8a7eb05703024e28",
+                "url": "https://api.github.com/repos/commerceleague/api-client-activecampaign/zipball/6cd6f9f100e672dad17649c1e114818315e13836",
+                "reference": "6cd6f9f100e672dad17649c1e114818315e13836",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.2",
+                "php": "^7.1",
                 "php-http/discovery": "^1.6",
                 "psr/http-client": "^1.0",
                 "psr/http-factory": "^1.0",
@@ -126,7 +126,7 @@
                 "MIT"
             ],
             "description": "N/A",
-            "time": "2019-06-26T07:59:14+00:00"
+            "time": "2019-06-26T15:53:58+00:00"
         },
         {
             "name": "composer/ca-bundle",
@@ -3819,16 +3819,16 @@
         },
         {
             "name": "symfony/filesystem",
-            "version": "v4.3.1",
+            "version": "v4.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/filesystem.git",
-                "reference": "bf2af40d738dec5e433faea7b00daa4431d0a4cf"
+                "reference": "b9896d034463ad6fd2bf17e2bf9418caecd6313d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/filesystem/zipball/bf2af40d738dec5e433faea7b00daa4431d0a4cf",
-                "reference": "bf2af40d738dec5e433faea7b00daa4431d0a4cf",
+                "url": "https://api.github.com/repos/symfony/filesystem/zipball/b9896d034463ad6fd2bf17e2bf9418caecd6313d",
+                "reference": "b9896d034463ad6fd2bf17e2bf9418caecd6313d",
                 "shasum": ""
             },
             "require": {
@@ -3865,20 +3865,20 @@
             ],
             "description": "Symfony Filesystem Component",
             "homepage": "https://symfony.com",
-            "time": "2019-06-03T20:27:40+00:00"
+            "time": "2019-06-23T08:51:25+00:00"
         },
         {
             "name": "symfony/finder",
-            "version": "v4.3.1",
+            "version": "v4.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/finder.git",
-                "reference": "b3d4f4c0e4eadfdd8b296af9ca637cfbf51d8176"
+                "reference": "33c21f7d5d3dc8a140c282854a7e13aeb5d0f91a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/finder/zipball/b3d4f4c0e4eadfdd8b296af9ca637cfbf51d8176",
-                "reference": "b3d4f4c0e4eadfdd8b296af9ca637cfbf51d8176",
+                "url": "https://api.github.com/repos/symfony/finder/zipball/33c21f7d5d3dc8a140c282854a7e13aeb5d0f91a",
+                "reference": "33c21f7d5d3dc8a140c282854a7e13aeb5d0f91a",
                 "shasum": ""
             },
             "require": {
@@ -3914,7 +3914,7 @@
             ],
             "description": "Symfony Finder Component",
             "homepage": "https://symfony.com",
-            "time": "2019-05-26T20:47:49+00:00"
+            "time": "2019-06-13T11:03:18+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
