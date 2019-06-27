@@ -80,7 +80,7 @@ class NewsletterSubscriberSaveAfterObserver implements ObserverInterface
 
         try {
             $contact = $this->contactRepository->getOrCreateBySubscriber($subscriber);
-        }  catch (CouldNotSaveException $e) {
+        } catch (CouldNotSaveException $e) {
             $this->logger->critical($e);
             return;
         }

@@ -78,7 +78,7 @@ class CustomerSaveAfterObserver implements ObserverInterface
 
         try {
             $contact = $this->contactRepository->getOrCreateByCustomer($customer);
-        }  catch (CouldNotSaveException $e) {
+        } catch (CouldNotSaveException $e) {
             $this->logger->critical($e);
             return;
         }

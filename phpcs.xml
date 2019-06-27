@@ -8,7 +8,5 @@
 	<file>Observer</file>
 	<file>Setup</file>
 	<exclude-pattern>Test/*</exclude-pattern>
-	<rule ref="Magento2">
-		<exclude name="Magento2.Functions.StaticFunction" />
-	</rule>
+	<rule ref="Magento2" />
 </ruleset>
