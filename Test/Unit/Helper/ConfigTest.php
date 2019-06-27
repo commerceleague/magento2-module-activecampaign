@@ -82,48 +82,4 @@ class ConfigTest extends TestCase
 
         $this->assertEquals($apiToken, $this->config->getApiToken());
     }
-
-    public function testIsEventTrackingEnabledFalse()
-    {
-        $this->scopeConfig->expects($this->once())
-            ->method('isSetFlag')
-            ->with('activecampaign/event_tracking/enabled')
-            ->willReturn(false);
-
-        $this->assertFalse($this->config->isEventTrackingEnabled());
-    }
-
-    public function testIsEventTrackingEnabledTrue()
-    {
-        $this->scopeConfig->expects($this->once())
-            ->method('isSetFlag')
-            ->with('activecampaign/event_tracking/enabled')
-            ->willReturn(true);
-
-        $this->assertTrue($this->config->isEventTrackingEnabled());
-    }
-
-    public function testGetEventTrackingId()
-    {
-        $trackingId = '123456';
-
-        $this->scopeConfig->expects($this->once())
-            ->method('getValue')
-            ->with('activecampaign/event_tracking/id')
-            ->willReturn($trackingId);
-
-        $this->assertEquals($trackingId, $this->config->getEventTrackingId());
-    }
-
-    public function testGetEventTrackingKey()
-    {
-        $trackingKey = '12bf905c03e23b67fde95145d3c9fad7edb2374ba';
-
-        $this->scopeConfig->expects($this->once())
-            ->method('getValue')
-            ->with('activecampaign/event_tracking/key')
-            ->willReturn($trackingKey);
-
-        $this->assertEquals($trackingKey, $this->config->getEventTrackingKey());
-    }
 }
