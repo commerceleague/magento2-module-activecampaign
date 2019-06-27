@@ -2,15 +2,10 @@
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Test\Unit\Gateway;
+namespace CommerceLeague\ActiveCampaign\Test\Unit\Helper;
 
-use CommerceLeague\ActiveCampaign\Gateway\Client;
+use CommerceLeague\ActiveCampaign\Helper\Client;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaignApi\Api\AbandonedCartApi;
-use CommerceLeague\ActiveCampaignApi\Api\ConnectionApi;
-use CommerceLeague\ActiveCampaignApi\Api\ContactApi;
-use CommerceLeague\ActiveCampaignApi\Api\CustomerApi;
-use CommerceLeague\ActiveCampaignApi\CommonClient;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 

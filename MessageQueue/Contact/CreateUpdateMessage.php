@@ -36,18 +36,4 @@ class CreateUpdateMessage implements SerializedRequestAwareInterface
         $this->contactId = $contactId;
         return $this;
     }
-
-    /**
-     * @param int $contactId
-     * @param array $request
-     * @return CreateUpdateMessage
-     */
-    public static function build(int $contactId, array $request): self
-    {
-        $message = new self();
-        $message->setContactId($contactId);
-        $message->setSerializedRequest(json_encode($request));
-
-        return $message;
-    }
 }

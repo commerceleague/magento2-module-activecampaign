@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
-use CommerceLeague\ActiveCampaign\Gateway\Client;
+use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -16,9 +16,9 @@ use Magento\Framework\Exception\CouldNotSaveException;
 class CreateUpdateConsumer
 {
     /**
-     * @var Client
+     * @var ClientHelper
      */
-    private $client;
+    private $clientHelper;
 
     /**
      * @var Logger
@@ -31,18 +31,18 @@ class CreateUpdateConsumer
     private $contactRepository;
 
     /**
-     * @param Client $client
+     * @param ClientHelper $clientHelper
      * @param Logger $logger
      * @param ContactRepositoryInterface $contactRepository
      */
     public function __construct(
-        Client $client,
+        ClientHelper $clientHelper,
         Logger $logger,
         ContactRepositoryInterface $contactRepository
     ) {
         $this->logger = $logger;
         $this->contactRepository = $contactRepository;
-        $this->client = $client;
+        $this->clientHelper = $clientHelper;
     }
 
     /**
@@ -60,7 +60,7 @@ class CreateUpdateConsumer
         $request = json_decode($message->getSerializedRequest(), true);
 
         try {
-            $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
+            $apiResponse = $this->clientHelper->getContactApi()->upsert(['contact' => $request]);
         } catch (HttpException $e) {
             $this->logger->error($e->getMessage());
             return;

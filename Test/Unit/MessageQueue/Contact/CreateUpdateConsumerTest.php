@@ -15,14 +15,14 @@ use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Phrase;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use CommerceLeague\ActiveCampaign\Gateway\Client;
+use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
 
 class CreateUpdateConsumerTest extends TestCase
 {
     /**
-     * @var MockObject|Client
+     * @var MockObject|ClientHelper
      */
-    protected $client;
+    protected $clientHelper;
 
     /**
      * @var MockObject|Logger
@@ -56,7 +56,7 @@ class CreateUpdateConsumerTest extends TestCase
 
     protected function setUp()
     {
-        $this->client = $this->createMock(Client::class);
+        $this->clientHelper = $this->createMock(ClientHelper::class);
         $this->logger = $this->createMock(Logger::class);
         $this->contactRepository = $this->createMock(ContactRepositoryInterface::class);
         $this->createUpdateMessage = $this->createMock(CreateUpdateMessage::class);
@@ -64,7 +64,7 @@ class CreateUpdateConsumerTest extends TestCase
         $this->contactApi = $this->createMock(ContactApiResourceInterface::class);
 
         $this->createUpdateConsumer = new CreateUpdateConsumer(
-            $this->client,
+            $this->clientHelper,
             $this->logger,
             $this->contactRepository
         );
@@ -121,7 +121,7 @@ class CreateUpdateConsumerTest extends TestCase
             ->method('getSerializedRequest')
             ->willReturn(json_encode($request));
 
-        $this->client->expects($this->once())
+        $this->clientHelper->expects($this->once())
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 
@@ -162,7 +162,7 @@ class CreateUpdateConsumerTest extends TestCase
             ->method('getSerializedRequest')
             ->willReturn(json_encode($request));
 
-        $this->client->expects($this->once())
+        $this->clientHelper->expects($this->once())
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 
@@ -210,7 +210,7 @@ class CreateUpdateConsumerTest extends TestCase
             ->method('getSerializedRequest')
             ->willReturn(json_encode($request));
 
-        $this->client->expects($this->once())
+        $this->clientHelper->expects($this->once())
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 
