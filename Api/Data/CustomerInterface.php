@@ -10,7 +10,7 @@ namespace CommerceLeague\ActiveCampaign\Api\Data;
 interface CustomerInterface
 {
     public const ENTITY_ID = 'entity_id';
-    public const EMAIL = 'email';
+    public const MAGENTO_CUSTOMER_ID = 'magento_customer_id';
     public const ACTIVE_CAMPAIGN_ID = 'activecampaign_id';
     public const CREATED_AT = 'created_at';
     public const UPDATED_AT = 'updated_at';
@@ -27,15 +27,15 @@ interface CustomerInterface
     public function setId($id);
 
     /**
-     * @return string|null
+     * @return int|null
      */
-    public function getEmail();
+    public function getMagentoCustomerId();
 
     /**
-     * @param string $email
+     * @param int $magentoCustomerId
      * @return CustomerInterface
      */
-    public function setEmail($email): self;
+    public function setMagentoCustomerId($magentoCustomerId): self;
 
     /**
      * @return int|null

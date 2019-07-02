@@ -57,18 +57,18 @@ class CustomerTest extends TestCase
         $this->assertEquals($entityId, $this->customer->getData(CustomerInterface::ENTITY_ID));
     }
 
-    public function testGetEmail()
+    public function testGetMagentoCustomerId()
     {
-        $email = 'example@example.com';
-        $this->customer->setData(CustomerInterface::EMAIL, $email);
-        $this->assertEquals($email, $this->customer->getEmail());
+        $magentoCustomerId = 123;
+        $this->customer->setData(CustomerInterface::MAGENTO_CUSTOMER_ID, $magentoCustomerId);
+        $this->assertEquals($magentoCustomerId, $this->customer->getMagentoCustomerId());
     }
 
-    public function testSetEmail()
+    public function testSetMagentoCustomerId()
     {
-        $email = 'example@example.com';
-        $this->customer->setEmail($email);
-        $this->assertEquals($email, $this->customer->getData(CustomerInterface::EMAIL));
+        $magentoCustomerId = 123;
+        $this->customer->setMagentoCustomerId($magentoCustomerId);
+        $this->assertEquals($magentoCustomerId, $this->customer->getData(CustomerInterface::MAGENTO_CUSTOMER_ID));
     }
 
     public function testGetActiveCampaignId()

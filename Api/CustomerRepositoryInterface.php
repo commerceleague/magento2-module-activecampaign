@@ -4,6 +4,7 @@
 
 namespace CommerceLeague\ActiveCampaign\Api;
 
+use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -27,10 +28,17 @@ interface CustomerRepositoryInterface
     public function getById($entityId): Data\CustomerInterface;
 
     /**
-     * @param string $email
+     * @param MagentoCustomer $magentoCustomer
      * @return Data\CustomerInterface
      */
-    public function getByEmail($email): Data\CustomerInterface;
+    public function getByMagentoCustomer(MagentoCustomer $magentoCustomer): Data\CustomerInterface;
+
+    /**
+     * @param MagentoCustomer $magentoCustomer
+     * @return Data\CustomerInterface
+     * @throws CouldNotSaveException
+     */
+    public function getOrCreateByMagentoCustomer(MagentoCustomer $magentoCustomer): Data\CustomerInterface;
 
     /**
      * @param Data\CustomerInterface $customer

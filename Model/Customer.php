@@ -41,17 +41,17 @@ class Customer extends AbstractModel implements CustomerInterface
     /**
      * @inheritDoc
      */
-    public function getEmail()
+    public function getMagentoCustomerId()
     {
-        return $this->_getData(self::EMAIL);
+        return $this->_getData(self::MAGENTO_CUSTOMER_ID);
     }
 
     /**
      * @inheritDoc
      */
-    public function setEmail($email): CustomerInterface
+    public function setMagentoCustomerId($magentoCustomerId): CustomerInterface
     {
-        return $this->setData(self::EMAIL, $email);
+        return $this->setData(self::MAGENTO_CUSTOMER_ID, $magentoCustomerId);
     }
 
     /**

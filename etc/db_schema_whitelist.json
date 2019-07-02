@@ -22,10 +22,15 @@
             "activecampaign_id": true,
             "created_at": true,
             "updated_at": true,
-            "entity_id": true
+            "entity_id": true,
+            "magento_customer_id": true
         },
         "constraint": {
-            "PRIMARY": true
+            "PRIMARY": true,
+            "ACTIVECAMPAIGN_CSTR_MAGENTO_CSTR_ID_CSTR_ENTT_ENTT_ID": true
+        },
+        "index": {
+            "ACTIVECAMPAIGN_CUSTOMER_MAGENTO_CUSTOMER_ID": true
         }
     }
 }

@@ -18,7 +18,8 @@
 	<table name="activecampaign_customer" resource="default" engine="innodb" comment="ActiveCampaign Customer Table">
 		<column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true"
 		        comment="Entity Id"/>
-		<column xsi:type="varchar" name="email" nullable="true" length="255" comment="Email"/>
+		<column xsi:type="int" name="magento_customer_id" padding="10" unsigned="true" nullable="false" identity="false"
+		        comment="Magento Customer Id"/>
 		<column xsi:type="int" name="activecampaign_id" padding="10" unsigned="true" nullable="true" identity="false"
 		        comment="Active Campaign Id"/>
 		<column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
@@ -28,5 +29,11 @@
 		<constraint xsi:type="primary" referenceId="PRIMARY">
 			<column name="entity_id"/>
 		</constraint>
+		<constraint xsi:type="foreign" referenceId="ACTIVECAMPAIGN_CSTR_MAGENTO_CSTR_ID_CSTR_ENTT_ENTT_ID"
+		            table="activecampaign_customer" column="magento_customer_id" referenceTable="customer_entity"
+		            referenceColumn="entity_id" onDelete="CASCADE"/>
+		<index referenceId="ACTIVECAMPAIGN_CUSTOMER_MAGENTO_CUSTOMER_ID" indexType="btree">
+			<column name="magento_customer_id"/>
+		</index>
 	</table>
 </schema>

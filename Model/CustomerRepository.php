@@ -8,6 +8,7 @@ namespace CommerceLeague\ActiveCampaign\Model;
 use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer as CustomerResource;
+use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -68,14 +69,29 @@ class CustomerRepository implements CustomerRepositoryInterface
         return $customer;
     }
 
+    public function getByMagentoCustomer(MagentoCustomer $magentoCustomer): Data\CustomerInterface
+    {
+        $customer = $this->customerFactory->create();
+        $this->customerResource->load(
+            $customer,
+            $magentoCustomer->getId(),
+            Data\CustomerInterface::MAGENTO_CUSTOMER_ID
+        );
+
+        return $customer;
+    }
+
     /**
      * @inheritDoc
      */
-    public function getByEmail($email): Data\CustomerInterface
+    public function getOrCreateByMagentoCustomer(MagentoCustomer $magentoCustomer): Data\CustomerInterface
     {
-        /** @var Customer $customer */
-        $customer = $this->customerFactory->create();
-        $this->customerResource->load($customer, $email, Data\ContactInterface::EMAIL);
+        $customer = $this->getByMagentoCustomer($magentoCustomer);
+
+        if (!$customer->getId()) {
+            $customer->setMagentoCustomerId($magentoCustomer->getId());
+            $this->save($customer);
+        }
 
         return $customer;
     }

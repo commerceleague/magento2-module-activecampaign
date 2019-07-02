@@ -37,13 +37,10 @@
 				<sorting>asc</sorting>
 			</settings>
 		</column>
-		<column name="email" sortOrder="20">
+		<column name="magento_customer_id" sortOrder="20">
 			<settings>
-				<filter>text</filter>
-				<editor>
-					<editorType>text</editorType>
-				</editor>
-				<label translate="true">Email</label>
+				<filter>textRange</filter>
+				<label translate="true">Magento Customer ID</label>
 			</settings>
 		</column>
 		<column name="activecampaign_id" sortOrder="30">
