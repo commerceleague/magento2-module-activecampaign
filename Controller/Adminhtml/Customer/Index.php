@@ -41,7 +41,7 @@ class Index extends AbstractCustomer implements HttpGetActionInterface
         /** @var ResultPage $resultPage */
         $resultPage = $this->resultPageFactory->create();
 
-        $this->initPage($resultPage)->getConfig()->getTitle()->prepend(__('Customers'));
+        $this->initPage($resultPage)->getConfig()->getTitle()->prepend(__('ActiveCampaign Customers'));
 
         return $resultPage;
     }

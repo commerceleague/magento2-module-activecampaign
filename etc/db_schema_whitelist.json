@@ -7,11 +7,9 @@
             "created_at": true,
             "updated_at": true
         },
-        "index": {
-            "ACTIVECAMPAIGN_CONTACT_EMAIL": true
-        },
         "constraint": {
-            "PRIMARY": true
+            "PRIMARY": true,
+            "ACTIVECAMPAIGN_CONTACT_EMAIL": true
         }
     },
     "activecampaign_customer": {
