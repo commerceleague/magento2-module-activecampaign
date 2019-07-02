@@ -87,9 +87,8 @@ class CreateUpdateCustomerObserver implements ObserverInterface
             return;
         }
 
-        if ($customer->getActiveCampaignId()) {
-            // TODO::publish update message
-        } else {
+        // TODO::publish update message
+        if (!$customer->getActiveCampaignId()) {
             $this->publisher->publish(
                 Topics::CUSTOMER_CREATE,
                 $this->createMessageBuilder->build($customer, $magentoCustomer)
