@@ -24,6 +24,7 @@ class CreateUpdateContactObserver implements ObserverInterface
      * @var ConfigHelper
      */
     private $configHelper;
+
     /**
      * @var ContactRepositoryInterface
      */

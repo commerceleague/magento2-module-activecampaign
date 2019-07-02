@@ -25,7 +25,8 @@
         },
         "constraint": {
             "PRIMARY": true,
-            "ACTIVECAMPAIGN_CSTR_MAGENTO_CSTR_ID_CSTR_ENTT_ENTT_ID": true
+            "ACTIVECAMPAIGN_CSTR_MAGENTO_CSTR_ID_CSTR_ENTT_ENTT_ID": true,
+            "ACTIVECAMPAIGN_CUSTOMER_MAGENTO_CUSTOMER_ID": true
         }
     }
 }

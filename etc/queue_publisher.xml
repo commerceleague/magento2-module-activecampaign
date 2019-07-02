@@ -6,4 +6,7 @@
 	<publisher topic="activecampaign.contact.import">
 		<connection name="db" exchange="magento-db" />
 	</publisher>
+	<publisher topic="activecampaign.customer.create">
+		<connection name="db" exchange="magento-db" />
+	</publisher>
 </config>

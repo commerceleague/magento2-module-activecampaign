@@ -6,4 +6,7 @@
 	<broker topic="activecampaign.contact.import" exchange="magento-db" type="db">
 		<queue name="activecampaign_contact_import" consumer="activeCampaignContactImport"/>
 	</broker>
+	<broker topic="activecampaign.customer.create" exchange="magento-db" type="db">
+		<queue name="activecampaign_customer_create" consumer="activeCampaignCustomerCreate"/>
+	</broker>
 </config>

@@ -20,9 +20,9 @@ use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
 class CreateUpdateConsumerTest extends TestCase
 {
     /**
-     * @var MockObject|ClientHelper
+     * @var MockObject|ContactRepositoryInterface
      */
-    protected $clientHelper;
+    protected $contactRepository;
 
     /**
      * @var MockObject|Logger
@@ -30,9 +30,9 @@ class CreateUpdateConsumerTest extends TestCase
     protected $logger;
 
     /**
-     * @var MockObject|ContactRepositoryInterface
+     * @var MockObject|ClientHelper
      */
-    protected $contactRepository;
+    protected $clientHelper;
 
     /**
      * @var MockObject|CreateUpdateMessage
@@ -56,17 +56,17 @@ class CreateUpdateConsumerTest extends TestCase
 
     protected function setUp()
     {
-        $this->clientHelper = $this->createMock(ClientHelper::class);
-        $this->logger = $this->createMock(Logger::class);
         $this->contactRepository = $this->createMock(ContactRepositoryInterface::class);
+        $this->logger = $this->createMock(Logger::class);
+        $this->clientHelper = $this->createMock(ClientHelper::class);
         $this->createUpdateMessage = $this->createMock(CreateUpdateMessage::class);
         $this->contact = $this->createMock(ContactInterface::class);
         $this->contactApi = $this->createMock(ContactApiResourceInterface::class);
 
         $this->createUpdateConsumer = new CreateUpdateConsumer(
-            $this->clientHelper,
+            $this->contactRepository,
             $this->logger,
-            $this->contactRepository
+            $this->clientHelper
         );
     }
 

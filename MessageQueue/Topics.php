@@ -12,4 +12,5 @@ class Topics
 {
     public const CONTACT_CREATE_UPDATE = 'activecampaign.contact.create_update';
     public const CONTACT_IMPORT = 'activecampaign.contact.import';
+    public const CUSTOMER_CREATE = 'activecampaign.customer.create';
 }

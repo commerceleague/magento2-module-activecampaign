@@ -2,4 +2,5 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/consumer.xsd">
 	<consumer name="activeCampaignContactCreateUpdate" queue="activecampaign_contact_create_update" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateConsumer::consume"/>
 	<consumer name="activeCampaignContactImport" queue="activecampaign_contact_import" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Contact\ImportConsumer::consume"/>
+	<consumer name="activeCampaignCustomerCreate" queue="activecampaign_customer_create" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Customer\CreateConsumer::consume"/>
 </config>

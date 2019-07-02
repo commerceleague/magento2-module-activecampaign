@@ -35,8 +35,8 @@
 		<constraint xsi:type="foreign" referenceId="ACTIVECAMPAIGN_CSTR_MAGENTO_CSTR_ID_CSTR_ENTT_ENTT_ID"
 		            table="activecampaign_customer" column="magento_customer_id" referenceTable="customer_entity"
 		            referenceColumn="entity_id" onDelete="CASCADE"/>
-		<index referenceId="ACTIVECAMPAIGN_CUSTOMER_MAGENTO_CUSTOMER_ID" indexType="btree">
+		<constraint xsi:type="unique" referenceId="ACTIVECAMPAIGN_CUSTOMER_MAGENTO_CUSTOMER_ID">
 			<column name="magento_customer_id"/>
-		</index>
+		</constraint>
 	</table>
 </schema>

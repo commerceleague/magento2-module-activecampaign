@@ -23,6 +23,8 @@ class Contact extends AbstractDb
     }
 
     /**
+     * @todo move this to import model
+     *
      * @param array $contacts
      * @throws LocalizedException
      */

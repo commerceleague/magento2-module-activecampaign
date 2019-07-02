@@ -2,7 +2,8 @@
 declare(strict_types=1);
 /**
  */
-namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
+
+namespace CommerceLeague\ActiveCampaign\MessageQueue\Customer;
 
 use CommerceLeague\ActiveCampaign\MessageQueue\EntityIdAwareInterface;
 use CommerceLeague\ActiveCampaign\MessageQueue\EntityIdAwareTrait;
@@ -10,9 +11,9 @@ use CommerceLeague\ActiveCampaign\MessageQueue\SerializedRequestAwareInterface;
 use CommerceLeague\ActiveCampaign\MessageQueue\SerializedRequestAwareTrait;
 
 /**
- * Class CreateUpdateConsumerMessage
+ * Class CreateMessage
  */
-class CreateUpdateMessage implements
+class CreateMessage implements
     EntityIdAwareInterface,
     SerializedRequestAwareInterface
 {

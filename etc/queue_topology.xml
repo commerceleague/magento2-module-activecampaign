@@ -3,5 +3,6 @@
 	<exchange name="magento-db" type="topic" connection="db">
 		<binding id="activecampaign.contact.create_update.binding" topic="activecampaign.contact.create_update" destinationType="queue" destination="activecampaign_contact_create_update" />
 		<binding id="activecampaign.contact.import.binding" topic="activecampaign.contact.import" destinationType="queue" destination="activecampaign_contact_import" />
+		<binding id="activecampaign.customer.create.binding" topic="activecampaign.customer.create" destinationType="queue" destination="activecampaign_customer_create" />
 	</exchange>
 </config>

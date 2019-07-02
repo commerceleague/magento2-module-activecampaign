@@ -2,4 +2,5 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Communication/etc/communication.xsd">
 	<topic name="activecampaign.contact.create_update" request="CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessage" />
 	<topic name="activecampaign.contact.import" request="CommerceLeague\ActiveCampaign\MessageQueue\Contact\ImportMessage" />
+	<topic name="activecampaign.customer.create" request="CommerceLeague\ActiveCampaign\MessageQueue\Customer\CreateMessage" />
 </config>
