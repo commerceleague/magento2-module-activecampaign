@@ -14,6 +14,9 @@
 		<constraint xsi:type="primary" referenceId="PRIMARY">
 			<column name="entity_id"/>
 		</constraint>
+		<index referenceId="ACTIVECAMPAIGN_CONTACT_EMAIL" indexType="btree">
+			<column name="email" />
+		</index>
 	</table>
 	<table name="activecampaign_customer" resource="default" engine="innodb" comment="ActiveCampaign Customer Table">
 		<column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true"

@@ -2,41 +2,43 @@
 declare(strict_types=1);
 /**
  */
-namespace CommerceLeague\ActiveCampaign\Observer;
+
+namespace CommerceLeague\ActiveCampaign\Observer\Newsletter;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
-use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageBuilder;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
-use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\CouldNotSaveException;
+use Magento\Newsletter\Model\Subscriber;
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 
 /**
- * Class CustomerSaveAfterObserver
+ * Class CreateUpdateContactObserver
  */
-class CustomerSaveAfterObserver implements ObserverInterface
+class CreateUpdateContactObserver implements ObserverInterface
 {
     /**
      * @var ConfigHelper
      */
     private $configHelper;
+
     /**
      * @var ContactRepositoryInterface
      */
     private $contactRepository;
 
     /**
-     * @var CreateUpdateMessageBuilder
-     */
-    private $createUpdateMessageBuilder;
-
-    /**
      * @var Logger
      */
     private $logger;
+
+    /**
+     * @var CreateUpdateMessageBuilder
+     */
+    private $createUpdateMessageBuilder;
 
     /**
      * @var CreateUpdatePublisher
@@ -65,7 +67,7 @@ class CustomerSaveAfterObserver implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
+     * @inheritDoc
      */
     public function execute(Observer $observer)
     {
@@ -73,18 +75,22 @@ class CustomerSaveAfterObserver implements ObserverInterface
             return;
         }
 
-        /** @var Customer $customer */
-        $customer = $observer->getEvent()->getData('customer');
+        /** @var Subscriber $subscriber */
+        $subscriber = $observer->getEvent()->getData('subscriber');
+
+        if ($subscriber->getData('customer_id')) {
+            return;
+        }
 
         try {
-            $contact = $this->contactRepository->getOrCreateByCustomer($customer);
+            $contact = $this->contactRepository->getOrCreateBySubscriber($subscriber);
         } catch (CouldNotSaveException $e) {
             $this->logger->critical($e);
             return;
         }
 
         $this->createUpdatePublisher->publish(
-            $this->createUpdateMessageBuilder->buildWithCustomer($contact, $customer)
+            $this->createUpdateMessageBuilder->buildWithSubscriber($contact, $subscriber)
         );
     }
 }

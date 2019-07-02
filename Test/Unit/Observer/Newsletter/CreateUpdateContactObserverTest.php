@@ -1,8 +1,9 @@
 <?php
+declare(strict_types=1);
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Test\Unit\Observer\Customer;
+namespace CommerceLeague\ActiveCampaign\Test\Unit\Observer\Newsletter;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
@@ -11,16 +12,16 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessage;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageBuilder;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
-use CommerceLeague\ActiveCampaign\Observer\CustomerSaveAfterObserver;
-use Magento\Customer\Model\Customer;
+use CommerceLeague\ActiveCampaign\Observer\Newsletter\CreateUpdateContactObserver;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Phrase;
+use Magento\Newsletter\Model\Subscriber;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-class CustomerSaveAfterObserverTest extends TestCase
+class CreateUpdateContactObserverTest extends TestCase
 {
     /**
      * @var MockObject|ConfigHelper
@@ -58,9 +59,9 @@ class CustomerSaveAfterObserverTest extends TestCase
     protected $event;
 
     /**
-     * @var MockObject|Customer
+     * @var MockObject|Subscriber
      */
-    protected $customer;
+    protected $subscriber;
 
     /**
      * @var MockObject|ContactInterface
@@ -73,9 +74,9 @@ class CustomerSaveAfterObserverTest extends TestCase
     protected $createUpdateMessage;
 
     /**
-     * @var CustomerSaveAfterObserver
+     * @var CreateUpdateContactObserver
      */
-    protected $customerSaveAfterObserver;
+    protected $newsletterSubscriberSaveAfterObserver;
 
     protected function setUp()
     {
@@ -86,11 +87,11 @@ class CustomerSaveAfterObserverTest extends TestCase
         $this->createUpdatePublisher = $this->createMock(CreateUpdatePublisher::class);
         $this->observer = $this->createMock(Observer::class);
         $this->event = $this->createMock(Event::class);
-        $this->customer = $this->createMock(Customer::class);
+        $this->subscriber = $this->createMock(Subscriber::class);
         $this->contact = $this->createMock(ContactInterface::class);
         $this->createUpdateMessage = $this->createMock(CreateUpdateMessage::class);
 
-        $this->customerSaveAfterObserver = new CustomerSaveAfterObserver(
+        $this->newsletterSubscriberSaveAfterObserver = new CreateUpdateContactObserver(
             $this->configHelper,
             $this->contactRepository,
             $this->logger,
@@ -108,7 +109,33 @@ class CustomerSaveAfterObserverTest extends TestCase
         $this->observer->expects($this->never())
             ->method('getEvent');
 
-        $this->customerSaveAfterObserver->execute($this->observer);
+        $this->newsletterSubscriberSaveAfterObserver->execute($this->observer);
+    }
+
+    public function testExecuteWithCustomerAsSubscriber()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isApiEnabled')
+            ->willReturn(true);
+
+        $this->observer->expects($this->once())
+            ->method('getEvent')
+            ->willReturn($this->event);
+
+        $this->event->expects($this->once())
+            ->method('getData')
+            ->with('subscriber')
+            ->willReturn($this->subscriber);
+
+        $this->subscriber->expects($this->once())
+            ->method('getData')
+            ->with('customer_id')
+            ->willReturn(123);
+
+        $this->contactRepository->expects($this->never())
+            ->method('getOrCreateBySubscriber');
+
+        $this->newsletterSubscriberSaveAfterObserver->execute($this->observer);
     }
 
     public function testExecuteWithException()
@@ -123,14 +150,19 @@ class CustomerSaveAfterObserverTest extends TestCase
 
         $this->event->expects($this->once())
             ->method('getData')
-            ->with('customer')
-            ->willReturn($this->customer);
+            ->with('subscriber')
+            ->willReturn($this->subscriber);
+
+        $this->subscriber->expects($this->once())
+            ->method('getData')
+            ->with('customer_id')
+            ->willReturn(null);
 
         $exception = new CouldNotSaveException(new Phrase(''));
 
         $this->contactRepository->expects($this->once())
-            ->method('getOrCreateByCustomer')
-            ->with($this->customer)
+            ->method('getOrCreateBySubscriber')
+            ->with($this->subscriber)
             ->willThrowException($exception);
 
         $this->logger->expects($this->once())
@@ -140,7 +172,7 @@ class CustomerSaveAfterObserverTest extends TestCase
         $this->createUpdatePublisher->expects($this->never())
             ->method('publish');
 
-        $this->customerSaveAfterObserver->execute($this->observer);
+        $this->newsletterSubscriberSaveAfterObserver->execute($this->observer);
     }
 
     public function testExecute()
@@ -155,23 +187,28 @@ class CustomerSaveAfterObserverTest extends TestCase
 
         $this->event->expects($this->once())
             ->method('getData')
-            ->with('customer')
-            ->willReturn($this->customer);
+            ->with('subscriber')
+            ->willReturn($this->subscriber);
+
+        $this->subscriber->expects($this->once())
+            ->method('getData')
+            ->with('customer_id')
+            ->willReturn(null);
 
         $this->contactRepository->expects($this->once())
-            ->method('getOrCreateByCustomer')
-            ->with($this->customer)
+            ->method('getOrCreateBySubscriber')
+            ->with($this->subscriber)
             ->willReturn($this->contact);
 
         $this->createUpdateMessageBuilder->expects($this->once())
-            ->method('buildWithCustomer')
-            ->with($this->contact, $this->customer)
+            ->method('buildWithSubscriber')
+            ->with($this->contact, $this->subscriber)
             ->willReturn($this->createUpdateMessage);
 
         $this->createUpdatePublisher->expects($this->once())
             ->method('publish')
             ->with($this->createUpdateMessage);
 
-        $this->customerSaveAfterObserver->execute($this->observer);
+        $this->newsletterSubscriberSaveAfterObserver->execute($this->observer);
     }
 }

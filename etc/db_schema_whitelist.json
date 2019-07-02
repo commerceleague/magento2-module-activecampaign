@@ -1,36 +1,33 @@
 {
     "activecampaign_contact": {
         "column": {
-            "contact_id": true,
-            "customer_id": true,
-            "external_id": true,
+            "entity_id": true,
             "email": true,
             "activecampaign_id": true,
             "created_at": true,
-            "updated_at": true,
-            "entity_id": true
+            "updated_at": true
+        },
+        "index": {
+            "ACTIVECAMPAIGN_CONTACT_EMAIL": true
         },
         "constraint": {
-            "PRIMARY": true,
-            "ACTIVECAMPAIGN_CONTACT_CUSTOMER_ID_CUSTOMER_ENTITY_ENTITY_ID": true
+            "PRIMARY": true
         }
     },
     "activecampaign_customer": {
         "column": {
-            "customer_id": true,
-            "email": true,
+            "entity_id": true,
+            "magento_customer_id": true,
             "activecampaign_id": true,
             "created_at": true,
-            "updated_at": true,
-            "entity_id": true,
-            "magento_customer_id": true
+            "updated_at": true
+        },
+        "index": {
+            "ACTIVECAMPAIGN_CUSTOMER_MAGENTO_CUSTOMER_ID": true
         },
         "constraint": {
             "PRIMARY": true,
             "ACTIVECAMPAIGN_CSTR_MAGENTO_CSTR_ID_CSTR_ENTT_ENTT_ID": true
-        },
-        "index": {
-            "ACTIVECAMPAIGN_CUSTOMER_MAGENTO_CUSTOMER_ID": true
         }
     }
 }
