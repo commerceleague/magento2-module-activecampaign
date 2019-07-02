@@ -15,4 +15,19 @@
 			</argument>
 		</arguments>
 	</type>
+	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Grid\Collection">
+		<arguments>
+			<argument name="mainTable" xsi:type="string">activecampaign_contact</argument>
+			<argument name="eventPrefix" xsi:type="string">activecampaign_contact_grid_collection</argument>
+			<argument name="eventObject" xsi:type="string">activecampaign_contact_grid_collection</argument>
+			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Collection</argument>
+		</arguments>
+	</type>
+	<type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+		<arguments>
+			<argument name="collections" xsi:type="array">
+				<item name="activecampaign_contact_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Grid\Collection</item>
+			</argument>
+		</arguments>
+	</type>
 </config>

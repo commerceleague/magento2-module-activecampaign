@@ -5,8 +5,12 @@
 		<column xsi:type="int" name="contact_id" padding="10" unsigned="true" nullable="false" identity="true"
 		        comment="Entity Id"/>
 		<column xsi:type="varchar" name="email" nullable="true" length="255" comment="Email"/>
-		<column xsi:type="int" name="active_campaign_id" padding="10" unsigned="true" nullable="true" identity="false"
+		<column xsi:type="int" name="activecampaign_id" padding="10" unsigned="true" nullable="true" identity="false"
 		        comment="Active Campaign Id"/>
+		<column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+		        comment="Created At"/>
+		<column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
+		        comment="Updated At"/>
 		<constraint xsi:type="primary" referenceId="PRIMARY">
 			<column name="contact_id"/>
 		</constraint>

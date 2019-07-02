@@ -12,7 +12,7 @@ interface ContactInterface
 {
     public const CONTACT_ID = 'contact_id';
     public const EMAIL = 'email';
-    public const ACTIVE_CAMPAIGN_ID = 'active_campaign_id';
+    public const ACTIVE_CAMPAIGN_ID = 'activecampaign_id';
 
     /**
      * @return int|null

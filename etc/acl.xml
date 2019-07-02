@@ -10,6 +10,11 @@
 						</resource>
 					</resource>
 				</resource>
+				<resource id="Magento_Backend::marketing">
+					<resource id="CommerceLeague_ActiveCampaign::main" title="ActiveCampaign" sortOrder="100">
+						<resource id="CommerceLeague_ActiveCampaign::contact" title="Contacts" sortOrder="10"/>
+					</resource>
+				</resource>
 			</resource>
 		</resources>
 	</acl>
