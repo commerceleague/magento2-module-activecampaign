@@ -4,7 +4,7 @@
 		<section id="activecampaign" translate="label" type="text" sortOrder="1200" showInDefault="1" showInWebsite="1" showInStore="0">
 			<label>Active Campaign</label>
 			<tab>general</tab>
-			<resource>CommerceLeague_ActiveCampaign::config</resource>
+			<resource>CommerceLeague_ActiveCampaign::activecampaign_config</resource>
 			<group id="api" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
 				<label>Api</label>
 				<field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">

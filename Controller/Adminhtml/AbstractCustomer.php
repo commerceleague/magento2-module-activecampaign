@@ -10,11 +10,11 @@ use Magento\Backend\Model\View\Result\Page as ResultPageModel;
 use Magento\Framework\View\Result\Page as ResultPage;
 
 /**
- * Class AbstractContact
+ * Class AbstractCustomer
  */
-abstract class AbstractContact extends Action
+abstract class AbstractCustomer extends Action
 {
-    const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_contact';
+    const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_customer';
 
     /**
      * @param ResultPage|ResultPageModel $resultPage
@@ -22,9 +22,9 @@ abstract class AbstractContact extends Action
      */
     protected function initPage(ResultPage $resultPage): ResultPage
     {
-        $resultPage->setActiveMenu('CommerceLeague_ActiveCampaign::activecampaign_contact')
+        $resultPage->setActiveMenu('CommerceLeague_ActiveCampaign::activecampaign_customer')
             ->addBreadcrumb(__('ActiveCampaign'), __('ActiveCampaign'))
-            ->addBreadcrumb(__('Contacts'), __('Contacts'));
+            ->addBreadcrumb(__('Customers'), __('Customers'));
 
         return $resultPage;
     }

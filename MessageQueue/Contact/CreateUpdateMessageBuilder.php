@@ -43,7 +43,7 @@ class CreateUpdateMessageBuilder
         /** @var CreateUpdateMessage $message */
         $message = $this->createUpdateMessageFactory->create();
 
-        $message->setContactId((int)$contact->getId())
+        $message->setEntityId((int)$contact->getId())
             ->setSerializedRequest(json_encode($request));
 
         return $message;
@@ -63,7 +63,7 @@ class CreateUpdateMessageBuilder
         /** @var CreateUpdateMessage $message */
         $message = $this->createUpdateMessageFactory->create();
 
-        $message->setContactId((int)$contact->getId())
+        $message->setEntityId((int)$contact->getId())
             ->setSerializedRequest(json_encode($request));
 
         return $message;

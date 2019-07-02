@@ -2,24 +2,24 @@
 <listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
 	<argument name="data" xsi:type="array">
 		<item name="js_config" xsi:type="array">
-			<item name="provider" xsi:type="string">activecampaign_contact_listing.activecampaign_contact_listing_data_source</item>
+			<item name="provider" xsi:type="string">activecampaign_customer_listing.activecampaign_customer_listing_data_source</item>
 		</item>
 	</argument>
 	<settings>
-		<spinner>activecampaign_contact_columns</spinner>
+		<spinner>activecampaign_customer_columns</spinner>
 		<deps>
-			<dep>activecampaign_contact_listing.activecampaign_contact_listing_data_source</dep>
+			<dep>activecampaign_customer_listing.activecampaign_customer_listing_data_source</dep>
 		</deps>
 	</settings>
-	<dataSource name="activecampaign_contact_listing_data_source" component="Magento_Ui/js/grid/provider">
+	<dataSource name="activecampaign_customer_listing_data_source" component="Magento_Ui/js/grid/provider">
 		<settings>
 			<storageConfig>
 				<param name="indexField" xsi:type="string">entity_id</param>
 			</storageConfig>
 			<updateUrl path="mui/index/render"/>
 		</settings>
-		<aclResource>CommerceLeague_ActiveCampaign::activecampaign_contact</aclResource>
-		<dataProvider class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider" name="activecampaign_contact_listing_data_source">
+		<aclResource>CommerceLeague_ActiveCampaign::activecampaign_customer</aclResource>
+		<dataProvider class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider" name="activecampaign_customer_listing_data_source">
 			<settings>
 				<requestFieldName>id</requestFieldName>
 				<primaryFieldName>entity_id</primaryFieldName>
@@ -29,7 +29,7 @@
 	<listingToolbar name="listing_top">
 		<paging name="listing_paging"/>
 	</listingToolbar>
-	<columns name="activecampaign_contact_columns">
+	<columns name="activecampaign_customer_columns">
 		<column name="entity_id" sortOrder="10">
 			<settings>
 				<filter>textRange</filter>

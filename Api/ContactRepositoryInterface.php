@@ -23,10 +23,10 @@ interface ContactRepositoryInterface
     public function save(Data\ContactInterface $contact): Data\ContactInterface;
 
     /**
-     * @param int $contactId
+     * @param int $entityId
      * @return Data\ContactInterface
      */
-    public function getById($contactId): Data\ContactInterface;
+    public function getById($entityId): Data\ContactInterface;
 
     /**
      * @param string $email
@@ -56,10 +56,10 @@ interface ContactRepositoryInterface
     public function delete(Data\ContactInterface $contact): bool;
 
     /**
-     * @param int $contactId
+     * @param int $entityId
      * @return bool
      * @throws NoSuchEntityException
      * @throws CouldNotDeleteException
      */
-    public function deleteById($contactId): bool;
+    public function deleteById($entityId): bool;
 }

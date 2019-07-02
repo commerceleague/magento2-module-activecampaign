@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
 	<menu>
-		<add id="CommerceLeague_ActiveCampaign::main" title="ActiveCampaign" module="CommerceLeague_ActiveCampaign" sortOrder="100" parent="Magento_Backend::marketing" resource="CommerceLeague_ActiveCampaign::main" />
-		<add id="CommerceLeague_ActiveCampaign::contact" title="Contacts" module="CommerceLeague_ActiveCampaign" sortOrder="10" parent="CommerceLeague_ActiveCampaign::main" resource="CommerceLeague_ActiveCampaign::contact" action="activecampaign/contact/index" />
+		<add id="CommerceLeague_ActiveCampaign::activecampaign_main" title="ActiveCampaign" module="CommerceLeague_ActiveCampaign" sortOrder="100" parent="Magento_Backend::marketing" resource="CommerceLeague_ActiveCampaign::activecampaign_main" />
+		<add id="CommerceLeague_ActiveCampaign::activecampaign_contact" title="Contacts" module="CommerceLeague_ActiveCampaign" sortOrder="10" parent="CommerceLeague_ActiveCampaign::activecampaign_main" resource="CommerceLeague_ActiveCampaign::activecampaign_contact" action="activecampaign/contact/index" />
+		<add id="CommerceLeague_ActiveCampaign::activecampaign_customer" title="Customers" module="CommerceLeague_ActiveCampaign" sortOrder="20" parent="CommerceLeague_ActiveCampaign::activecampaign_main" resource="CommerceLeague_ActiveCampaign::activecampaign_customer" action="activecampaign/customer/index" />
 	</menu>
 </config>

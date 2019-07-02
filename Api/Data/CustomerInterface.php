@@ -1,14 +1,13 @@
 <?php
-declare(strict_types=1);
 /**
  */
 
 namespace CommerceLeague\ActiveCampaign\Api\Data;
 
 /**
- * Interface ContactInterface
+ * Interface CustomerInterface
  */
-interface ContactInterface
+interface CustomerInterface
 {
     public const ENTITY_ID = 'entity_id';
     public const EMAIL = 'email';
@@ -23,7 +22,7 @@ interface ContactInterface
 
     /**
      * @param int $id
-     * @return ContactInterface
+     * @return CustomerInterface
      */
     public function setId($id);
 
@@ -34,7 +33,7 @@ interface ContactInterface
 
     /**
      * @param string $email
-     * @return ContactInterface
+     * @return CustomerInterface
      */
     public function setEmail($email): self;
 
@@ -45,7 +44,7 @@ interface ContactInterface
 
     /**
      * @param int $activeCampaignId
-     * @return ContactInterface
+     * @return CustomerInterface
      */
     public function setActiveCampaignId($activeCampaignId): self;
 
@@ -56,7 +55,7 @@ interface ContactInterface
 
     /**
      * @param string $createdAt
-     * @return ContactInterface
+     * @return CustomerInterface
      */
     public function setCreatedAt($createdAt): self;
 
@@ -67,7 +66,7 @@ interface ContactInterface
 
     /**
      * @param string $updatedAt
-     * @return ContactInterface
+     * @return CustomerInterface
      */
     public function setUpdatedAt($updatedAt): self;
 }

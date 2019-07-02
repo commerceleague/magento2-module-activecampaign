@@ -106,8 +106,14 @@ class ContactRepositoryTest extends TestCase
 
     public function testGetById()
     {
-        $contactId = 123;
-        $this->assertEquals($this->contact, $this->contactRepository->getById($contactId));
+        $entityId = 123;
+        $this->assertEquals($this->contact, $this->contactRepository->getById($entityId));
+    }
+
+    public function testGetByEmail()
+    {
+        $email = 'email@example.com';
+        $this->assertEquals($this->contact, $this->contactRepository->getByEmail($email));
     }
 
     public function testGetOrCreateByCustomerCreatesContact()
@@ -143,7 +149,7 @@ class ContactRepositoryTest extends TestCase
 
     public function testGetOrCreateByCustomerLoadsContact()
     {
-        $contactId = 678;
+        $entityId = 678;
         $email = 'email@example.com';
 
         $this->customer->expects($this->any())
@@ -158,7 +164,7 @@ class ContactRepositoryTest extends TestCase
 
         $this->contact->expects($this->once())
             ->method('getId')
-            ->willReturn($contactId);
+            ->willReturn($entityId);
 
         $this->contact->expects($this->never())
             ->method('setEmail');
@@ -202,7 +208,7 @@ class ContactRepositoryTest extends TestCase
 
     public function testGetOrCreateBySubscriberLoadsContact()
     {
-        $contactId = 678;
+        $entityId = 678;
         $email = 'email@example.com';
 
         $this->subscriber->expects($this->any())
@@ -216,7 +222,7 @@ class ContactRepositoryTest extends TestCase
 
         $this->contact->expects($this->once())
             ->method('getId')
-            ->willReturn($contactId);
+            ->willReturn($entityId);
 
         $this->contact->expects($this->never())
             ->method('setEmail');
@@ -253,7 +259,7 @@ class ContactRepositoryTest extends TestCase
 
     public function testDeleteByIdThrowsException()
     {
-        $contactId = 123;
+        $entityId = 123;
 
         $this->contact->expects($this->once())
             ->method('getId')
@@ -261,7 +267,7 @@ class ContactRepositoryTest extends TestCase
 
         $this->contactResource->expects($this->once())
             ->method('load')
-            ->with($this->contact, $contactId)
+            ->with($this->contact, $entityId)
             ->willReturn($this->contact);
 
         $this->contactResource->expects($this->never())
@@ -270,20 +276,20 @@ class ContactRepositoryTest extends TestCase
         $this->expectException(NoSuchEntityException::class);
         $this->expectExceptionMessage('The Contact with the "123" ID doesn\'t exist');
 
-        $this->contactRepository->deleteById($contactId);
+        $this->contactRepository->deleteById($entityId);
     }
 
     public function testDeleteById()
     {
-        $contactId = 123;
+        $entityId = 123;
 
         $this->contact->expects($this->once())
             ->method('getId')
-            ->willReturn($contactId);
+            ->willReturn($entityId);
 
         $this->contactResource->expects($this->once())
             ->method('load')
-            ->with($this->contact, $contactId)
+            ->with($this->contact, $entityId)
             ->willReturn($this->contact);
 
         $this->contactResource->expects($this->once())
@@ -291,6 +297,6 @@ class ContactRepositoryTest extends TestCase
             ->with($this->contact)
             ->willReturnSelf();
 
-        $this->assertTrue($this->contactRepository->deleteById($contactId));
+        $this->assertTrue($this->contactRepository->deleteById($entityId));
     }
 }

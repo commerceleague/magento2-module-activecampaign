@@ -45,16 +45,16 @@ class ContactTest extends TestCase
 
     public function testGetId()
     {
-        $contactId = 123;
-        $this->contact->setData(ContactInterface::CONTACT_ID, $contactId);
-        $this->assertEquals($contactId, $this->contact->getId());
+        $entityId = 123;
+        $this->contact->setData(ContactInterface::ENTITY_ID, $entityId);
+        $this->assertEquals($entityId, $this->contact->getId());
     }
 
     public function testSetId()
     {
-        $contactId = 123;
-        $this->contact->setId($contactId);
-        $this->assertEquals($contactId, $this->contact->getData(ContactInterface::CONTACT_ID));
+        $entityId = 123;
+        $this->contact->setId($entityId);
+        $this->assertEquals($entityId, $this->contact->getData(ContactInterface::ENTITY_ID));
     }
 
     public function testGetEmail()
@@ -83,5 +83,33 @@ class ContactTest extends TestCase
         $activeCampaignId = 123;
         $this->contact->setActiveCampaignId($activeCampaignId);
         $this->assertEquals($activeCampaignId, $this->contact->getData(ContactInterface::ACTIVE_CAMPAIGN_ID));
+    }
+
+    public function testGetCreatedAt()
+    {
+        $createdAt = '2019-01-01 00:00:00';
+        $this->contact->setData(ContactInterface::CREATED_AT, $createdAt);
+        $this->assertEquals($createdAt, $this->contact->getCreatedAt());
+    }
+
+    public function testSetCreatedAt()
+    {
+        $createdAt = '2019-01-01 00:00:00';
+        $this->contact->setCreatedAt($createdAt);
+        $this->assertEquals($createdAt, $this->contact->getData(ContactInterface::CREATED_AT));
+    }
+
+    public function testGetUpdatedAt()
+    {
+        $updatedAt = '2019-01-01 00:00:00';
+        $this->contact->setData(ContactInterface::UPDATED_AT, $updatedAt);
+        $this->assertEquals($updatedAt, $this->contact->getUpdatedAt());
+    }
+
+    public function testSetUpdatedAt()
+    {
+        $updatedAt = '2019-01-01 00:00:00';
+        $this->contact->setUpdatedAt($updatedAt);
+        $this->assertEquals($updatedAt, $this->contact->getData(ContactInterface::UPDATED_AT));
     }
 }

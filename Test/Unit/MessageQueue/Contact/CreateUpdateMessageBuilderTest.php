@@ -93,7 +93,7 @@ class CreateUpdateMessageBuilderTest extends TestCase
             ->willReturn('123');
 
         $this->createUpdateMessage->expects($this->once())
-            ->method('setContactId')
+            ->method('setEntityId')
             ->with(123)
             ->willReturnSelf();
 
@@ -130,7 +130,7 @@ class CreateUpdateMessageBuilderTest extends TestCase
             ->willReturn('123');
 
         $this->createUpdateMessage->expects($this->once())
-            ->method('setContactId')
+            ->method('setEntityId')
             ->with(123)
             ->willReturnSelf();
 

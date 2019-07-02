@@ -72,16 +72,16 @@ class CreateUpdateConsumerTest extends TestCase
 
     public function testConsumeWithUnknownCustomer()
     {
-        $contactId = 123;
+        $entityId = 123;
 
         $this->contactRepository->expects($this->once())
             ->method('getById')
-            ->with($contactId)
+            ->with($entityId)
             ->willReturn($this->contact);
 
         $this->createUpdateMessage->expects($this->any())
-            ->method('getContactId')
-            ->willReturn($contactId);
+            ->method('getEntityId')
+            ->willReturn($entityId);
 
         $this->contact->expects($this->once())
             ->method('getId')
@@ -89,7 +89,7 @@ class CreateUpdateConsumerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with(__('Unable to find contact with id "%1".', $contactId));
+            ->with(__('Unable to find contact with id "%1".', $entityId));
 
         $this->createUpdateMessage->expects($this->never())
             ->method('getSerializedRequest');
@@ -99,23 +99,23 @@ class CreateUpdateConsumerTest extends TestCase
 
     public function testConsumeApiCallFails()
     {
-        $contactId = 123;
+        $entityId = 123;
         $request = ['request'];
         /** @var MockObject|HttpException $exception */
         $exception = $this->createMock(HttpException::class);
 
         $this->contactRepository->expects($this->once())
             ->method('getById')
-            ->with($contactId)
+            ->with($entityId)
             ->willReturn($this->contact);
 
         $this->createUpdateMessage->expects($this->any())
-            ->method('getContactId')
-            ->willReturn($contactId);
+            ->method('getEntityId')
+            ->willReturn($entityId);
 
         $this->contact->expects($this->once())
             ->method('getId')
-            ->willReturn($contactId);
+            ->willReturn($entityId);
 
         $this->createUpdateMessage->expects($this->once())
             ->method('getSerializedRequest')
@@ -141,22 +141,22 @@ class CreateUpdateConsumerTest extends TestCase
 
     public function testConsumeContactCouldNotSave()
     {
-        $contactId = 123;
+        $entityId = 123;
         $activeCampaignId = 456;
         $request = ['request'];
 
         $this->contactRepository->expects($this->once())
             ->method('getById')
-            ->with($contactId)
+            ->with($entityId)
             ->willReturn($this->contact);
 
         $this->createUpdateMessage->expects($this->any())
-            ->method('getContactId')
-            ->willReturn($contactId);
+            ->method('getEntityId')
+            ->willReturn($entityId);
 
         $this->contact->expects($this->once())
             ->method('getId')
-            ->willReturn($contactId);
+            ->willReturn($entityId);
 
         $this->createUpdateMessage->expects($this->once())
             ->method('getSerializedRequest')
@@ -189,22 +189,22 @@ class CreateUpdateConsumerTest extends TestCase
 
     public function testConsume()
     {
-        $contactId = 123;
+        $entityId = 123;
         $activeCampaignId = 456;
         $request = ['request'];
 
         $this->contactRepository->expects($this->once())
             ->method('getById')
-            ->with($contactId)
+            ->with($entityId)
             ->willReturn($this->contact);
 
         $this->createUpdateMessage->expects($this->any())
-            ->method('getContactId')
-            ->willReturn($contactId);
+            ->method('getEntityId')
+            ->willReturn($entityId);
 
         $this->contact->expects($this->once())
             ->method('getId')
-            ->willReturn($contactId);
+            ->willReturn($entityId);
 
         $this->createUpdateMessage->expects($this->once())
             ->method('getSerializedRequest')

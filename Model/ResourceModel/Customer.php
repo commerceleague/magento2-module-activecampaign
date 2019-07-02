@@ -2,22 +2,23 @@
 declare(strict_types=1);
 /**
  */
+
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel;
 
-use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
+use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
 /**
- * Class Contact
+ * Class Customer
  */
-class Contact extends AbstractDb
+class Customer extends AbstractDb
 {
     /**
      * @inheritDoc
      */
     protected function _construct()
     {
-        $this->_init(SchemaInterface::CONTACT_TABLE, ContactInterface::ENTITY_ID);
+        $this->_init(SchemaInterface::CUSTOMER_TABLE, CustomerInterface::ENTITY_ID);
     }
 }

@@ -2,23 +2,24 @@
 declare(strict_types=1);
 /**
  */
+
 namespace CommerceLeague\ActiveCampaign\Model;
 
-use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact as ContactResource;
+use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer as CustomerResource;
 use Magento\Framework\Model\AbstractModel;
 
 /**
- * Class Contact
+ * Class Customer
  */
-class Contact extends AbstractModel implements ContactInterface
+class Customer extends AbstractModel implements CustomerInterface
 {
     /**
      * @inheritDoc
      */
     protected function _construct()
     {
-        $this->_init(ContactResource::class);
+        $this->_init(CustomerResource::class);
     }
 
     /**
@@ -48,7 +49,7 @@ class Contact extends AbstractModel implements ContactInterface
     /**
      * @inheritDoc
      */
-    public function setEmail($email): ContactInterface
+    public function setEmail($email): CustomerInterface
     {
         return $this->setData(self::EMAIL, $email);
     }
@@ -64,7 +65,7 @@ class Contact extends AbstractModel implements ContactInterface
     /**
      * @inheritDoc
      */
-    public function setActiveCampaignId($activeCampaignId): ContactInterface
+    public function setActiveCampaignId($activeCampaignId): CustomerInterface
     {
         return $this->setData(self::ACTIVE_CAMPAIGN_ID, $activeCampaignId);
     }
@@ -80,7 +81,7 @@ class Contact extends AbstractModel implements ContactInterface
     /**
      * @inheritDoc
      */
-    public function setCreatedAt($createdAt): ContactInterface
+    public function setCreatedAt($createdAt): CustomerInterface
     {
         return $this->setData(self::CREATED_AT, $createdAt);
     }
@@ -96,7 +97,7 @@ class Contact extends AbstractModel implements ContactInterface
     /**
      * @inheritDoc
      */
-    public function setUpdatedAt($updatedAt): ContactInterface
+    public function setUpdatedAt($updatedAt): CustomerInterface
     {
         return $this->setData(self::UPDATED_AT, $updatedAt);
     }

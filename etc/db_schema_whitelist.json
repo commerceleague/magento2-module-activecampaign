@@ -7,11 +7,25 @@
             "email": true,
             "activecampaign_id": true,
             "created_at": true,
-            "updated_at": true
+            "updated_at": true,
+            "entity_id": true
         },
         "constraint": {
             "PRIMARY": true,
             "ACTIVECAMPAIGN_CONTACT_CUSTOMER_ID_CUSTOMER_ENTITY_ENTITY_ID": true
+        }
+    },
+    "activecampaign_customer": {
+        "column": {
+            "customer_id": true,
+            "email": true,
+            "activecampaign_id": true,
+            "created_at": true,
+            "updated_at": true,
+            "entity_id": true
+        },
+        "constraint": {
+            "PRIMARY": true
         }
     }
 }

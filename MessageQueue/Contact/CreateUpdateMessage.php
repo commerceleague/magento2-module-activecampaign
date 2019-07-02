@@ -17,23 +17,23 @@ class CreateUpdateMessage implements SerializedRequestAwareInterface
     /**
      * @var int
      */
-    private $contactId;
+    private $entityId;
 
     /**
      * @return int
      */
-    public function getContactId(): int
+    public function getEntityId(): int
     {
-        return $this->contactId;
+        return $this->entityId;
     }
 
     /**
-     * @param int $contactId
+     * @param int $entityId
      * @return $this
      */
-    public function setContactId(int $contactId): self
+    public function setEntityId(int $entityId): self
     {
-        $this->contactId = $contactId;
+        $this->entityId = $entityId;
         return $this;
     }
 }

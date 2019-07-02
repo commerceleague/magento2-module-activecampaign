@@ -11,10 +11,10 @@ class CreateUpdateMessageTest extends TestCase
 {
     public function testGetSetContactId()
     {
-        $contactId = 123;
+        $entityId = 123;
         $createUpdateMessage = new CreateUpdateMessage();
-        $createUpdateMessage->setContactId($contactId);
-        $this->assertEquals($contactId, $createUpdateMessage->getContactId());
+        $createUpdateMessage->setEntityId($entityId);
+        $this->assertEquals($entityId, $createUpdateMessage->getEntityId());
     }
 
     public function testGetSetSerializedRequest()

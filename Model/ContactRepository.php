@@ -60,11 +60,11 @@ class ContactRepository implements ContactRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function getById($contactId): Data\ContactInterface
+    public function getById($entityId): Data\ContactInterface
     {
         /** @var Contact $contact */
         $contact = $this->contactFactory->create();
-        $this->contactResource->load($contact, $contactId);
+        $this->contactResource->load($contact, $entityId);
 
         return $contact;
     }
@@ -130,13 +130,13 @@ class ContactRepository implements ContactRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function deleteById($contactId): bool
+    public function deleteById($entityId): bool
     {
-        $contact = $this->getById($contactId);
+        $contact = $this->getById($entityId);
 
         if (!$contact->getId()) {
             throw new NoSuchEntityException(
-                __('The Contact with the "%1" ID doesn\'t exist', $contactId)
+                __('The Contact with the "%1" ID doesn\'t exist', $entityId)
             );
         }
 

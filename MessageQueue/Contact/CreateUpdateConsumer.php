@@ -50,10 +50,10 @@ class CreateUpdateConsumer
      */
     public function consume(CreateUpdateMessage $message): void
     {
-        $contact = $this->contactRepository->getById($message->getContactId());
+        $contact = $this->contactRepository->getById($message->getEntityId());
 
         if (!$contact->getId()) {
-            $this->logger->error(__('Unable to find contact with id "%1".', $message->getContactId()));
+            $this->logger->error(__('Unable to find contact with id "%1".', $message->getEntityId()));
             return;
         }
 
