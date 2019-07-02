@@ -14,6 +14,7 @@ class Config extends AbstractHelper
     private const XML_PATH_API_ENABLED = 'activecampaign/api/enabled';
     private const XML_PATH_API_URL = 'activecampaign/api/url';
     private const XML_PATH_API_TOKEN = 'activecampaign/api/token';
+    private const XML_PATH_CONNECTION_ID = 'activecampaign/api/connection_id';
 
     /**
      * @return bool
@@ -37,5 +38,13 @@ class Config extends AbstractHelper
     public function getApiToken(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_API_TOKEN);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getConnectionId(): ?string
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_CONNECTION_ID);
     }
 }

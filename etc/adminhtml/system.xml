@@ -23,6 +23,12 @@
 						<field id="enabled">1</field>
 					</depends>
 				</field>
+				<field id="connection_id" translate="label" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Connection Id</label>
+					<depends>
+						<field id="enabled">1</field>
+					</depends>
+				</field>
 			</group>
 		</section>
 	</system>
