@@ -10,7 +10,8 @@ use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessage;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageBuilder;
-use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use CommerceLeague\ActiveCampaign\Observer\Customer\CreateUpdateContactObserver;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event;
@@ -43,9 +44,9 @@ class CreateUpdateContactObserverTest extends TestCase
     protected $createUpdateMessageBuilder;
 
     /**
-     * @var MockObject|CreateUpdatePublisher
+     * @var MockObject|PublisherInterface
      */
-    protected $createUpdatePublisher;
+    protected $publisher;
 
     /**
      * @var MockObject|Observer
@@ -83,7 +84,7 @@ class CreateUpdateContactObserverTest extends TestCase
         $this->contactRepository = $this->createMock(ContactRepositoryInterface::class);
         $this->logger = $this->createMock(Logger::class);
         $this->createUpdateMessageBuilder = $this->createMock(CreateUpdateMessageBuilder::class);
-        $this->createUpdatePublisher = $this->createMock(CreateUpdatePublisher::class);
+        $this->publisher = $this->createMock(PublisherInterface::class);
         $this->observer = $this->createMock(Observer::class);
         $this->event = $this->createMock(Event::class);
         $this->customer = $this->createMock(Customer::class);
@@ -95,7 +96,7 @@ class CreateUpdateContactObserverTest extends TestCase
             $this->contactRepository,
             $this->logger,
             $this->createUpdateMessageBuilder,
-            $this->createUpdatePublisher
+            $this->publisher
         );
     }
 
@@ -137,7 +138,7 @@ class CreateUpdateContactObserverTest extends TestCase
             ->method('critical')
             ->with($exception);
 
-        $this->createUpdatePublisher->expects($this->never())
+        $this->publisher->expects($this->never())
             ->method('publish');
 
         $this->customerSaveAfterObserver->execute($this->observer);
@@ -168,9 +169,9 @@ class CreateUpdateContactObserverTest extends TestCase
             ->with($this->contact, $this->customer)
             ->willReturn($this->createUpdateMessage);
 
-        $this->createUpdatePublisher->expects($this->once())
+        $this->publisher->expects($this->once())
             ->method('publish')
-            ->with($this->createUpdateMessage);
+            ->with(Topics::CONTACT_CREATE_UPDATE, $this->createUpdateMessage);
 
         $this->customerSaveAfterObserver->execute($this->observer);
     }

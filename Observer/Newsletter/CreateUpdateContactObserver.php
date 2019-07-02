@@ -8,7 +8,8 @@ namespace CommerceLeague\ActiveCampaign\Observer\Newsletter;
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageBuilder;
-use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -41,29 +42,29 @@ class CreateUpdateContactObserver implements ObserverInterface
     private $createUpdateMessageBuilder;
 
     /**
-     * @var CreateUpdatePublisher
+     * @var PublisherInterface
      */
-    private $createUpdatePublisher;
+    private $publisher;
 
     /**
      * @param ConfigHelper $configHelper
      * @param ContactRepositoryInterface $contactRepository
      * @param Logger $logger
      * @param CreateUpdateMessageBuilder $createUpdateMessageBuilder
-     * @param CreateUpdatePublisher $createUpdatePublisher
+     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
         ContactRepositoryInterface $contactRepository,
         Logger $logger,
         CreateUpdateMessageBuilder $createUpdateMessageBuilder,
-        CreateUpdatePublisher $createUpdatePublisher
+        PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
         $this->contactRepository = $contactRepository;
         $this->logger = $logger;
         $this->createUpdateMessageBuilder = $createUpdateMessageBuilder;
-        $this->createUpdatePublisher = $createUpdatePublisher;
+        $this->publisher = $publisher;
     }
 
     /**
@@ -89,7 +90,8 @@ class CreateUpdateContactObserver implements ObserverInterface
             return;
         }
 
-        $this->createUpdatePublisher->publish(
+        $this->publisher->publish(
+            Topics::CONTACT_CREATE_UPDATE,
             $this->createUpdateMessageBuilder->buildWithSubscriber($contact, $subscriber)
         );
     }

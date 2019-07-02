@@ -8,7 +8,8 @@ use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageBuilder;
-use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdatePublisher;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -39,29 +40,29 @@ class CreateUpdateContactObserver implements ObserverInterface
     private $logger;
 
     /**
-     * @var CreateUpdatePublisher
+     * @var PublisherInterface
      */
-    private $createUpdatePublisher;
+    private $publisher;
 
     /**
      * @param ConfigHelper $configHelper
      * @param ContactRepositoryInterface $contactRepository
      * @param Logger $logger
      * @param CreateUpdateMessageBuilder $createUpdateMessageBuilder
-     * @param CreateUpdatePublisher $createUpdatePublisher
+     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
         ContactRepositoryInterface $contactRepository,
         Logger $logger,
         CreateUpdateMessageBuilder $createUpdateMessageBuilder,
-        CreateUpdatePublisher $createUpdatePublisher
+        PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
         $this->contactRepository = $contactRepository;
         $this->logger = $logger;
         $this->createUpdateMessageBuilder = $createUpdateMessageBuilder;
-        $this->createUpdatePublisher = $createUpdatePublisher;
+        $this->publisher = $publisher;
     }
 
     /**
@@ -83,7 +84,8 @@ class CreateUpdateContactObserver implements ObserverInterface
             return;
         }
 
-        $this->createUpdatePublisher->publish(
+        $this->publisher->publish(
+            Topics::CONTACT_CREATE_UPDATE,
             $this->createUpdateMessageBuilder->buildWithCustomer($contact, $customer)
         );
     }
