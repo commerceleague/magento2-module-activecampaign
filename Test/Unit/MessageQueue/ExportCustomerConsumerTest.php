@@ -7,7 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\MessageQueue;
 
 use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
-use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
+use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\ExportCustomerConsumer;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
@@ -28,9 +28,9 @@ class ExportCustomerConsumerTest extends TestCase
     protected $logger;
 
     /**
-     * @var MockObject|ClientHelper
+     * @var MockObject|Client
      */
-    protected $clientHelper;
+    protected $client;
 
     /**
      * @var MockObject|CustomerInterface
@@ -51,14 +51,14 @@ class ExportCustomerConsumerTest extends TestCase
     {
         $this->customerRepository = $this->createMock(CustomerRepositoryInterface::class);
         $this->logger = $this->createMock(Logger::class);
-        $this->clientHelper = $this->createMock(ClientHelper::class);
+        $this->client = $this->createMock(Client::class);
         $this->customer = $this->createMock(CustomerInterface::class);
         $this->customerApi = $this->createMock(CustomerApiResourceInterface::class);
 
         $this->exportCustomerConsumer = new ExportCustomerConsumer(
             $this->customerRepository,
             $this->logger,
-            $this->clientHelper
+            $this->client
         );
     }
 
@@ -71,7 +71,7 @@ class ExportCustomerConsumerTest extends TestCase
             ->with($magentoCustomerId)
             ->willReturn($this->customer);
 
-        $this->clientHelper->expects($this->once())
+        $this->client->expects($this->once())
             ->method('getCustomerApi')
             ->willReturn($this->customerApi);
 
@@ -107,7 +107,7 @@ class ExportCustomerConsumerTest extends TestCase
             ->with($magentoCustomerId)
             ->willReturn($this->customer);
 
-        $this->clientHelper->expects($this->once())
+        $this->client->expects($this->once())
             ->method('getCustomerApi')
             ->willReturn($this->customerApi);
 
@@ -147,7 +147,7 @@ class ExportCustomerConsumerTest extends TestCase
             ->with($magentoCustomerId)
             ->willReturn($this->customer);
 
-        $this->clientHelper->expects($this->once())
+        $this->client->expects($this->once())
             ->method('getCustomerApi')
             ->willReturn($this->customerApi);
 

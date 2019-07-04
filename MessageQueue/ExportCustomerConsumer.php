@@ -7,11 +7,10 @@ namespace CommerceLeague\ActiveCampaign\MessageQueue;
 
 use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
-use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
+use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
-use Magento\Framework\Model\AbstractModel;
 
 /**
  * Class ExportCustomerConsumer
@@ -29,23 +28,23 @@ class ExportCustomerConsumer
     private $logger;
 
     /**
-     * @var ClientHelper
+     * @var Client
      */
-    private $clientHelper;
+    private $client;
 
     /**
      * @param CustomerRepositoryInterface $customerRepository
      * @param Logger $logger
-     * @param ClientHelper $clientHelper
+     * @param Client $client
      */
     public function __construct(
         CustomerRepositoryInterface $customerRepository,
         Logger $logger,
-        ClientHelper $clientHelper
+        Client $client
     ) {
         $this->customerRepository = $customerRepository;
         $this->logger = $logger;
-        $this->clientHelper = $clientHelper;
+        $this->client = $client;
     }
 
     /**
@@ -78,9 +77,9 @@ class ExportCustomerConsumer
     private function performApiRequest(CustomerInterface $customer, array $request): array
     {
         if ($activeCampaignId = $customer->getActiveCampaignId()) {
-            return $this->clientHelper->getCustomerApi()->update((int)$activeCampaignId, ['ecomCustomer' => $request]);
+            return $this->client->getCustomerApi()->update((int)$activeCampaignId, ['ecomCustomer' => $request]);
         } else {
-            return $this->clientHelper->getCustomerApi()->create(['ecomCustomer' => $request]);
+            return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
         }
     }
 }

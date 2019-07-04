@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\MessageQueue;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
-use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
+use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -26,23 +26,23 @@ class ExportContactConsumer
     private $logger;
 
     /**
-     * @var ClientHelper
+     * @var Client
      */
-    private $clientHelper;
+    private $client;
 
     /**
      * @param ContactRepositoryInterface $contactRepository
      * @param Logger $logger
-     * @param ClientHelper $clientHelper
+     * @param Client $client
      */
     public function __construct(
         ContactRepositoryInterface $contactRepository,
         Logger $logger,
-        ClientHelper $clientHelper
+        Client $client
     ) {
         $this->contactRepository = $contactRepository;
         $this->logger = $logger;
-        $this->clientHelper = $clientHelper;
+        $this->client = $client;
     }
 
     /**
@@ -55,7 +55,7 @@ class ExportContactConsumer
         $contact = $this->contactRepository->getOrCreateByEmail($message['email']);
 
         try {
-            $apiResponse = $this->clientHelper->getContactApi()->upsert(['contact' => $message['request']]);
+            $apiResponse = $this->client->getContactApi()->upsert(['contact' => $message['request']]);
         } catch (HttpException $e) {
             $this->logger->error($e->getMessage());
             return;

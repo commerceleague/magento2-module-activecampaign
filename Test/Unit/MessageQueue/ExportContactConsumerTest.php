@@ -13,7 +13,7 @@ use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
+use CommerceLeague\ActiveCampaign\Gateway\Client;
 
 class ExportContactConsumerTest extends TestCase
 {
@@ -28,9 +28,9 @@ class ExportContactConsumerTest extends TestCase
     protected $logger;
 
     /**
-     * @var MockObject|ClientHelper
+     * @var MockObject|Client
      */
-    protected $clientHelper;
+    protected $client;
 
     /**
      * @var MockObject|ContactInterface
@@ -51,14 +51,14 @@ class ExportContactConsumerTest extends TestCase
     {
         $this->contactRepository = $this->createMock(ContactRepositoryInterface::class);
         $this->logger = $this->createMock(Logger::class);
-        $this->clientHelper = $this->createMock(ClientHelper::class);
+        $this->client = $this->createMock(Client::class);
         $this->contact = $this->createMock(ContactInterface::class);
         $this->contactApi = $this->createMock(ContactApiResourceInterface::class);
 
         $this->exportContactConsumer = new ExportContactConsumer(
             $this->contactRepository,
             $this->logger,
-            $this->clientHelper
+            $this->client
         );
     }
 
@@ -72,7 +72,7 @@ class ExportContactConsumerTest extends TestCase
             ->with($email)
             ->willReturn($this->contact);
 
-        $this->clientHelper->expects($this->once())
+        $this->client->expects($this->once())
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 
@@ -105,7 +105,7 @@ class ExportContactConsumerTest extends TestCase
             ->with($email)
             ->willReturn($this->contact);
 
-        $this->clientHelper->expects($this->once())
+        $this->client->expects($this->once())
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 

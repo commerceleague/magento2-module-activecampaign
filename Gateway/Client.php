@@ -2,7 +2,7 @@
 declare(strict_types=1);
 /**
  */
-namespace CommerceLeague\ActiveCampaign\Helper;
+namespace CommerceLeague\ActiveCampaign\Gateway;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaignApi\Api\AbandonedCartApiResourceInterface;
