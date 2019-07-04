@@ -77,7 +77,8 @@ class ExportContactServiceTest extends TestCase
         $request = ['request'];
 
         $subscriber->expects($this->once())
-            ->method('getEmail')
+            ->method('getData')
+            ->with('email')
             ->willReturn($email);
 
         $this->contactRequestBuilder->expects($this->once())

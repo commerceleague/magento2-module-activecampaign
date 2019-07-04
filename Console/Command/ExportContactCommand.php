@@ -5,25 +5,29 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Console\Command;
 
-use CommerceLeague\ActiveCampaign\Service\ExportCustomerService;
+use CommerceLeague\ActiveCampaign\Service\ExportContactService;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\MagentoCustomerFactory;
-use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as MagentoCustomerCollectionFactory;
 use Magento\Customer\Model\ResourceModel\Customer\Collection as MagentoCustomerCollection;
+use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as MagentoCustomerCollectionFactory;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\Model\ResourceModel\Iterator as ResourceIterator;
+use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
+use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
+use Magento\Newsletter\Model\Subscriber;
+use Magento\Newsletter\Model\SubscriberFactory;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Class ExportContactCommand
  */
-class ExportCustomerCommand extends Command
+class ExportContactCommand extends Command
 {
-    private const NAME = 'activecampaign:export:customer';
+    private const NAME = 'activecampaign:export:contact';
 
     /**
      * @var MagentoCustomerCollectionFactory
@@ -31,9 +35,19 @@ class ExportCustomerCommand extends Command
     private $magentoCustomerCollectionFactory;
 
     /**
+     * @var SubscriberCollectionFactory
+     */
+    private $subscriberCollectionFactory;
+
+    /**
      * @var MagentoCustomerFactory
      */
     private $magentoCustomerFactory;
+
+    /**
+     * @var SubscriberFactory
+     */
+    private $subscriberFactory;
 
     /**
      * @var ProgressBarFactory
@@ -46,9 +60,14 @@ class ExportCustomerCommand extends Command
     private $resourceIterator;
 
     /**
-     * @var ExportCustomerService
+     * @var ExportContactService
      */
-    private $exportCustomerService;
+    private $exportContactService;
+
+    /**
+     * @var array
+     */
+    private $processedEmails = [];
 
     /**
      * @var int
@@ -57,23 +76,29 @@ class ExportCustomerCommand extends Command
 
     /**
      * @param MagentoCustomerCollectionFactory $magentoCustomerCollectionFactory
+     * @param SubscriberCollectionFactory $subscriberCollectionFactory
      * @param MagentoCustomerFactory $magentoCustomerFactory
+     * @param SubscriberFactory $subscriberFactory
      * @param ProgressBarFactory $progressBarFactory
      * @param ResourceIterator $resourceIterator
-     * @param ExportCustomerService $exportContactService
+     * @param ExportContactService $exportContactService
      */
     public function __construct(
         MagentoCustomerCollectionFactory $magentoCustomerCollectionFactory,
+        SubscriberCollectionFactory $subscriberCollectionFactory,
         MagentoCustomerFactory $magentoCustomerFactory,
+        SubscriberFactory $subscriberFactory,
         ProgressBarFactory $progressBarFactory,
         ResourceIterator $resourceIterator,
-        ExportCustomerService $exportContactService
+        ExportContactService $exportContactService
     ) {
         $this->magentoCustomerCollectionFactory = $magentoCustomerCollectionFactory;
+        $this->subscriberCollectionFactory = $subscriberCollectionFactory;
         $this->magentoCustomerFactory = $magentoCustomerFactory;
+        $this->subscriberFactory = $subscriberFactory;
         $this->progressBarFactory = $progressBarFactory;
         $this->resourceIterator = $resourceIterator;
-        $this->exportCustomerService = $exportContactService;
+        $this->exportContactService = $exportContactService;
         parent::__construct();
     }
 
@@ -93,8 +118,11 @@ class ExportCustomerCommand extends Command
         /** @var MagentoCustomerCollection $magentoCustomerCollection */
         $magentoCustomerCollection = $this->magentoCustomerCollectionFactory->create();
 
-        if ($magentoCustomerCollection->getSize() === 0) {
-            $output->writeln('<error>No valid magento customers found</error>');
+        /** @var SubscriberCollection $subscriberCollection */
+        $subscriberCollection = $this->subscriberCollectionFactory->create();
+
+        if ($magentoCustomerCollection->getSize() === 0 && $subscriberCollection->getSize() === 0) {
+            $output->writeln('<error>No valid magento customers or subscribers found</error>');
             return Cli::RETURN_FAILURE;
         }
 
@@ -108,6 +136,15 @@ class ExportCustomerCommand extends Command
             [[$this, 'callbackExportMagentoCustomer']],
             [
                 'magentoCustomer' => $this->magentoCustomerFactory->create(),
+                'progressBar' => $progressBar
+            ]
+        );
+
+        $this->resourceIterator->walk(
+            $magentoCustomerCollection->getSelect(),
+            [[$this, 'callbackExportSubscriber']],
+            [
+                'subscriber' => $this->subscriberFactory->create(),
                 'progressBar' => $progressBar
             ]
         );
@@ -131,7 +168,29 @@ class ExportCustomerCommand extends Command
         $progressBar = $args['progressBar'];
         $progressBar->advance();
 
-        $this->exportCustomerService->export($magentoCustomer);
+        $this->exportContactService->exportWithMagentoCustomer($magentoCustomer);
+        $this->processedEmails[$magentoCustomer->getData('email')] = null;
+        $this->exportMessages++;
+    }
+
+    /**
+     * @param array $args
+     */
+    public function callbackExportSubscriber(array $args): void
+    {
+        /** @var Subscriber $subscriber */
+        $subscriber = clone $args['subscriber'];
+        $subscriber->setData($args['row']);
+
+        if (array_key_exists($subscriber->getData('email'), $this->processedEmails)) {
+            return;
+        }
+
+        /** @var ProgressBar $progressBar */
+        $progressBar = $args['progressBar'];
+        $progressBar->advance();
+
+        $this->exportContactService->exportWithSubscriber($subscriber);
         $this->exportMessages++;
     }
 }

@@ -57,7 +57,7 @@ class ExportContactService
     public function exportWithSubscriber(Subscriber $subscriber): void
     {
         $data = [
-            'email' => $subscriber->getEmail(),
+            'email' => $subscriber->getData('email'),
             'request' => $this->contactRequestBuilder->buildWithSubscriber($subscriber)
         ];
 

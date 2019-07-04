@@ -44,6 +44,7 @@
 	<type name="Magento\Framework\Console\CommandListInterface">
 		<arguments>
 			<argument name="commands" xsi:type="array">
+				<item name="activecampaign_export_contact" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportContactCommand</item>
 				<item name="activecampaign_export_customer" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportCustomerCommand</item>
 			</argument>
 		</arguments>
