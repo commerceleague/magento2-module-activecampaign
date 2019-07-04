@@ -35,18 +35,11 @@ interface ContactRepositoryInterface
     public function getByEmail($email): Data\ContactInterface;
 
     /**
-     * @param Customer $customer
+     * @param string $email
      * @return Data\ContactInterface
      * @throws CouldNotSaveException
      */
-    public function getOrCreateByCustomer(Customer $customer): Data\ContactInterface;
-
-    /**
-     * @param Subscriber $subscriber
-     * @return Data\ContactInterface
-     * @throws CouldNotSaveException
-     */
-    public function getOrCreateBySubscriber(Subscriber $subscriber): Data\ContactInterface;
+    public function getOrCreateByEmail($email): Data\ContactInterface;
 
     /**
      * @param Data\ContactInterface $contact

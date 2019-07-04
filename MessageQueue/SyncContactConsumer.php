@@ -2,7 +2,7 @@
 declare(strict_types=1);
 /**
  */
-namespace CommerceLeague\ActiveCampaign\MessageQueue\Contact;
+namespace CommerceLeague\ActiveCampaign\MessageQueue;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
@@ -13,7 +13,7 @@ use Magento\Framework\Exception\CouldNotSaveException;
 /**
  * Class CreateUpdateConsumer
  */
-class CreateUpdateConsumer
+class SyncContactConsumer
 {
     /**
      * @var ContactRepositoryInterface
@@ -46,21 +46,21 @@ class CreateUpdateConsumer
     }
 
     /**
-     * @param CreateUpdateMessage $message
+     * @param string $message
      */
-    public function consume(CreateUpdateMessage $message): void
+    public function consume(string $message): void
     {
-        $contact = $this->contactRepository->getById($message->getEntityId());
+        $message = json_decode($message, true);
 
-        if (!$contact->getId()) {
-            $this->logger->error(__('Unable to find contact with id "%1".', $message->getEntityId()));
+        try {
+            $contact = $this->contactRepository->getOrCreateByEmail($message['email']);
+        } catch (CouldNotSaveException $e) {
+            $this->logger->error(__('Unable to find contact with email "%1".', $message['email']));
             return;
         }
 
-        $request = json_decode($message->getSerializedRequest(), true);
-
         try {
-            $apiResponse = $this->clientHelper->getContactApi()->upsert(['contact' => $request]);
+            $apiResponse = $this->clientHelper->getContactApi()->upsert(['contact' => $message['request']]);
         } catch (HttpException $e) {
             $this->logger->error($e->getMessage());
             return;

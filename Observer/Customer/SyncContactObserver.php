@@ -4,16 +4,11 @@ declare(strict_types=1);
  */
 namespace CommerceLeague\ActiveCampaign\Observer\Customer;
 
-use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\Logger\Logger;
-use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageBuilder;
-use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use Magento\Framework\MessageQueue\PublisherInterface;
+use CommerceLeague\ActiveCampaign\Service\Contact\SyncContactService;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Exception\CouldNotSaveException;
 
 /**
  * Class SyncContactObserver
@@ -26,44 +21,20 @@ class SyncContactObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var ContactRepositoryInterface
+     * @var SyncContactService
      */
-    private $contactRepository;
-
-    /**
-     * @var CreateUpdateMessageBuilder
-     */
-    private $createUpdateMessageBuilder;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
+    private $syncContactService;
 
     /**
      * @param ConfigHelper $configHelper
-     * @param ContactRepositoryInterface $contactRepository
-     * @param Logger $logger
-     * @param CreateUpdateMessageBuilder $createUpdateMessageBuilder
-     * @param PublisherInterface $publisher
+     * @param SyncContactService $syncContactService
      */
     public function __construct(
         ConfigHelper $configHelper,
-        ContactRepositoryInterface $contactRepository,
-        Logger $logger,
-        CreateUpdateMessageBuilder $createUpdateMessageBuilder,
-        PublisherInterface $publisher
+        SyncContactService $syncContactService
     ) {
         $this->configHelper = $configHelper;
-        $this->contactRepository = $contactRepository;
-        $this->logger = $logger;
-        $this->createUpdateMessageBuilder = $createUpdateMessageBuilder;
-        $this->publisher = $publisher;
+        $this->syncContactService = $syncContactService;
     }
 
     /**
@@ -75,19 +46,9 @@ class SyncContactObserver implements ObserverInterface
             return;
         }
 
-        /** @var Customer $customer */
-        $customer = $observer->getEvent()->getData('customer');
+        /** @var Customer $magentoCustomer */
+        $magentoCustomer = $observer->getEvent()->getData('customer');
 
-        try {
-            $contact = $this->contactRepository->getOrCreateByCustomer($customer);
-        } catch (CouldNotSaveException $e) {
-            $this->logger->critical($e);
-            return;
-        }
-
-        $this->publisher->publish(
-            Topics::CONTACT_CREATE_UPDATE,
-            $this->createUpdateMessageBuilder->buildWithCustomer($contact, $customer)
-        );
+        $this->syncContactService->syncWithMagentoCustomer($magentoCustomer);
     }
 }

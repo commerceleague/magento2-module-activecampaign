@@ -84,27 +84,12 @@ class ContactRepository implements ContactRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function getOrCreateByCustomer(Customer $customer): Data\ContactInterface
+    public function getOrCreateByEmail($email): Data\ContactInterface
     {
-        $contact = $this->getByEmail($customer->getData('email'));
+        $contact = $this->getByEmail($email);
 
         if (!$contact->getId()) {
-            $contact->setEmail($customer->getData('email'));
-            $this->save($contact);
-        }
-
-        return $contact;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getOrCreateBySubscriber(Subscriber $subscriber): Data\ContactInterface
-    {
-        $contact = $this->getByEmail($subscriber->getEmail());
-
-        if (!$contact->getId()) {
-            $contact->setEmail($subscriber->getEmail());
+            $contact->setEmail($email);
             $this->save($contact);
         }
 

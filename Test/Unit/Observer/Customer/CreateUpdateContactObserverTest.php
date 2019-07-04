@@ -171,7 +171,7 @@ class CreateUpdateContactObserverTest extends TestCase
 
         $this->publisher->expects($this->once())
             ->method('publish')
-            ->with(Topics::CONTACT_CREATE_UPDATE, $this->createUpdateMessage);
+            ->with(Topics::CONTACT_SYNC, $this->createUpdateMessage);
 
         $this->customerSaveAfterObserver->execute($this->observer);
     }

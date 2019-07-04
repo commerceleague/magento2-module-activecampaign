@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/consumer.xsd">
-	<consumer name="activeCampaignContactCreateUpdate" queue="activecampaign_contact_create_update" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateConsumer::consume"/>
-	<consumer name="activeCampaignCustomerSync" queue="activecampaign_customer_sync" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Customer\SyncCustomerConsumer::consume"/>
+	<consumer name="activeCampaignContactSync" queue="activecampaign_contact_sync" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\SyncContactConsumer::consume"/>
+	<consumer name="activeCampaignCustomerSync" queue="activecampaign_customer_sync" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\SyncCustomerConsumer::consume"/>
 </config>

@@ -10,6 +10,6 @@ namespace CommerceLeague\ActiveCampaign\MessageQueue;
  */
 class Topics
 {
-    public const CONTACT_CREATE_UPDATE = 'activecampaign.contact.create_update';
+    public const CONTACT_SYNC = 'activecampaign.contact.sync';
     public const CUSTOMER_SYNC = 'activecampaign.customer.sync';
 }

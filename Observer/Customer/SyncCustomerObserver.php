@@ -5,13 +5,11 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Observer\Customer;
 
-use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use Magento\Customer\Model\Customer;
+use CommerceLeague\ActiveCampaign\Service\Customer\SyncCustomerService;
+use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
  * Class SyncCustomerObserver
@@ -24,28 +22,20 @@ class SyncCustomerObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var CustomerRequestBuilder
+     * @var SyncCustomerService
      */
-    private $customerRequestBuilder;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
+    private $syncCustomerService;
 
     /**
      * @param ConfigHelper $configHelper
-     * @param CustomerRequestBuilder $customerRequestBuilder
-     * @param PublisherInterface $publisher
+     * @param SyncCustomerService $syncCustomerService
      */
     public function __construct(
         ConfigHelper $configHelper,
-        CustomerRequestBuilder $customerRequestBuilder,
-        PublisherInterface $publisher
+        SyncCustomerService $syncCustomerService
     ) {
         $this->configHelper = $configHelper;
-        $this->customerRequestBuilder = $customerRequestBuilder;
-        $this->publisher = $publisher;
+        $this->syncCustomerService = $syncCustomerService;
     }
 
     /**
@@ -57,14 +47,9 @@ class SyncCustomerObserver implements ObserverInterface
             return;
         }
 
-        /** @var Customer $magentoCustomer */
+        /** @var MagentoCustomer $magentoCustomer */
         $magentoCustomer = $observer->getEvent()->getData('customer');
 
-        $data = [
-            'magento_customer_id' => $magentoCustomer->getId(),
-            'request' => $this->customerRequestBuilder->build($magentoCustomer)
-        ];
-
-        $this->publisher->publish(Topics::CUSTOMER_SYNC, json_encode($data));
+        $this->syncCustomerService->sync($magentoCustomer);
     }
 }

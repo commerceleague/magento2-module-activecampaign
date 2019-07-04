@@ -7,7 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\MessageQueue\Contact;
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
-use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateConsumer;
+use CommerceLeague\ActiveCampaign\MessageQueue\Contact\SyncContactConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessage;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -50,7 +50,7 @@ class CreateUpdateConsumerTest extends TestCase
     protected $contactApi;
 
     /**
-     * @var CreateUpdateConsumer
+     * @var SyncContactConsumer
      */
     protected $createUpdateConsumer;
 
@@ -63,7 +63,7 @@ class CreateUpdateConsumerTest extends TestCase
         $this->contact = $this->createMock(ContactInterface::class);
         $this->contactApi = $this->createMock(ContactApiResourceInterface::class);
 
-        $this->createUpdateConsumer = new CreateUpdateConsumer(
+        $this->createUpdateConsumer = new SyncContactConsumer(
             $this->contactRepository,
             $this->logger,
             $this->clientHelper
