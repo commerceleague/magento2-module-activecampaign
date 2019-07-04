@@ -41,4 +41,11 @@
 			</argument>
 		</arguments>
 	</type>
+	<type name="Magento\Framework\Console\CommandListInterface">
+		<arguments>
+			<argument name="commands" xsi:type="array">
+				<item name="activecampaign_export_customer" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportCustomerCommand</item>
+			</argument>
+		</arguments>
+	</type>
 </config>
