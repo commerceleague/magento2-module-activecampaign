@@ -112,7 +112,7 @@ class CustomerRepositoryTest extends TestCase
             ->with($this->customer, null, 'magento_customer_id')
             ->willReturn($this->customer);
 
-        $this->assertSame($this->customer, $this->customerRepository->getByMagentoCustomer($this->magentoCustomer));
+        $this->assertSame($this->customer, $this->customerRepository->getByMagentoCustomerId($this->magentoCustomer));
     }
 
     public function testGetByMagentoCustomer()
@@ -128,7 +128,7 @@ class CustomerRepositoryTest extends TestCase
             ->with($this->customer, $magentoCustomerId, 'magento_customer_id')
             ->willReturn($this->customer);
 
-        $this->assertSame($this->customer, $this->customerRepository->getByMagentoCustomer($this->magentoCustomer));
+        $this->assertSame($this->customer, $this->customerRepository->getByMagentoCustomerId($this->magentoCustomer));
     }
 
     public function testGetOrCreateByMagentoCustomerCreatesCustomer()
@@ -160,7 +160,7 @@ class CustomerRepositoryTest extends TestCase
 
         $this->assertSame(
             $this->customer,
-            $this->customerRepository->getOrCreateByMagentoCustomer($this->magentoCustomer)
+            $this->customerRepository->getOrCreateByMagentoCustomerId($this->magentoCustomer)
         );
     }
 
@@ -190,7 +190,7 @@ class CustomerRepositoryTest extends TestCase
 
         $this->assertSame(
             $this->customer,
-            $this->customerRepository->getOrCreateByMagentoCustomer($this->magentoCustomer)
+            $this->customerRepository->getOrCreateByMagentoCustomerId($this->magentoCustomer)
         );
     }
 

@@ -2,25 +2,23 @@
 declare(strict_types=1);
 /**
  */
-
 namespace CommerceLeague\ActiveCampaign\Observer\Customer;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
-use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
-use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\MessageQueue\Customer\CreateMessageBuilder;
+use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageBuilder;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\CouldNotSaveException;
-use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
- * Class CreateUpdateCustomerObserver
+ * Class SyncContactObserver
  */
-class CreateUpdateCustomerObserver implements ObserverInterface
+class SyncContactObserver implements ObserverInterface
 {
     /**
      * @var ConfigHelper
@@ -30,17 +28,17 @@ class CreateUpdateCustomerObserver implements ObserverInterface
     /**
      * @var ContactRepositoryInterface
      */
-    private $customerRepository;
+    private $contactRepository;
+
+    /**
+     * @var CreateUpdateMessageBuilder
+     */
+    private $createUpdateMessageBuilder;
 
     /**
      * @var Logger
      */
     private $logger;
-
-    /**
-     * @var CreateMessageBuilder
-     */
-    private $createMessageBuilder;
 
     /**
      * @var PublisherInterface
@@ -49,27 +47,27 @@ class CreateUpdateCustomerObserver implements ObserverInterface
 
     /**
      * @param ConfigHelper $configHelper
-     * @param CustomerRepositoryInterface $customerRepository
+     * @param ContactRepositoryInterface $contactRepository
      * @param Logger $logger
-     * @param CreateMessageBuilder $createMessageBuilder
+     * @param CreateUpdateMessageBuilder $createUpdateMessageBuilder
      * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
-        CustomerRepositoryInterface $customerRepository,
+        ContactRepositoryInterface $contactRepository,
         Logger $logger,
-        CreateMessageBuilder $createMessageBuilder,
+        CreateUpdateMessageBuilder $createUpdateMessageBuilder,
         PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
-        $this->customerRepository = $customerRepository;
+        $this->contactRepository = $contactRepository;
         $this->logger = $logger;
-        $this->createMessageBuilder = $createMessageBuilder;
+        $this->createUpdateMessageBuilder = $createUpdateMessageBuilder;
         $this->publisher = $publisher;
     }
 
     /**
-     * @inheritDoc
+     * @param Observer $observer
      */
     public function execute(Observer $observer)
     {
@@ -77,22 +75,19 @@ class CreateUpdateCustomerObserver implements ObserverInterface
             return;
         }
 
-        /** @var Customer $magentoCustomer */
-        $magentoCustomer = $observer->getEvent()->getData('customer');
+        /** @var Customer $customer */
+        $customer = $observer->getEvent()->getData('customer');
 
         try {
-            $customer = $this->customerRepository->getOrCreateByMagentoCustomer($magentoCustomer);
+            $contact = $this->contactRepository->getOrCreateByCustomer($customer);
         } catch (CouldNotSaveException $e) {
             $this->logger->critical($e);
             return;
         }
 
-        // TODO::publish update message
-        if (!$customer->getActiveCampaignId()) {
-            $this->publisher->publish(
-                Topics::CUSTOMER_CREATE,
-                $this->createMessageBuilder->build($customer, $magentoCustomer)
-            );
-        }
+        $this->publisher->publish(
+            Topics::CONTACT_CREATE_UPDATE,
+            $this->createUpdateMessageBuilder->buildWithCustomer($contact, $customer)
+        );
     }
 }

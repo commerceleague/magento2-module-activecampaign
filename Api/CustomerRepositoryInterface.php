@@ -28,17 +28,17 @@ interface CustomerRepositoryInterface
     public function getById($entityId): Data\CustomerInterface;
 
     /**
-     * @param MagentoCustomer $magentoCustomer
+     * @param int $magentoCustomerId
      * @return Data\CustomerInterface
      */
-    public function getByMagentoCustomer(MagentoCustomer $magentoCustomer): Data\CustomerInterface;
+    public function getByMagentoCustomerId($magentoCustomerId): Data\CustomerInterface;
 
     /**
-     * @param MagentoCustomer $magentoCustomer
+     * @param int $magentoCustomerId
      * @return Data\CustomerInterface
      * @throws CouldNotSaveException
      */
-    public function getOrCreateByMagentoCustomer(MagentoCustomer $magentoCustomer): Data\CustomerInterface;
+    public function getOrCreateByMagentoCustomerId($magentoCustomerId): Data\CustomerInterface;
 
     /**
      * @param Data\CustomerInterface $customer

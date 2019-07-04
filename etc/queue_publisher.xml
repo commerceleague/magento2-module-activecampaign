@@ -3,10 +3,7 @@
 	<publisher topic="activecampaign.contact.create_update">
 		<connection name="db" exchange="magento-db" />
 	</publisher>
-	<publisher topic="activecampaign.contact.import">
-		<connection name="db" exchange="magento-db" />
-	</publisher>
-	<publisher topic="activecampaign.customer.create">
+	<publisher topic="activecampaign.customer.sync">
 		<connection name="db" exchange="magento-db" />
 	</publisher>
 </config>

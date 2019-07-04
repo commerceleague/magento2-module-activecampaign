@@ -17,9 +17,9 @@ use Magento\Newsletter\Model\Subscriber;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 
 /**
- * Class CreateUpdateContactObserver
+ * Class SyncContactObserver
  */
-class CreateUpdateContactObserver implements ObserverInterface
+class SyncContactObserver implements ObserverInterface
 {
     /**
      * @var ConfigHelper

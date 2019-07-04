@@ -21,19 +21,4 @@ class Contact extends AbstractDb
     {
         $this->_init(SchemaInterface::CONTACT_TABLE, ContactInterface::ENTITY_ID);
     }
-
-    /**
-     * @todo move this to import model
-     *
-     * @param array $contacts
-     * @throws LocalizedException
-     */
-    public function importContacts(array $contacts): void
-    {
-        $this->getConnection()->insertOnDuplicate(
-            $this->getMainTable(),
-            $contacts,
-            [ContactInterface::EMAIL, ContactInterface::ACTIVE_CAMPAIGN_ID]
-        );
-    }
 }

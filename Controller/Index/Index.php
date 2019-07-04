@@ -37,7 +37,7 @@ class Index extends Action
      */
     public function execute()
     {
-        $consumer = $this->consumerFactory->get('activeCampaignContactCreateUpdate');
+        $consumer = $this->consumerFactory->get('activeCampaignCustomerSync');
         $consumer->process();
 
         die('now in here');

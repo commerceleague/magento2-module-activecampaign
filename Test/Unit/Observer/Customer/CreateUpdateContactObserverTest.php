@@ -12,7 +12,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessage;
 use CommerceLeague\ActiveCampaign\MessageQueue\Contact\CreateUpdateMessageBuilder;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use Magento\Framework\MessageQueue\PublisherInterface;
-use CommerceLeague\ActiveCampaign\Observer\Customer\CreateUpdateContactObserver;
+use CommerceLeague\ActiveCampaign\Observer\Customer\SyncContactObserver;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
@@ -74,7 +74,7 @@ class CreateUpdateContactObserverTest extends TestCase
     protected $createUpdateMessage;
 
     /**
-     * @var CreateUpdateContactObserver
+     * @var SyncContactObserver
      */
     protected $customerSaveAfterObserver;
 
@@ -91,7 +91,7 @@ class CreateUpdateContactObserverTest extends TestCase
         $this->contact = $this->createMock(ContactInterface::class);
         $this->createUpdateMessage = $this->createMock(CreateUpdateMessage::class);
 
-        $this->customerSaveAfterObserver = new CreateUpdateContactObserver(
+        $this->customerSaveAfterObserver = new SyncContactObserver(
             $this->configHelper,
             $this->contactRepository,
             $this->logger,

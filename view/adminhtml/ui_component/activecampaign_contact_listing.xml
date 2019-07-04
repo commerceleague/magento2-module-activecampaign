@@ -6,9 +6,6 @@
 		</item>
 	</argument>
 	<settings>
-		<buttons>
-			<button name="import" class="CommerceLeague\ActiveCampaign\Block\Adminhtml\Contact\ImportButton"/>
-		</buttons>
 		<spinner>activecampaign_contact_columns</spinner>
 		<deps>
 			<dep>activecampaign_contact_listing.activecampaign_contact_listing_data_source</dep>

@@ -69,12 +69,12 @@ class CustomerRepository implements CustomerRepositoryInterface
         return $customer;
     }
 
-    public function getByMagentoCustomer(MagentoCustomer $magentoCustomer): Data\CustomerInterface
+    public function getByMagentoCustomerId($magentoCustomerId): Data\CustomerInterface
     {
         $customer = $this->customerFactory->create();
         $this->customerResource->load(
             $customer,
-            $magentoCustomer->getId(),
+            $magentoCustomerId,
             Data\CustomerInterface::MAGENTO_CUSTOMER_ID
         );
 
@@ -84,12 +84,12 @@ class CustomerRepository implements CustomerRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function getOrCreateByMagentoCustomer(MagentoCustomer $magentoCustomer): Data\CustomerInterface
+    public function getOrCreateByMagentoCustomerId($magentoCustomerId): Data\CustomerInterface
     {
-        $customer = $this->getByMagentoCustomer($magentoCustomer);
+        $customer = $this->getByMagentoCustomerId($magentoCustomerId);
 
         if (!$customer->getId()) {
-            $customer->setMagentoCustomerId($magentoCustomer->getId());
+            $customer->setMagentoCustomerId($magentoCustomerId);
             $this->save($customer);
         }
 
