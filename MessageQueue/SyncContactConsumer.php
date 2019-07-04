@@ -47,17 +47,12 @@ class SyncContactConsumer
 
     /**
      * @param string $message
+     * @throws CouldNotSaveException
      */
     public function consume(string $message): void
     {
         $message = json_decode($message, true);
-
-        try {
-            $contact = $this->contactRepository->getOrCreateByEmail($message['email']);
-        } catch (CouldNotSaveException $e) {
-            $this->logger->error(__('Unable to find contact with email "%1".', $message['email']));
-            return;
-        }
+        $contact = $this->contactRepository->getOrCreateByEmail($message['email']);
 
         try {
             $apiResponse = $this->clientHelper->getContactApi()->upsert(['contact' => $message['request']]);
@@ -68,10 +63,6 @@ class SyncContactConsumer
 
         $contact->setActiveCampaignId($apiResponse['contact']['id']);
 
-        try {
-            $this->contactRepository->save($contact);
-        } catch (CouldNotSaveException $e) {
-            $this->logger->error($e->getMessage());
-        }
+        $this->contactRepository->save($contact);
     }
 }

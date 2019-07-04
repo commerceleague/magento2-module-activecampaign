@@ -69,6 +69,9 @@ class CustomerRepository implements CustomerRepositoryInterface
         return $customer;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getByMagentoCustomerId($magentoCustomerId): Data\CustomerInterface
     {
         $customer = $this->customerFactory->create();

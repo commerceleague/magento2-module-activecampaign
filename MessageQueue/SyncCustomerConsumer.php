@@ -50,18 +50,13 @@ class SyncCustomerConsumer
 
     /**
      * @param string $message
+     * @throws CouldNotSaveException
      */
     public function consume(string $message): void
     {
         $message = json_decode($message, true);
 
-        try {
-            /** @var AbstractModel|CustomerInterface $customer */
-            $customer = $this->customerRepository->getOrCreateByMagentoCustomerId($message['magento_customer_id']);
-        } catch (CouldNotSaveException $e) {
-            $this->logger->error(__('Unable to find customer with id "%1".', $message->getEntityId()));
-            return;
-        }
+        $customer = $this->customerRepository->getOrCreateByMagentoCustomerId($message['magento_customer_id']);
 
         try {
             $apiResponse = $this->performApiRequest($customer, $message['request']);
@@ -72,11 +67,7 @@ class SyncCustomerConsumer
 
         $customer->setActiveCampaignId($apiResponse['ecomCustomer']['id']);
 
-        try {
-            $this->customerRepository->save($customer);
-        } catch (CouldNotSaveException $e) {
-            $this->logger->error($e->getMessage());
-        }
+        $this->customerRepository->save($customer);
     }
 
     /**

@@ -82,4 +82,16 @@ class ConfigTest extends TestCase
 
         $this->assertEquals($apiToken, $this->config->getApiToken());
     }
+
+    public function testGetConnectionId()
+    {
+        $connectionId = '123';
+
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with('activecampaign/api/connection_id')
+            ->willReturn($connectionId);
+
+        $this->assertEquals($connectionId, $this->config->getConnectionId());
+    }
 }
