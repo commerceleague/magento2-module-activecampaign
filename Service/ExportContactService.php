@@ -3,7 +3,7 @@ declare(strict_types=1);
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Service\Contact;
+namespace CommerceLeague\ActiveCampaign\Service;
 
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
@@ -11,7 +11,10 @@ use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Newsletter\Model\Subscriber;
 
-class SyncContactService
+/**
+ * Class ExportContactService
+ */
+class ExportContactService
 {
     /**
      * @var ContactRequestBuilder
@@ -38,26 +41,26 @@ class SyncContactService
     /**
      * @param MagentoCustomer $magentoCustomer
      */
-    public function syncWithMagentoCustomer(MagentoCustomer $magentoCustomer): void
+    public function exportWithMagentoCustomer(MagentoCustomer $magentoCustomer): void
     {
         $data = [
             'email' => $magentoCustomer->getData('email'),
             'request' => $this->contactRequestBuilder->buildWithMagentoCustomer($magentoCustomer)
         ];
 
-        $this->publisher->publish(Topics::CONTACT_SYNC, json_encode($data));
+        $this->publisher->publish(Topics::CONTACT_EXPORT, json_encode($data));
     }
 
     /**
      * @param Subscriber $subscriber
      */
-    public function syncWithSubscriber(Subscriber $subscriber): void
+    public function exportWithSubscriber(Subscriber $subscriber): void
     {
         $data = [
             'email' => $subscriber->getEmail(),
             'request' => $this->contactRequestBuilder->buildWithSubscriber($subscriber)
         ];
 
-        $this->publisher->publish(Topics::CONTACT_SYNC, json_encode($data));
+        $this->publisher->publish(Topics::CONTACT_EXPORT, json_encode($data));
     }
 }

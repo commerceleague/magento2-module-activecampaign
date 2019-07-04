@@ -9,13 +9,13 @@ use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
 use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
-use CommerceLeague\ActiveCampaign\MessageQueue\SyncCustomerConsumer;
+use CommerceLeague\ActiveCampaign\MessageQueue\ExportCustomerConsumer;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-class SyncCustomerConsumerTest extends TestCase
+class ExportCustomerConsumerTest extends TestCase
 {
     /**
      * @var MockObject|CustomerRepositoryInterface
@@ -43,9 +43,9 @@ class SyncCustomerConsumerTest extends TestCase
     protected $customerApi;
 
     /**
-     * @var SyncCustomerConsumer
+     * @var ExportCustomerConsumer
      */
-    protected $syncCustomerConsumer;
+    protected $exportCustomerConsumer;
 
     protected function setUp()
     {
@@ -55,7 +55,7 @@ class SyncCustomerConsumerTest extends TestCase
         $this->customer = $this->createMock(CustomerInterface::class);
         $this->customerApi = $this->createMock(CustomerApiResourceInterface::class);
 
-        $this->syncCustomerConsumer = new SyncCustomerConsumer(
+        $this->exportCustomerConsumer = new ExportCustomerConsumer(
             $this->customerRepository,
             $this->logger,
             $this->clientHelper
@@ -89,7 +89,7 @@ class SyncCustomerConsumerTest extends TestCase
         $this->customer->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->syncCustomerConsumer->consume(
+        $this->exportCustomerConsumer->consume(
             json_encode(['magento_customer_id' => $magentoCustomerId, 'request' => []])
         );
     }
@@ -129,7 +129,7 @@ class SyncCustomerConsumerTest extends TestCase
             ->method('save')
             ->with($this->customer);
 
-        $this->syncCustomerConsumer->consume(
+        $this->exportCustomerConsumer->consume(
             json_encode(['magento_customer_id' => $magentoCustomerId, 'request' => []])
         );
     }
@@ -169,7 +169,7 @@ class SyncCustomerConsumerTest extends TestCase
             ->method('save')
             ->with($this->customer);
 
-        $this->syncCustomerConsumer->consume(
+        $this->exportCustomerConsumer->consume(
             json_encode(['magento_customer_id' => $magentoCustomerId, 'request' => []])
         );
     }

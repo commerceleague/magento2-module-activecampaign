@@ -8,7 +8,6 @@ namespace CommerceLeague\ActiveCampaign\Model;
 use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer as CustomerResource;
-use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;

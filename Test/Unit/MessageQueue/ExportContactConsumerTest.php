@@ -8,14 +8,14 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\MessageQueue;
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
-use CommerceLeague\ActiveCampaign\MessageQueue\SyncContactConsumer;
+use CommerceLeague\ActiveCampaign\MessageQueue\ExportContactConsumer;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use CommerceLeague\ActiveCampaign\Helper\Client as ClientHelper;
 
-class SyncContactConsumerTest extends TestCase
+class ExportContactConsumerTest extends TestCase
 {
     /**
      * @var MockObject|ContactRepositoryInterface
@@ -43,9 +43,9 @@ class SyncContactConsumerTest extends TestCase
     protected $contactApi;
 
     /**
-     * @var SyncContactConsumer
+     * @var ExportContactConsumer
      */
-    protected $syncContactConsumer;
+    protected $exportContactConsumer;
 
     protected function setUp()
     {
@@ -55,7 +55,7 @@ class SyncContactConsumerTest extends TestCase
         $this->contact = $this->createMock(ContactInterface::class);
         $this->contactApi = $this->createMock(ContactApiResourceInterface::class);
 
-        $this->syncContactConsumer = new SyncContactConsumer(
+        $this->exportContactConsumer = new ExportContactConsumer(
             $this->contactRepository,
             $this->logger,
             $this->clientHelper
@@ -90,7 +90,7 @@ class SyncContactConsumerTest extends TestCase
         $this->contact->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->syncContactConsumer->consume(json_encode(['email' => $email, 'request' => $request]));
+        $this->exportContactConsumer->consume(json_encode(['email' => $email, 'request' => $request]));
     }
 
     public function testConsume()
@@ -123,6 +123,6 @@ class SyncContactConsumerTest extends TestCase
             ->method('save')
             ->with($this->contact);
 
-        $this->syncContactConsumer->consume(json_encode(['email' => $email, 'request' => $request]));
+        $this->exportContactConsumer->consume(json_encode(['email' => $email, 'request' => $request]));
     }
 }

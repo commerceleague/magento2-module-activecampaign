@@ -11,9 +11,9 @@ use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
 
 /**
- * Class CreateUpdateConsumer
+ * Class ExportContactConsumer
  */
-class SyncContactConsumer
+class ExportContactConsumer
 {
     /**
      * @var ContactRepositoryInterface

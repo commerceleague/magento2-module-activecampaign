@@ -10,6 +10,6 @@ namespace CommerceLeague\ActiveCampaign\MessageQueue;
  */
 class Topics
 {
-    public const CONTACT_SYNC = 'activecampaign.contact.sync';
-    public const CUSTOMER_SYNC = 'activecampaign.customer.sync';
+    public const CONTACT_EXPORT = 'activecampaign.contact.export';
+    public const CUSTOMER_EXPORT = 'activecampaign.customer.export';
 }

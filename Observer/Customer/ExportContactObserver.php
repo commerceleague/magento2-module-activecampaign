@@ -2,19 +2,18 @@
 declare(strict_types=1);
 /**
  */
-
 namespace CommerceLeague\ActiveCampaign\Observer\Customer;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\Service\Customer\SyncCustomerService;
-use Magento\Customer\Model\Customer as MagentoCustomer;
+use CommerceLeague\ActiveCampaign\Service\ExportContactService;
+use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
 /**
- * Class SyncCustomerObserver
+ * Class ExportContactObserver
  */
-class SyncCustomerObserver implements ObserverInterface
+class ExportContactObserver implements ObserverInterface
 {
     /**
      * @var ConfigHelper
@@ -22,24 +21,24 @@ class SyncCustomerObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var SyncCustomerService
+     * @var ExportContactService
      */
-    private $syncCustomerService;
+    private $exportContactService;
 
     /**
      * @param ConfigHelper $configHelper
-     * @param SyncCustomerService $syncCustomerService
+     * @param ExportContactService $exportContactService
      */
     public function __construct(
         ConfigHelper $configHelper,
-        SyncCustomerService $syncCustomerService
+        ExportContactService $exportContactService
     ) {
         $this->configHelper = $configHelper;
-        $this->syncCustomerService = $syncCustomerService;
+        $this->exportContactService = $exportContactService;
     }
 
     /**
-     * @inheritDoc
+     * @param Observer $observer
      */
     public function execute(Observer $observer)
     {
@@ -47,9 +46,9 @@ class SyncCustomerObserver implements ObserverInterface
             return;
         }
 
-        /** @var MagentoCustomer $magentoCustomer */
+        /** @var Customer $magentoCustomer */
         $magentoCustomer = $observer->getEvent()->getData('customer');
 
-        $this->syncCustomerService->sync($magentoCustomer);
+        $this->exportContactService->exportWithMagentoCustomer($magentoCustomer);
     }
 }

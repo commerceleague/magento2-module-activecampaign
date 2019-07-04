@@ -5,18 +5,16 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Observer\Newsletter;
 
-use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Service\Contact\SyncContactService;
+use CommerceLeague\ActiveCampaign\Service\ExportContactService;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Newsletter\Model\Subscriber;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 
 /**
- * Class SyncContactObserver
+ * Class ExportContactObserver
  */
-class SyncContactObserver implements ObserverInterface
+class ExportContactObserver implements ObserverInterface
 {
     /**
      * @var ConfigHelper
@@ -24,20 +22,20 @@ class SyncContactObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var SyncContactService
+     * @var ExportContactService
      */
-    private $syncContactService;
+    private $exportContactService;
 
     /**
      * @param ConfigHelper $configHelper
-     * @param SyncContactService $syncContactService
+     * @param ExportContactService $exportContactService
      */
     public function __construct(
         ConfigHelper $configHelper,
-        SyncContactService $syncContactService
+        ExportContactService $exportContactService
     ) {
         $this->configHelper = $configHelper;
-        $this->syncContactService = $syncContactService;
+        $this->exportContactService = $exportContactService;
     }
 
     /**
@@ -56,6 +54,6 @@ class SyncContactObserver implements ObserverInterface
             return;
         }
 
-        $this->syncContactService->syncWithSubscriber($subscriber);
+        $this->exportContactService->exportWithSubscriber($subscriber);
     }
 }

@@ -14,9 +14,9 @@ use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Model\AbstractModel;
 
 /**
- * Class SyncCustomerConsumer
+ * Class ExportCustomerConsumer
  */
-class SyncCustomerConsumer
+class ExportCustomerConsumer
 {
     /**
      * @var CustomerRepositoryInterface
@@ -55,7 +55,6 @@ class SyncCustomerConsumer
     public function consume(string $message): void
     {
         $message = json_decode($message, true);
-
         $customer = $this->customerRepository->getOrCreateByMagentoCustomerId($message['magento_customer_id']);
 
         try {

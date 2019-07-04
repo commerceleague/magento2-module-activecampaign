@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/queue.xsd">
-	<broker topic="activecampaign.contact.sync" exchange="magento-db" type="db">
-		<queue name="activecampaign_contact_sync" consumer="activeCampaignContactSync"/>
+	<broker topic="activecampaign.contact.export" exchange="magento-db" type="db">
+		<queue name="activecampaign_contact_export" consumer="activeCampaignContactExport"/>
 	</broker>
-	<broker topic="activecampaign.customer.sync" exchange="magento-db" type="db">
-		<queue name="activecampaign_customer_sync" consumer="activeCampaignCustomerSync"/>
+	<broker topic="activecampaign.customer.export" exchange="magento-db" type="db">
+		<queue name="activecampaign_customer_export" consumer="activeCampaignCustomerExport"/>
 	</broker>
 </config>

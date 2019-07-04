@@ -2,18 +2,19 @@
 declare(strict_types=1);
 /**
  */
+
 namespace CommerceLeague\ActiveCampaign\Observer\Customer;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\Service\Contact\SyncContactService;
-use Magento\Customer\Model\Customer;
+use CommerceLeague\ActiveCampaign\Service\ExportCustomerService;
+use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
 /**
- * Class SyncContactObserver
+ * Class ExportCustomerObserver
  */
-class SyncContactObserver implements ObserverInterface
+class ExportCustomerObserver implements ObserverInterface
 {
     /**
      * @var ConfigHelper
@@ -21,24 +22,24 @@ class SyncContactObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var SyncContactService
+     * @var ExportCustomerService
      */
-    private $syncContactService;
+    private $exportCustomerService;
 
     /**
      * @param ConfigHelper $configHelper
-     * @param SyncContactService $syncContactService
+     * @param ExportCustomerService $exportCustomerService
      */
     public function __construct(
         ConfigHelper $configHelper,
-        SyncContactService $syncContactService
+        ExportCustomerService $exportCustomerService
     ) {
         $this->configHelper = $configHelper;
-        $this->syncContactService = $syncContactService;
+        $this->exportCustomerService = $exportCustomerService;
     }
 
     /**
-     * @param Observer $observer
+     * @inheritDoc
      */
     public function execute(Observer $observer)
     {
@@ -46,9 +47,9 @@ class SyncContactObserver implements ObserverInterface
             return;
         }
 
-        /** @var Customer $magentoCustomer */
+        /** @var MagentoCustomer $magentoCustomer */
         $magentoCustomer = $observer->getEvent()->getData('customer');
 
-        $this->syncContactService->syncWithMagentoCustomer($magentoCustomer);
+        $this->exportCustomerService->export($magentoCustomer);
     }
 }

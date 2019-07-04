@@ -6,15 +6,15 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Test\Observer\Customer;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\Observer\Customer\SyncCustomerObserver;
-use CommerceLeague\ActiveCampaign\Service\Customer\SyncCustomerService;
+use CommerceLeague\ActiveCampaign\Observer\Customer\ExportCustomerObserver;
+use CommerceLeague\ActiveCampaign\Service\ExportCustomerService;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-class SyncCustomerObserverTest extends TestCase
+class ExportCustomerObserverTest extends TestCase
 {
     /**
      * @var MockObject|ConfigHelper
@@ -22,9 +22,9 @@ class SyncCustomerObserverTest extends TestCase
     protected $configHelper;
 
     /**
-     * @var MockObject|SyncCustomerService
+     * @var MockObject|ExportCustomerService
      */
-    protected $syncCustomerService;
+    protected $exportCustomerService;
 
     /**
      * @var MockObject|Observer
@@ -42,21 +42,21 @@ class SyncCustomerObserverTest extends TestCase
     protected $customer;
 
     /**
-     * @var SyncCustomerObserver
+     * @var ExportCustomerObserver
      */
-    protected $syncCustomerObserver;
+    protected $exportCustomerObserver;
 
     protected function setUp()
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->syncCustomerService = $this->createMock(SyncCustomerService::class);
+        $this->exportCustomerService = $this->createMock(ExportCustomerService::class);
         $this->observer = $this->createMock(Observer::class);
         $this->event = $this->createMock(Event::class);
         $this->customer = $this->createMock(Customer::class);
 
-        $this->syncCustomerObserver = new SyncCustomerObserver(
+        $this->exportCustomerObserver = new ExportCustomerObserver(
             $this->configHelper,
-            $this->syncCustomerService
+            $this->exportCustomerService
         );
     }
 
@@ -69,7 +69,7 @@ class SyncCustomerObserverTest extends TestCase
         $this->observer->expects($this->never())
             ->method('getEvent');
 
-        $this->syncCustomerObserver->execute($this->observer);
+        $this->exportCustomerObserver->execute($this->observer);
     }
 
     public function testExecute()
@@ -87,10 +87,10 @@ class SyncCustomerObserverTest extends TestCase
             ->with('customer')
             ->willReturn($this->customer);
 
-        $this->syncCustomerService->expects($this->once())
-            ->method('sync')
+        $this->exportCustomerService->expects($this->once())
+            ->method('export')
             ->with($this->customer);
 
-        $this->syncCustomerObserver->execute($this->observer);
+        $this->exportCustomerObserver->execute($this->observer);
     }
 }

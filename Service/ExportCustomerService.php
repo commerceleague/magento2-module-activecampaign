@@ -3,15 +3,17 @@ declare(strict_types=1);
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Service\Customer;
-
+namespace CommerceLeague\ActiveCampaign\Service;
 
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
-class SyncCustomerService
+/**
+ * Class ExportCustomerService
+ */
+class ExportCustomerService
 {
 
     /**
@@ -39,13 +41,13 @@ class SyncCustomerService
     /**
      * @param MagentoCustomer $magentoCustomer
      */
-    public function sync(MagentoCustomer $magentoCustomer): void
+    public function export(MagentoCustomer $magentoCustomer): void
     {
         $data = [
             'magento_customer_id' => $magentoCustomer->getId(),
             'request' => $this->customerRequestBuilder->build($magentoCustomer)
         ];
 
-        $this->publisher->publish(Topics::CUSTOMER_SYNC, json_encode($data));
+        $this->publisher->publish(Topics::CUSTOMER_EXPORT, json_encode($data));
     }
 }

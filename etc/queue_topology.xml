@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
 	<exchange name="magento-db" type="topic" connection="db">
-		<binding id="activecampaign.contact.sync.binding" topic="activecampaign.contact.sync" destinationType="queue" destination="activecampaign_contact_sync" />
-		<binding id="activecampaign.customer.sync.binding" topic="activecampaign.customer.sync" destinationType="queue" destination="activecampaign_customer_sync" />
+		<binding id="activecampaign.contact.export.binding" topic="activecampaign.contact.export" destinationType="queue" destination="activecampaign_contact_export" />
+		<binding id="activecampaign.customer.export.binding" topic="activecampaign.customer.export" destinationType="queue" destination="activecampaign_customer_export" />
 	</exchange>
 </config>

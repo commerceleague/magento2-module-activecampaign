@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
 	<event name="customer_save_after">
-		<observer name="activecampaign_sync_contact" instance="CommerceLeague\ActiveCampaign\Observer\Customer\SyncContactObserver" />
-		<observer name="activecampaign_sync_customer" instance="CommerceLeague\ActiveCampaign\Observer\Customer\SyncCustomerObserver" />
+		<observer name="activecampaign_export_contact" instance="CommerceLeague\ActiveCampaign\Observer\Customer\ExportContactObserver" />
+		<observer name="activecampaign_export_customer" instance="CommerceLeague\ActiveCampaign\Observer\Customer\ExportCustomerObserver" />
 	</event>
 	<event name="newsletter_subscriber_save_after">
-		<observer name="activecampaign_sync_contact" instance="CommerceLeague\ActiveCampaign\Observer\Newsletter\SyncContactObserver" />
+		<observer name="activecampaign_export_contact" instance="CommerceLeague\ActiveCampaign\Observer\Newsletter\ExportContactObserver" />
 	</event>
 </config>
