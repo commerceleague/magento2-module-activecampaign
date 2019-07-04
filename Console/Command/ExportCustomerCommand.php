@@ -7,7 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Console\Command;
 
 use CommerceLeague\ActiveCampaign\Service\ExportCustomerService;
 use Magento\Customer\Model\Customer;
-use Magento\Customer\Model\MagentoCustomerFactory;
+use Magento\Customer\Model\CustomerFactory as MagentoCustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as MagentoCustomerCollectionFactory;
 use Magento\Customer\Model\ResourceModel\Customer\Collection as MagentoCustomerCollection;
 use Magento\Framework\Console\Cli;

@@ -7,7 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Console\Command;
 
 use CommerceLeague\ActiveCampaign\Service\ExportContactService;
 use Magento\Customer\Model\Customer;
-use Magento\Customer\Model\MagentoCustomerFactory;
+use Magento\Customer\Model\CustomerFactory as MagentoCustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer\Collection as MagentoCustomerCollection;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as MagentoCustomerCollectionFactory;
 use Magento\Framework\Console\Cli;
@@ -141,7 +141,7 @@ class ExportContactCommand extends Command
         );
 
         $this->resourceIterator->walk(
-            $magentoCustomerCollection->getSelect(),
+            $subscriberCollection->getSelect(),
             [[$this, 'callbackExportSubscriber']],
             [
                 'subscriber' => $this->subscriberFactory->create(),
