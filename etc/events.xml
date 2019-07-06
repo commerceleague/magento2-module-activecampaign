@@ -7,4 +7,7 @@
 	<event name="newsletter_subscriber_save_after">
 		<observer name="activecampaign_export_contact" instance="CommerceLeague\ActiveCampaign\Observer\Newsletter\ExportContactObserver" />
 	</event>
+	<event name="sales_order_save_after">
+		<observer name="activecampaign_export_order" instance="CommerceLeague\ActiveCampaign\Observer\Sales\ExportOrderObserver" />
+	</event>
 </config>

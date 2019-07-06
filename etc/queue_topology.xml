@@ -3,5 +3,6 @@
 	<exchange name="magento-db" type="topic" connection="db">
 		<binding id="activecampaign.contact.export.binding" topic="activecampaign.contact.export" destinationType="queue" destination="activecampaign_contact_export" />
 		<binding id="activecampaign.customer.export.binding" topic="activecampaign.customer.export" destinationType="queue" destination="activecampaign_customer_export" />
+		<binding id="activecampaign.order.export.binding" topic="activecampaign.order.export" destinationType="queue" destination="activecampaign_order_export" />
 	</exchange>
 </config>

@@ -2,4 +2,5 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/consumer.xsd">
 	<consumer name="activeCampaignContactExport" queue="activecampaign_contact_export" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\ExportContactConsumer::consume"/>
 	<consumer name="activeCampaignCustomerExport" queue="activecampaign_customer_export" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\ExportCustomerConsumer::consume"/>
+	<consumer name="activeCampaignOrderExport" queue="activecampaign_order_export" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\ExportOrderConsumer::consume"/>
 </config>

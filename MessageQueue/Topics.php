@@ -12,4 +12,5 @@ class Topics
 {
     public const CONTACT_EXPORT = 'activecampaign.contact.export';
     public const CUSTOMER_EXPORT = 'activecampaign.customer.export';
+    public const ORDER_EXPORT = 'activecampaign.order.export';
 }

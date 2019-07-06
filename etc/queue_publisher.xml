@@ -6,4 +6,7 @@
 	<publisher topic="activecampaign.customer.export">
 		<connection name="db" exchange="magento-db" />
 	</publisher>
+	<publisher topic="activecampaign.order.export">
+		<connection name="db" exchange="magento-db" />
+	</publisher>
 </config>

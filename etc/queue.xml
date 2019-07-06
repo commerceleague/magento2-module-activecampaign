@@ -6,4 +6,7 @@
 	<broker topic="activecampaign.customer.export" exchange="magento-db" type="db">
 		<queue name="activecampaign_customer_export" consumer="activeCampaignCustomerExport"/>
 	</broker>
+	<broker topic="activecampaign.order.export" exchange="magento-db" type="db">
+		<queue name="activecampaign_order_export" consumer="activeCampaignOrderExport"/>
+	</broker>
 </config>

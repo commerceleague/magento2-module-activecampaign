@@ -10,7 +10,7 @@ namespace CommerceLeague\ActiveCampaign\Api\Data;
 interface OrderInterface
 {
     public const ENTITY_ID = 'entity_id';
-    public const MAGENTO_ORDER_ID = 'order_id';
+    public const MAGENTO_ORDER_ID = 'magento_order_id';
     public const ACTIVE_CAMPAIGN_ID = 'activecampaign_id';
     public const CREATED_AT = 'created_at';
     public const UPDATED_AT = 'updated_at';

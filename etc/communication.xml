@@ -2,4 +2,5 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Communication/etc/communication.xsd">
 	<topic name="activecampaign.contact.export" request="string" />
 	<topic name="activecampaign.customer.export" request="string" />
+	<topic name="activecampaign.order.export" request="string" />
 </config>

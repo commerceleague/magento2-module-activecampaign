@@ -15,7 +15,6 @@ use Magento\Framework\MessageQueue\PublisherInterface;
  */
 class ExportCustomerService
 {
-
     /**
      * @var CustomerRequestBuilder
      */
