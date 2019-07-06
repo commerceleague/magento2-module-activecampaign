@@ -4,5 +4,6 @@
 		<add id="CommerceLeague_ActiveCampaign::activecampaign_main" title="ActiveCampaign" module="CommerceLeague_ActiveCampaign" sortOrder="100" parent="Magento_Backend::marketing" resource="CommerceLeague_ActiveCampaign::activecampaign_main" />
 		<add id="CommerceLeague_ActiveCampaign::activecampaign_contact" title="Contacts" module="CommerceLeague_ActiveCampaign" sortOrder="10" parent="CommerceLeague_ActiveCampaign::activecampaign_main" resource="CommerceLeague_ActiveCampaign::activecampaign_contact" action="activecampaign/contact/index" />
 		<add id="CommerceLeague_ActiveCampaign::activecampaign_customer" title="Customers" module="CommerceLeague_ActiveCampaign" sortOrder="20" parent="CommerceLeague_ActiveCampaign::activecampaign_main" resource="CommerceLeague_ActiveCampaign::activecampaign_customer" action="activecampaign/customer/index" />
+		<add id="CommerceLeague_ActiveCampaign::activecampaign_order" title="Orders" module="CommerceLeague_ActiveCampaign" sortOrder="30" parent="CommerceLeague_ActiveCampaign::activecampaign_main" resource="CommerceLeague_ActiveCampaign::activecampaign_order" action="activecampaign/order/index" />
 	</menu>
 </config>

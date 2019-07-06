@@ -10,7 +10,6 @@ use CommerceLeague\ActiveCampaign\Model\ContactRepository;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Newsletter\Model\Subscriber;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact as ContactResource;
@@ -32,11 +31,6 @@ class ContactRepositoryTest extends TestCase
      * @var MockObject|ContactFactory
      */
     protected $contactFactory;
-
-    /**
-     * @var MockObject|Subscriber
-     */
-    protected $subscriber;
 
     /**
      * @var ContactRepository
@@ -61,10 +55,6 @@ class ContactRepositoryTest extends TestCase
         $this->contactFactory->expects($this->any())
             ->method('create')
             ->willReturn($this->contact);
-
-        $this->subscriber = $this->getMockBuilder(Subscriber::class)
-            ->disableOriginalConstructor()
-            ->getMock();
 
         $this->contactRepository = new ContactRepository(
             $this->contactResource,

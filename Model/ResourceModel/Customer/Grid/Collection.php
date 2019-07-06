@@ -19,6 +19,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Class Collection
+ * @codeCoverageIgnore
  */
 class Collection extends ExtendCollection implements SearchResultInterface
 {

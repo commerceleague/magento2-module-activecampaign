@@ -11,6 +11,7 @@ use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
 /**
  * Class Contact
+ * @codeCoverageIgnore
  */
 class Contact extends AbstractDb
 {

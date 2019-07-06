@@ -3,9 +3,9 @@ declare(strict_types=1);
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Grid;
+namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Grid;
 
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Collection as ExtendCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as ExtendCollection;
 use Magento\Framework\Api\Search\AggregationInterface;
 use Magento\Framework\Api\Search\SearchResultInterface;
 use Magento\Framework\Api\SearchCriteriaInterface;

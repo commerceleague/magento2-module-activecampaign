@@ -2,10 +2,11 @@
 declare(strict_types=1);
 /**
  */
-namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact;
 
-use CommerceLeague\ActiveCampaign\Model\Contact;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact as ContactResource;
+namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Order;
+
+use CommerceLeague\ActiveCampaign\Model\Order;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order as OrderResource;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
 /**
@@ -19,6 +20,6 @@ class Collection extends AbstractCollection
      */
     protected function _construct()
     {
-        $this->_init(Contact::class, ContactResource::class);
+        $this->_init(Order::class, OrderResource::class);
     }
 }

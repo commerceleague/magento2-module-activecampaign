@@ -73,6 +73,7 @@ class CustomerRepository implements CustomerRepositoryInterface
      */
     public function getByMagentoCustomerId($magentoCustomerId): Data\CustomerInterface
     {
+        /** @var Customer $customer */
         $customer = $this->customerFactory->create();
         $this->customerResource->load(
             $customer,
