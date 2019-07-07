@@ -2,9 +2,12 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
 	<default>
 		<activecampaign>
-			<api>
+			<general>
 				<enabled>0</enabled>
-			</api>
+			</general>
+			<abandoned_cart>
+				<export_after>15</export_after>
+			</abandoned_cart>
 		</activecampaign>
 	</default>
 </config>

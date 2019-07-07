@@ -12,4 +12,7 @@
 	<broker topic="activecampaign.sales.export.order" exchange="magento-db" type="db">
 		<queue name="activecampaign_sales_export_order" consumer="activeCampaignSalesExportOrder" />
 	</broker>
+	<broker topic="activecampaign.quote.export.abandoned_cart" exchange="magento-db" type="db">
+		<queue name="activecampaign_quote_export_abandoned_cart" consumer="activeCampaignQuoteExportAbandonedCart" />
+	</broker>
 </config>

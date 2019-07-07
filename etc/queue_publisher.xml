@@ -12,4 +12,7 @@
 	<publisher topic="activecampaign.sales.export.order">
 		<connection name="db" exchange="magento-db" />
 	</publisher>
+	<publisher topic="activecampaign.quote.export.abandoned_cart">
+		<connection name="db" exchange="magento-db" />
+	</publisher>
 </config>

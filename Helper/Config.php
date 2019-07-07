@@ -11,17 +11,18 @@ use Magento\Framework\App\Helper\AbstractHelper;
  */
 class Config extends AbstractHelper
 {
-    private const XML_PATH_API_ENABLED = 'activecampaign/api/enabled';
-    private const XML_PATH_API_URL = 'activecampaign/api/url';
-    private const XML_PATH_API_TOKEN = 'activecampaign/api/token';
-    private const XML_PATH_CONNECTION_ID = 'activecampaign/api/connection_id';
+    private const XML_PATH_ENABLED = 'activecampaign/general/enabled';
+    private const XML_PATH_API_URL = 'activecampaign/general/api_url';
+    private const XML_PATH_API_TOKEN = 'activecampaign/general/api_token';
+    private const XML_PATH_CONNECTION_ID = 'activecampaign/general/connection_id';
+    private const XML_PATH_ABANDONED_CART_EXPORT_AFTER = 'activecampaign/abandoned_cart/export_after';
 
     /**
      * @return bool
      */
-    public function isApiEnabled(): bool
+    public function isEnabled(): bool
     {
-        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_API_ENABLED);
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_ENABLED);
     }
 
     /**
@@ -46,5 +47,13 @@ class Config extends AbstractHelper
     public function getConnectionId(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_CONNECTION_ID);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getAbandonedCartExportAfter(): ?string
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_ABANDONED_CART_EXPORT_AFTER);
     }
 }

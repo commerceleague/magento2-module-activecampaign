@@ -4,4 +4,5 @@
 	<consumer name="activeCampaignCustomerExportCustomer" queue="activecampaign_customer_export_customer" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportCustomerConsumer::consume" />
 	<consumer name="activeCampaignNewsletterExportContact" queue="activecampaign_newsletter_export_contact" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Newsletter\ExportContactConsumer::consume" />
 	<consumer name="activeCampaignSalesExportOrder" queue="activecampaign_sales_export_order" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Sales\ExportOrderConsumer::consume" />
+	<consumer name="activeCampaignQuoteExportAbandonedCart" queue="activecampaign_quote_export_abandoned_cart" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Quote\ExportAbandonedCartConsumer::consume" />
 </config>

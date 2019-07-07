@@ -64,7 +64,7 @@ class ExportCustomerObserverTest extends TestCase
     public function testExecuteApiDisabled()
     {
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(false);
 
         $this->observer->expects($this->never())
@@ -78,7 +78,7 @@ class ExportCustomerObserverTest extends TestCase
         $magentoCustomerId = 123;
 
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())

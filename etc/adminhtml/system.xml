@@ -5,19 +5,19 @@
 			<label>Active Campaign</label>
 			<tab>general</tab>
 			<resource>CommerceLeague_ActiveCampaign::activecampaign_config</resource>
-			<group id="api" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-				<label>Api</label>
+			<group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+				<label>General</label>
 				<field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
 					<label>Enabled</label>
 					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 				</field>
-				<field id="url" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+				<field id="api_url" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
 					<label>Api Url</label>
 					<depends>
 						<field id="enabled">1</field>
 					</depends>
 				</field>
-				<field id="token" translate="label" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+				<field id="api_token" translate="label" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
 					<label>Api Token</label>
 					<depends>
 						<field id="enabled">1</field>
@@ -28,6 +28,13 @@
 					<depends>
 						<field id="enabled">1</field>
 					</depends>
+				</field>
+			</group>
+			<group id="abandoned_cart" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+				<label>Abandoned Cart</label>
+				<field id="export_after" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Export After (min)</label>
+					<source_model>CommerceLeague\ActiveCampaign\Model\Config\Source\MinuteInterval</source_model>
 				</field>
 			</group>
 		</section>

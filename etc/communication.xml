@@ -4,4 +4,5 @@
 	<topic name="activecampaign.customer.export.customer" request="string" />
 	<topic name="activecampaign.newsletter.export.contact" request="string" />
 	<topic name="activecampaign.sales.export.order" request="string" />
+	<topic name="activecampaign.quote.export.abandoned_cart" request="string" />
 </config>

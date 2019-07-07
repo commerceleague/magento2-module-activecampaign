@@ -64,7 +64,7 @@ class ExportContactObserverTest extends TestCase
     public function testExecuteApiDisabled()
     {
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(false);
 
         $this->observer->expects($this->never())
@@ -76,7 +76,7 @@ class ExportContactObserverTest extends TestCase
     public function testExecuteWithSubscriberAsCustomer()
     {
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())
@@ -104,7 +104,7 @@ class ExportContactObserverTest extends TestCase
         $email = 'example@example.com';
 
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())

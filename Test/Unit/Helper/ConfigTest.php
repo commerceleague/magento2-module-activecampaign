@@ -39,24 +39,24 @@ class ConfigTest extends TestCase
         );
     }
 
-    public function testIsApiEnabledFalse()
+    public function testIsEnabledFalse()
     {
         $this->scopeConfig->expects($this->once())
             ->method('isSetFlag')
-            ->with('activecampaign/api/enabled')
+            ->with('activecampaign/general/enabled')
             ->willReturn(false);
 
-        $this->assertFalse($this->config->isApiEnabled());
+        $this->assertFalse($this->config->isEnabled());
     }
 
-    public function testIsApiEnabledTrue()
+    public function testIsEnabledTrue()
     {
         $this->scopeConfig->expects($this->once())
             ->method('isSetFlag')
-            ->with('activecampaign/api/enabled')
+            ->with('activecampaign/general/enabled')
             ->willReturn(true);
 
-        $this->assertTrue($this->config->isApiEnabled());
+        $this->assertTrue($this->config->isEnabled());
     }
 
     public function testGetApiUrl()
@@ -65,7 +65,7 @@ class ConfigTest extends TestCase
 
         $this->scopeConfig->expects($this->once())
             ->method('getValue')
-            ->with('activecampaign/api/url')
+            ->with('activecampaign/general/api_url')
             ->willReturn($apiUrl);
 
         $this->assertEquals($apiUrl, $this->config->getApiUrl());
@@ -77,7 +77,7 @@ class ConfigTest extends TestCase
 
         $this->scopeConfig->expects($this->once())
             ->method('getValue')
-            ->with('activecampaign/api/token')
+            ->with('activecampaign/general/api_token')
             ->willReturn($apiToken);
 
         $this->assertEquals($apiToken, $this->config->getApiToken());
@@ -89,9 +89,21 @@ class ConfigTest extends TestCase
 
         $this->scopeConfig->expects($this->once())
             ->method('getValue')
-            ->with('activecampaign/api/connection_id')
+            ->with('activecampaign/general/connection_id')
             ->willReturn($connectionId);
 
         $this->assertEquals($connectionId, $this->config->getConnectionId());
+    }
+
+    public function getAbandonedCartExportAfter()
+    {
+        $exportAfter = 15;
+
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with('activecampaign/abandoned_cart/export_after')
+            ->willReturn($exportAfter);
+
+        $this->assertEquals($exportAfter, $this->config->getAbandonedCartExportAfter());
     }
 }

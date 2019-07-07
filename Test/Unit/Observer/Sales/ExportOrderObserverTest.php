@@ -64,7 +64,7 @@ class ExportOrderObserverTest extends TestCase
     public function testExecuteApiDisabled()
     {
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(false);
 
         $this->observer->expects($this->never())
@@ -76,7 +76,7 @@ class ExportOrderObserverTest extends TestCase
     public function testExecuteWithIncompleteOrder()
     {
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())
@@ -101,7 +101,7 @@ class ExportOrderObserverTest extends TestCase
     public function testExecuteWithGuestOrder()
     {
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())
@@ -132,7 +132,7 @@ class ExportOrderObserverTest extends TestCase
         $magentoOrderId = 123;
 
         $this->configHelper->expects($this->once())
-            ->method('isApiEnabled')
+            ->method('isEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())

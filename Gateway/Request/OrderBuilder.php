@@ -7,14 +7,13 @@ namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Sales\Api\Data\OrderInterface as MagentoOrderInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
 
 /**
  * Class OrderBuilder
  */
-class OrderBuilder
+class OrderBuilder extends AbstractBuilder
 {
     /**
      * @var ConfigHelper
@@ -27,23 +26,15 @@ class OrderBuilder
     private $customerRepository;
 
     /**
-     * @var TimezoneInterface
-     */
-    private $timezone;
-
-    /**
      * @param ConfigHelper $configHelper
      * @param CustomerRepositoryInterface $customerRepository
-     * @param TimezoneInterface $timezone
      */
     public function __construct(
         ConfigHelper $configHelper,
-        CustomerRepositoryInterface $customerRepository,
-        TimezoneInterface $timezone
+        CustomerRepositoryInterface $customerRepository
     ) {
         $this->configHelper = $configHelper;
         $this->customerRepository = $customerRepository;
-        $this->timezone = $timezone;
     }
 
     /**
@@ -75,29 +66,11 @@ class OrderBuilder
                 'externalid' => $magentoOrderItem->getSku(),
                 'name' => $magentoOrderItem->getName(),
                 'price' => $this->convertToCent((float)$magentoOrderItem->getPriceInclTax()),
-                'quantity' => (int)$magentoOrderItem->getQtyOrdered()
+                'quantity' => (int)$magentoOrderItem->getQtyOrdered(),
+                'productUrl' => $magentoOrderItem->getProduct()->getProductUrl(),
             ];
         }
 
         return $request;
-    }
-
-    /**
-     * @param float $amount
-     * @return int
-     */
-    private function convertToCent(float $amount): int
-    {
-        return (int)($amount * 100);
-    }
-
-    /**
-     * @param string $date
-     * @return string
-     * @throws \Exception
-     */
-    private function formatDateTime(string $date): string
-    {
-        return (new \DateTime($date))->format(\DateTime::W3C);
     }
 }

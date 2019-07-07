@@ -7,6 +7,7 @@
 	<preference for="CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\ContactRepository" />
 	<preference for="CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\CustomerRepository" />
 	<preference for="CommerceLeague\ActiveCampaign\Api\OrderRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\OrderRepository" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\AbandonedRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\AbandonedRepository" />
 	<type name="CommerceLeague\ActiveCampaign\Logger\Handler">
 		<arguments>
 			<argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
@@ -68,6 +69,7 @@
 				<item name="activecampaign_export_contact" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportContactCommand</item>
 				<item name="activecampaign_export_customer" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportCustomerCommand</item>
 				<item name="activecampaign_export_order" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportOrderCommand</item>
+				<item name="activecampaign_export_abandoned" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportAbandonedCommand</item>
 			</argument>
 		</arguments>
 	</type>

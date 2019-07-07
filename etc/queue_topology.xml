@@ -5,5 +5,6 @@
 		<binding id="activecampaign.customer.export.customer.binding" topic="activecampaign.customer.export.customer" destinationType="queue" destination="activecampaign_customer_export_customer" />
 		<binding id="activecampaign.newsletter.export.contact.binding" topic="activecampaign.newsletter.export.contact" destinationType="queue" destination="activecampaign_newsletter_export_contact" />
 		<binding id="activecampaign.sales.export.order.binding" topic="activecampaign.sales.export.order" destinationType="queue" destination="activecampaign_sales_export_contact" />
+		<binding id="activecampaign.quote.export.abandoned_cart.binding" topic="activecampaign.quote.export.abandoned_cart" destinationType="queue" destination="activecampaign_quote_export_abandoned_cart" />
 	</exchange>
 </config>
