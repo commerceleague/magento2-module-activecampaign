@@ -3,6 +3,7 @@
 	<preference for="CommerceLeague\ActiveCampaign\Api\Data\ContactInterface" type="CommerceLeague\ActiveCampaign\Model\Contact" />
 	<preference for="CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface" type="CommerceLeague\ActiveCampaign\Model\Customer" />
 	<preference for="CommerceLeague\ActiveCampaign\Api\Data\OrderInterface" type="CommerceLeague\ActiveCampaign\Model\Order" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\Data\AbandonedInterface" type="CommerceLeague\ActiveCampaign\Model\Abandoned" />
 	<preference for="CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\ContactRepository" />
 	<preference for="CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\CustomerRepository" />
 	<preference for="CommerceLeague\ActiveCampaign\Api\OrderRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\OrderRepository" />
@@ -43,12 +44,21 @@
 			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection</argument>
 		</arguments>
 	</type>
+	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\Abandoned\Grid\Collection">
+		<arguments>
+			<argument name="mainTable" xsi:type="string">activecampaign_abandoned</argument>
+			<argument name="eventPrefix" xsi:type="string">activecampaign_abandoned_grid_collection</argument>
+			<argument name="eventObject" xsi:type="string">activecampaign_abandoned_grid_collection</argument>
+			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Abandoned\Collection</argument>
+		</arguments>
+	</type>
 	<type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
 		<arguments>
 			<argument name="collections" xsi:type="array">
 				<item name="activecampaign_contact_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Grid\Collection</item>
 				<item name="activecampaign_customer_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Grid\Collection</item>
 				<item name="activecampaign_order_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Grid\Collection</item>
+				<item name="activecampaign_abandoned_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Abandoned\Grid\Collection</item>
 			</argument>
 		</arguments>
 	</type>

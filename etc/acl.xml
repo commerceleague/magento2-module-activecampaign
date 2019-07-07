@@ -15,6 +15,7 @@
 						<resource id="CommerceLeague_ActiveCampaign::activecampaign_contact" title="Contacts" sortOrder="10"/>
 						<resource id="CommerceLeague_ActiveCampaign::activecampaign_customer" title="Customers" sortOrder="20"/>
 						<resource id="CommerceLeague_ActiveCampaign::activecampaign_order" title="Orders" sortOrder="30"/>
+						<resource id="CommerceLeague_ActiveCampaign::activecampaign_abandoned" title="Abandoned Carts" sortOrder="40"/>
 					</resource>
 				</resource>
 			</resource>

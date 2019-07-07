@@ -13,4 +13,5 @@ interface SchemaInterface
     public const CONTACT_TABLE = 'activecampaign_contact';
     public const CUSTOMER_TABLE = 'activecampaign_customer';
     public const ORDER_TABLE = 'activecampaign_order';
+    public const ABANDONED_TABLE = 'activecampaign_abandoned';
 }

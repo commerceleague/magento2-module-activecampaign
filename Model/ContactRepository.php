@@ -7,12 +7,10 @@ namespace CommerceLeague\ActiveCampaign\Model;
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact as ContactResource;
-use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
-use Magento\Newsletter\Model\Subscriber;
 
 /**
  * Class ContactRepository

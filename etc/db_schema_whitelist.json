@@ -42,5 +42,19 @@
             "ACTIVECAMPAIGN_ORDER_MAGENTO_ORDER_ID_SALES_ORDER_ENTITY_ID": true,
             "ACTIVECAMPAIGN_ORDER_MAGENTO_ORDER_ID": true
         }
+    },
+    "activecampaign_abandoned": {
+        "column": {
+            "entity_id": true,
+            "quote_id": true,
+            "activecampaign_id": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ACTIVECAMPAIGN_ABANDONED_QUOTE_ID_QUOTE_ENTITY_ID": true,
+            "ACTIVECAMPAIGN_ABANDONED_QUOTE_ID": true
+        }
     }
 }
