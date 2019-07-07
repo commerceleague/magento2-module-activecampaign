@@ -72,6 +72,7 @@ class ExportOrderConsumer implements ConsumerInterface
     /**
      * @param string $message
      * @throws CouldNotSaveException
+     * @throws \Exception
      */
     public function consume(string $message): void
     {

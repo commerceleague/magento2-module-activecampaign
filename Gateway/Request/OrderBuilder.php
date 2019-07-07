@@ -7,6 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Sales\Api\Data\OrderInterface as MagentoOrderInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
 
@@ -26,20 +27,29 @@ class OrderBuilder
     private $customerRepository;
 
     /**
+     * @var TimezoneInterface
+     */
+    private $timezone;
+
+    /**
      * @param ConfigHelper $configHelper
      * @param CustomerRepositoryInterface $customerRepository
+     * @param TimezoneInterface $timezone
      */
     public function __construct(
         ConfigHelper $configHelper,
-        CustomerRepositoryInterface $customerRepository
+        CustomerRepositoryInterface $customerRepository,
+        TimezoneInterface $timezone
     ) {
         $this->configHelper = $configHelper;
         $this->customerRepository = $customerRepository;
+        $this->timezone = $timezone;
     }
 
     /**
      * @param MagentoOrderInterface|MagentoOrder $magentoOrder
      * @return array
+     * @throws \Exception
      */
     public function build(MagentoOrderInterface $magentoOrder): array
     {
@@ -50,7 +60,7 @@ class OrderBuilder
             'source' => 1,
             'email' => $magentoOrder->getCustomerEmail(),
             'orderNumber' => $magentoOrder->getIncrementId(),
-            'orderDate' => $magentoOrder->getCreatedAt(),
+            'orderDate' => $this->formatDateTime($magentoOrder->getCreatedAt()),
             'shippingMethod' => $magentoOrder->getShippingMethod(),
             'totalPrice' => $this->convertToCent((float)$magentoOrder->getGrandTotal()),
             'currency' => $magentoOrder->getBaseCurrencyCode(),
@@ -79,5 +89,15 @@ class OrderBuilder
     private function convertToCent(float $amount): int
     {
         return (int)($amount * 100);
+    }
+
+    /**
+     * @param string $date
+     * @return string
+     * @throws \Exception
+     */
+    private function formatDateTime(string $date): string
+    {
+        return (new \DateTime($date))->format(\DateTime::W3C);
     }
 }
