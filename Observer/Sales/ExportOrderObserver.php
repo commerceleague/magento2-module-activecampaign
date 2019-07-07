@@ -6,9 +6,10 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Observer\Sales;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\Service\ExportOrderService;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
 
 /**
@@ -22,20 +23,20 @@ class ExportOrderObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var ExportOrderService
+     * @var PublisherInterface
      */
-    private $exportOrderService;
+    private $publisher;
 
     /**
      * @param ConfigHelper $configHelper
-     * @param ExportOrderService $exportOrderService
+     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
-        ExportOrderService $exportOrderService
+        PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
-        $this->exportOrderService = $exportOrderService;
+        $this->publisher = $publisher;
     }
 
     /**
@@ -50,11 +51,13 @@ class ExportOrderObserver implements ObserverInterface
         /** @var MagentoOrder $magentoOrder */
         $magentoOrder = $observer->getEvent()->getData('order');
 
-        // do not export guest orders for now
         if ($magentoOrder->getStatus() !== MagentoOrder::STATE_COMPLETE || $magentoOrder->getCustomerIsGuest()) {
             return;
         }
 
-        $this->exportOrderService->export($magentoOrder);
+        $this->publisher->publish(
+            Topics::SALES_ORDER_EXPORT,
+            json_encode(['magento_order_id' => $magentoOrder->getId()])
+        );
     }
 }

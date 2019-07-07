@@ -10,7 +10,8 @@ namespace CommerceLeague\ActiveCampaign\MessageQueue;
  */
 class Topics
 {
-    public const CONTACT_EXPORT = 'activecampaign.contact.export';
-    public const CUSTOMER_EXPORT = 'activecampaign.customer.export';
-    public const ORDER_EXPORT = 'activecampaign.order.export';
+    public const CUSTOMER_CONTACT_EXPORT = 'activecampaign.customer.export.contact';
+    public const CUSTOMER_CUSTOMER_EXPORT = 'activecampaign.customer.export.customer';
+    public const NEWSLETTER_CONTACT_EXPORT = 'activecampaign.newsletter.export.contact';
+    public const SALES_ORDER_EXPORT = 'activecampaign.sales.export.order';
 }

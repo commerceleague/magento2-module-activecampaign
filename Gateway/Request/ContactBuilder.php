@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 
-use Magento\Customer\Model\Customer as MagentoCustomer;
+use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 use Magento\Newsletter\Model\Subscriber;
 
 /**
@@ -14,15 +14,15 @@ use Magento\Newsletter\Model\Subscriber;
 class ContactBuilder
 {
     /**
-     * @param MagentoCustomer $magentoCustomer
+     * @param MagentoCustomerInterface $magentoCustomer
      * @return array
      */
-    public function buildWithMagentoCustomer(MagentoCustomer $magentoCustomer): array
+    public function buildWithMagentoCustomer(MagentoCustomerInterface $magentoCustomer): array
     {
         return [
-            'email' => $magentoCustomer->getData('email'),
-            'firstName' => $magentoCustomer->getData('firstname'),
-            'lastName' => $magentoCustomer->getData('lastname')
+            'email' => $magentoCustomer->getEmail(),
+            'firstName' => $magentoCustomer->getFirstname(),
+            'lastName' => $magentoCustomer->getLastname()
         ];
     }
 

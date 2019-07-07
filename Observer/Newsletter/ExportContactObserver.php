@@ -5,9 +5,10 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Observer\Newsletter;
 
-use CommerceLeague\ActiveCampaign\Service\ExportContactService;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Newsletter\Model\Subscriber;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 
@@ -22,20 +23,20 @@ class ExportContactObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var ExportContactService
+     * @var PublisherInterface
      */
-    private $exportContactService;
+    private $publisher;
 
     /**
      * @param ConfigHelper $configHelper
-     * @param ExportContactService $exportContactService
+     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
-        ExportContactService $exportContactService
+        PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
-        $this->exportContactService = $exportContactService;
+        $this->publisher = $publisher;
     }
 
     /**
@@ -54,6 +55,9 @@ class ExportContactObserver implements ObserverInterface
             return;
         }
 
-        $this->exportContactService->exportWithSubscriber($subscriber);
+        $this->publisher->publish(
+            Topics::NEWSLETTER_CONTACT_EXPORT,
+            json_encode(['email' => $subscriber->getEmail()])
+        );
     }
 }

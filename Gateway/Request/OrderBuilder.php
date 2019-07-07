@@ -7,6 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
+use Magento\Sales\Api\Data\OrderInterface as MagentoOrderInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
 
 /**
@@ -37,10 +38,10 @@ class OrderBuilder
     }
 
     /**
-     * @param MagentoOrder $magentoOrder
+     * @param MagentoOrderInterface|MagentoOrder $magentoOrder
      * @return array
      */
-    public function build(MagentoOrder $magentoOrder): array
+    public function build(MagentoOrderInterface $magentoOrder): array
     {
         $customer = $this->customerRepository->getByMagentoCustomerId($magentoOrder->getCustomerId());
 

@@ -6,11 +6,12 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Test\Observer\Customer;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Observer\Customer\ExportCustomerObserver;
-use CommerceLeague\ActiveCampaign\Service\ExportCustomerService;
-use Magento\Customer\Model\Customer;
+use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -22,9 +23,9 @@ class ExportCustomerObserverTest extends TestCase
     protected $configHelper;
 
     /**
-     * @var MockObject|ExportCustomerService
+     * @var MockObject|PublisherInterface
      */
-    protected $exportCustomerService;
+    protected $publisher;
 
     /**
      * @var MockObject|Observer
@@ -37,9 +38,9 @@ class ExportCustomerObserverTest extends TestCase
     protected $event;
 
     /**
-     * @var MockObject|Customer
+     * @var MockObject|MagentoCustomer
      */
-    protected $customer;
+    protected $magentoCustomer;
 
     /**
      * @var ExportCustomerObserver
@@ -49,14 +50,14 @@ class ExportCustomerObserverTest extends TestCase
     protected function setUp()
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->exportCustomerService = $this->createMock(ExportCustomerService::class);
+        $this->publisher = $this->createMock(PublisherInterface::class);
         $this->observer = $this->createMock(Observer::class);
         $this->event = $this->createMock(Event::class);
-        $this->customer = $this->createMock(Customer::class);
+        $this->magentoCustomer = $this->createMock(MagentoCustomer::class);
 
         $this->exportCustomerObserver = new ExportCustomerObserver(
             $this->configHelper,
-            $this->exportCustomerService
+            $this->publisher
         );
     }
 
@@ -74,6 +75,8 @@ class ExportCustomerObserverTest extends TestCase
 
     public function testExecute()
     {
+        $magentoCustomerId = 123;
+
         $this->configHelper->expects($this->once())
             ->method('isApiEnabled')
             ->willReturn(true);
@@ -85,11 +88,18 @@ class ExportCustomerObserverTest extends TestCase
         $this->event->expects($this->once())
             ->method('getData')
             ->with('customer')
-            ->willReturn($this->customer);
+            ->willReturn($this->magentoCustomer);
 
-        $this->exportCustomerService->expects($this->once())
-            ->method('export')
-            ->with($this->customer);
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->publisher->expects($this->once())
+            ->method('publish')
+            ->with(
+                Topics::CUSTOMER_CUSTOMER_EXPORT,
+                json_encode(['magento_customer_id' => $magentoCustomerId])
+            );
 
         $this->exportCustomerObserver->execute($this->observer);
     }

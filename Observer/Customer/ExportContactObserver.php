@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Observer\Customer;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\Service\ExportContactService;
-use Magento\Customer\Model\Customer;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
  * Class ExportContactObserver
@@ -21,20 +22,20 @@ class ExportContactObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var ExportContactService
+     * @var PublisherInterface
      */
-    private $exportContactService;
+    private $publisher;
 
     /**
      * @param ConfigHelper $configHelper
-     * @param ExportContactService $exportContactService
+     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
-        ExportContactService $exportContactService
+        PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
-        $this->exportContactService = $exportContactService;
+        $this->publisher = $publisher;
     }
 
     /**
@@ -46,9 +47,12 @@ class ExportContactObserver implements ObserverInterface
             return;
         }
 
-        /** @var Customer $magentoCustomer */
+        /** @var MagentoCustomer $magentoCustomer */
         $magentoCustomer = $observer->getEvent()->getData('customer');
 
-        $this->exportContactService->exportWithMagentoCustomer($magentoCustomer);
+        $this->publisher->publish(
+            Topics::CUSTOMER_CONTACT_EXPORT,
+            json_encode(['magento_customer_id' => $magentoCustomer->getId()])
+        );
     }
 }

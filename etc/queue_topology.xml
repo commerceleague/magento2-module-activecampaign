@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
 	<exchange name="magento-db" type="topic" connection="db">
-		<binding id="activecampaign.contact.export.binding" topic="activecampaign.contact.export" destinationType="queue" destination="activecampaign_contact_export" />
-		<binding id="activecampaign.customer.export.binding" topic="activecampaign.customer.export" destinationType="queue" destination="activecampaign_customer_export" />
-		<binding id="activecampaign.order.export.binding" topic="activecampaign.order.export" destinationType="queue" destination="activecampaign_order_export" />
+		<binding id="activecampaign.customer.export.contact.binding" topic="activecampaign.customer.export.contact" destinationType="queue" destination="activecampaign_customer_export_contact" />
+		<binding id="activecampaign.customer.export.customer.binding" topic="activecampaign.customer.export.customer" destinationType="queue" destination="activecampaign_customer_export_customer" />
+		<binding id="activecampaign.newsletter.export.contact.binding" topic="activecampaign.newsletter.export.contact" destinationType="queue" destination="activecampaign_newsletter_export_contact" />
+		<binding id="activecampaign.sales.export.order.binding" topic="activecampaign.sales.export.order" destinationType="queue" destination="activecampaign_sales_export_contact" />
 	</exchange>
 </config>

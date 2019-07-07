@@ -1,12 +1,15 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/queue.xsd">
-	<broker topic="activecampaign.contact.export" exchange="magento-db" type="db">
-		<queue name="activecampaign_contact_export" consumer="activeCampaignContactExport"/>
+	<broker topic="activecampaign.customer.export.contact" exchange="magento-db" type="db">
+		<queue name="activecampaign_customer_export_contact" consumer="activeCampaignCustomerExportContact" />
 	</broker>
-	<broker topic="activecampaign.customer.export" exchange="magento-db" type="db">
-		<queue name="activecampaign_customer_export" consumer="activeCampaignCustomerExport"/>
+	<broker topic="activecampaign.customer.export.customer" exchange="magento-db" type="db">
+		<queue name="activecampaign_customer_export_customer" consumer="activeCampaignCustomerExportCustomer" />
 	</broker>
-	<broker topic="activecampaign.order.export" exchange="magento-db" type="db">
-		<queue name="activecampaign_order_export" consumer="activeCampaignOrderExport"/>
+	<broker topic="activecampaign.newsletter.export.contact" exchange="magento-db" type="db">
+		<queue name="activecampaign_newsletter_export_contact" consumer="activeCampaignNewsletterExportContact" />
+	</broker>
+	<broker topic="activecampaign.sales.export.order" exchange="magento-db" type="db">
+		<queue name="activecampaign_sales_export_order" consumer="activeCampaignSalesExportOrder" />
 	</broker>
 </config>
