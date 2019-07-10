@@ -95,9 +95,9 @@ class ConfigTest extends TestCase
         $this->assertEquals($connectionId, $this->config->getConnectionId());
     }
 
-    public function getAbandonedCartExportAfter()
+    public function testGetAbandonedCartExportAfter()
     {
-        $exportAfter = 15;
+        $exportAfter = '15';
 
         $this->scopeConfig->expects($this->once())
             ->method('getValue')

@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-	<preference for="CommerceLeague\ActiveCampaign\Api\Data\ContactInterface" type="CommerceLeague\ActiveCampaign\Model\Contact" />
-	<preference for="CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface" type="CommerceLeague\ActiveCampaign\Model\Customer" />
-	<preference for="CommerceLeague\ActiveCampaign\Api\Data\OrderInterface" type="CommerceLeague\ActiveCampaign\Model\Order" />
-	<preference for="CommerceLeague\ActiveCampaign\Api\Data\AbandonedInterface" type="CommerceLeague\ActiveCampaign\Model\Abandoned" />
-	<preference for="CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\ContactRepository" />
-	<preference for="CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\CustomerRepository" />
-	<preference for="CommerceLeague\ActiveCampaign\Api\OrderRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\OrderRepository" />
-	<preference for="CommerceLeague\ActiveCampaign\Api\AbandonedRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\AbandonedRepository" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\Data\ContactInterface" type="CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Contact" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface" type="CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Customer" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\Data\OrderInterface" type="CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Order" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\Data\AbandonedInterface" type="CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Abandoned" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\ActiveCampaign\ContactRepository" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\ActiveCampaign\CustomerRepository" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\OrderRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\ActiveCampaign\OrderRepository" />
+	<preference for="CommerceLeague\ActiveCampaign\Api\AbandonedRepositoryInterface" type="CommerceLeague\ActiveCampaign\Model\ActiveCampaign\AbandonedRepository" />
 	<type name="CommerceLeague\ActiveCampaign\Logger\Handler">
 		<arguments>
 			<argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
@@ -21,45 +21,45 @@
 			</argument>
 		</arguments>
 	</type>
-	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Grid\Collection">
+	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact\Grid\Collection">
 		<arguments>
 			<argument name="mainTable" xsi:type="string">activecampaign_contact</argument>
 			<argument name="eventPrefix" xsi:type="string">activecampaign_contact_grid_collection</argument>
 			<argument name="eventObject" xsi:type="string">activecampaign_contact_grid_collection</argument>
-			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Collection</argument>
+			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact\Collection</argument>
 		</arguments>
 	</type>
-	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Grid\Collection">
+	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer\Grid\Collection">
 		<arguments>
 			<argument name="mainTable" xsi:type="string">activecampaign_customer</argument>
 			<argument name="eventPrefix" xsi:type="string">activecampaign_customer_grid_collection</argument>
 			<argument name="eventObject" xsi:type="string">activecampaign_customer_grid_collection</argument>
-			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection</argument>
+			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer\Collection</argument>
 		</arguments>
 	</type>
-	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Grid\Collection">
+	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Order\Grid\Collection">
 		<arguments>
 			<argument name="mainTable" xsi:type="string">activecampaign_order</argument>
 			<argument name="eventPrefix" xsi:type="string">activecampaign_order_grid_collection</argument>
 			<argument name="eventObject" xsi:type="string">activecampaign_order_grid_collection</argument>
-			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection</argument>
+			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Order\Collection</argument>
 		</arguments>
 	</type>
-	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\Abandoned\Grid\Collection">
+	<type name="CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Abandoned\Grid\Collection">
 		<arguments>
 			<argument name="mainTable" xsi:type="string">activecampaign_abandoned</argument>
 			<argument name="eventPrefix" xsi:type="string">activecampaign_abandoned_grid_collection</argument>
 			<argument name="eventObject" xsi:type="string">activecampaign_abandoned_grid_collection</argument>
-			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Abandoned\Collection</argument>
+			<argument name="resourceModel" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Abandoned\Collection</argument>
 		</arguments>
 	</type>
 	<type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
 		<arguments>
 			<argument name="collections" xsi:type="array">
-				<item name="activecampaign_contact_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Contact\Grid\Collection</item>
-				<item name="activecampaign_customer_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Grid\Collection</item>
-				<item name="activecampaign_order_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Grid\Collection</item>
-				<item name="activecampaign_abandoned_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\Abandoned\Grid\Collection</item>
+				<item name="activecampaign_contact_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact\Grid\Collection</item>
+				<item name="activecampaign_customer_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer\Grid\Collection</item>
+				<item name="activecampaign_order_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Order\Grid\Collection</item>
+				<item name="activecampaign_abandoned_listing_data_source" xsi:type="string">CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Abandoned\Grid\Collection</item>
 			</argument>
 		</arguments>
 	</type>
