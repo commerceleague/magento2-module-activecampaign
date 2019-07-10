@@ -18,6 +18,7 @@
 	<filter>
 		<whitelist>
 			<directory suffix=".php">Api</directory>
+			<directory suffix=".php">Console</directory>
 			<directory suffix=".php">Gateway</directory>
 			<directory suffix=".php">Helper</directory>
 			<directory suffix=".php">Logger</directory>
