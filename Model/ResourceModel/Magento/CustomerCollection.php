@@ -22,9 +22,15 @@ class CustomerCollection extends ExtendCustomerCollection
         parent::_initSelect();
 
         $this->getSelect()->joinLeft(
-            ['acc' => $this->_resource->getTableName(SchemaInterface::CUSTOMER_TABLE)],
-            'acc.magento_customer_id = e.entity_id',
-            ['acc.activecampaign_id']
+            ['ac_contact' => $this->_resource->getTableName(SchemaInterface::CONTACT_TABLE)],
+            'ac_contact.email = e.email',
+            ['ac_contact.activecampaign_id']
+        );
+
+        $this->getSelect()->joinLeft(
+            ['ac_customer' => $this->_resource->getTableName(SchemaInterface::CUSTOMER_TABLE)],
+            'ac_customer.magento_customer_id = e.entity_id',
+            ['ac_customer.activecampaign_id']
         );
 
         return $this;
@@ -43,9 +49,18 @@ class CustomerCollection extends ExtendCustomerCollection
     /**
      * @return CustomerCollection
      */
-    public function addOmittedFilter(): self
+    public function addContactOmittedFilter(): self
     {
-        $this->getSelect()->where('acc.activecampaign_id IS NULL');
+        $this->getSelect()->where('ac_contact.activecampaign_id IS NULL');
+        return $this;
+    }
+
+    /**
+     * @return CustomerCollection
+     */
+    public function addCustomerOmittedFilter(): self
+    {
+        $this->getSelect()->where('ac_customer.activecampaign_id IS NULL');
         return $this;
     }
 }

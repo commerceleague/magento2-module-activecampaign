@@ -109,7 +109,7 @@ class ExportCustomerCommand extends AbstractExportCommand
 
         $progressBar = $this->createProgressBar(
             $output,
-            count($customerIds),
+            $customerIdsCount,
             'Customer(s)'
         );
 
@@ -145,7 +145,7 @@ class ExportCustomerCommand extends AbstractExportCommand
         }
 
         if ($input->getOption(self::OPTION_OMITTED)) {
-            $customerCollection->addOmittedFilter();
+            $customerCollection->addCustomerOmittedFilter();
         }
 
         return $customerCollection->getAllIds();
