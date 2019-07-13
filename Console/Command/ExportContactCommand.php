@@ -10,9 +10,8 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\CustomerCollection
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\CustomerCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\SubscriberCollectionFactory as SubscriberCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\SubscriberCollection as SubscriberCollection;
-use Magento\Newsletter\Model\Subscriber;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\SubscriberCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\SubscriberCollection;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Input\InputInterface;
@@ -159,7 +158,7 @@ class ExportContactCommand extends AbstractExportCommand
         }
 
         $output->writeln(sprintf(
-                '<info>%s contacts(s) have been scheduled for export.</info>',
+                '<info>%s contact(s) have been scheduled for export.</info>',
             ($customerIdsCount + $subscriberEmailsCount))
         );
 
