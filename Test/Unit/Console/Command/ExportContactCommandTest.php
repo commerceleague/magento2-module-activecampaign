@@ -7,10 +7,10 @@ namespace Test\Unit\Console\Command;
 
 use CommerceLeague\ActiveCampaign\Console\Command\ExportContactCommand;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\CustomerCollection;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\CustomerCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\SubscriberCollection;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\SubscriberCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use CommerceLeague\ActiveCampaign\Test\Unit\Console\Command\TestOutput;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
@@ -21,9 +21,6 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Tester\CommandTester;
 
-/**
- * @group current
- */
 class ExportContactCommandTest extends TestCase
 {
     /**

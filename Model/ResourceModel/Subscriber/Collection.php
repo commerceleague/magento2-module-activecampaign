@@ -3,17 +3,17 @@ declare(strict_types=1);
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento;
+namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber;
 
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
 use Magento\Framework\DB\Select;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as ExtendSubscriberCollection;
 
 /**
- * Class SubscriberCollection
+ * Class Collection
  * @codeCoverageIgnore
  */
-class SubscriberCollection extends ExtendSubscriberCollection
+class Collection extends ExtendSubscriberCollection
 {
     /**
      * @inheritDoc
@@ -30,7 +30,7 @@ class SubscriberCollection extends ExtendSubscriberCollection
     }
 
     /**
-     * @return SubscriberCollection
+     * @return Collection
      */
     public function excludeCustomers(): self
     {
@@ -40,7 +40,7 @@ class SubscriberCollection extends ExtendSubscriberCollection
 
     /**
      * @param string $email
-     * @return SubscriberCollection
+     * @return Collection
      */
     public function addEmailFilter(string $email): self
     {
@@ -49,7 +49,7 @@ class SubscriberCollection extends ExtendSubscriberCollection
     }
 
     /**
-     * @return SubscriberCollection
+     * @return Collection
      */
     public function addContactOmittedFilter(): self
     {

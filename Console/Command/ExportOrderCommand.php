@@ -93,7 +93,4 @@ class ExportOrderCommand extends AbstractExportCommand
 
         return $magentoOrderCollection->getAllIds();
     }
-
-
-
 }

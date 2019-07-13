@@ -109,10 +109,6 @@ class ExportOrderConsumerTest extends TestCase
        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
-    /**
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
-     * @group current
-     */
     public function testConsumeApiRequestException()
     {
         $magentoOrderId = 123;

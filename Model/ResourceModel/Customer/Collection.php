@@ -3,16 +3,17 @@ declare(strict_types=1);
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento;
+namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer;
 
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\CustomerCollection;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
 use Magento\Customer\Model\ResourceModel\Customer\Collection as ExtendCustomerCollection;
 
 /**
- * Class CustomerCollection
+ * Class Collection
  * @codeCoverageIgnore
  */
-class CustomerCollection extends ExtendCustomerCollection
+class Collection extends ExtendCustomerCollection
 {
     /**
      * @inheritDoc
@@ -38,7 +39,7 @@ class CustomerCollection extends ExtendCustomerCollection
 
     /**
      * @param string $email
-     * @return CustomerCollection
+     * @return Collection
      */
     public function addEmailFilter(string $email): self
     {
@@ -47,7 +48,7 @@ class CustomerCollection extends ExtendCustomerCollection
     }
 
     /**
-     * @return CustomerCollection
+     * @return Collection
      */
     public function addContactOmittedFilter(): self
     {
@@ -56,7 +57,7 @@ class CustomerCollection extends ExtendCustomerCollection
     }
 
     /**
-     * @return CustomerCollection
+     * @return Collection
      */
     public function addCustomerOmittedFilter(): self
     {
@@ -64,3 +65,4 @@ class CustomerCollection extends ExtendCustomerCollection
         return $this;
     }
 }
+

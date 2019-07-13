@@ -6,12 +6,12 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Console\Command;
 
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\CustomerCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\CustomerCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\SubscriberCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\SubscriberCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Input\InputInterface;
