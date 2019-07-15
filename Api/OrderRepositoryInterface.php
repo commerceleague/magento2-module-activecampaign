@@ -27,17 +27,17 @@ interface OrderRepositoryInterface
     public function getById($entityId): Data\OrderInterface;
 
     /**
-     * @param int $magentoOrderId
+     * @param int $magentoQuoteId
      * @return Data\OrderInterface
      */
-    public function getByMagentoOrderId($magentoOrderId): Data\OrderInterface;
+    public function getByMagentoQuoteId($magentoQuoteId): Data\OrderInterface;
 
     /**
-     * @param int $magentoOrderId
+     * @param int $magentoQuoteId
      * @return Data\OrderInterface
      * @throws CouldNotSaveException
      */
-    public function getOrCreateByMagentoOrderId($magentoOrderId): Data\OrderInterface;
+    public function getOrCreateByMagentoQuoteId($magentoQuoteId): Data\OrderInterface;
 
     /**
      * @param Data\OrderInterface $order

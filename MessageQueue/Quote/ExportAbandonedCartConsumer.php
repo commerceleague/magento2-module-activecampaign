@@ -5,14 +5,13 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Quote;
 
-use CommerceLeague\ActiveCampaign\Api\AbandonedRepositoryInterface;
+use CommerceLeague\ActiveCampaign\Api\OrderRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Request\AbandonedCartBuilder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteFactory;
 
@@ -22,9 +21,9 @@ use Magento\Quote\Model\QuoteFactory;
 class ExportAbandonedCartConsumer implements ConsumerInterface
 {
     /**
-     * @var AbandonedRepositoryInterface
+     * @var QuoteFactory
      */
-    private $abandonedRepository;
+    private $quoteFactory;
 
     /**
      * @var Logger
@@ -32,9 +31,9 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
     private $logger;
 
     /**
-     * @var QuoteFactory
+     * @var OrderRepositoryInterface
      */
-    private $quoteFactory;
+    private $orderRepository;
 
     /**
      * @var AbandonedCartBuilder
@@ -47,22 +46,22 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
     private $client;
 
     /**
-     * @param AbandonedRepositoryInterface $abandonedRepository
-     * @param Logger $logger
      * @param QuoteFactory $quoteFactory
+     * @param Logger $logger
+     * @param OrderRepositoryInterface $orderRepository
      * @param AbandonedCartBuilder $abandonedCartRequestBuilder
      * @param Client $client
      */
     public function __construct(
-        AbandonedRepositoryInterface $abandonedRepository,
-        Logger $logger,
         QuoteFactory $quoteFactory,
+        Logger $logger,
+        OrderRepositoryInterface $orderRepository,
         AbandonedCartBuilder $abandonedCartRequestBuilder,
         Client $client
     ) {
-        $this->abandonedRepository = $abandonedRepository;
-        $this->logger = $logger;
         $this->quoteFactory = $quoteFactory;
+        $this->logger = $logger;
+        $this->orderRepository = $orderRepository;
         $this->abandonedCartRequestBuilder = $abandonedCartRequestBuilder;
         $this->client = $client;
     }
@@ -70,6 +69,7 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
     /**
      * @param string $message
      * @throws CouldNotSaveException
+     * @throws \Exception
      */
     public function consume(string $message): void
     {
@@ -84,7 +84,7 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
             return;
         }
 
-        $abandoned = $this->abandonedRepository->getOrCreateByQuoteId($quote->getId());
+        $order = $this->orderRepository->getOrCreateByMagentoQuoteId($quote->getId());
         $request = $this->abandonedCartRequestBuilder->build($quote);
 
         try {
@@ -94,7 +94,7 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
             return;
         }
 
-        $abandoned->setActiveCampaignId($apiResponse['ecomOrder']['id']);
-        $this->abandonedRepository->save($abandoned);
+        $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
+        $this->orderRepository->save($order);
     }
 }

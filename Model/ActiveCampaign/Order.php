@@ -41,17 +41,17 @@ class Order extends AbstractModel implements OrderInterface
     /**
      * @inheritDoc
      */
-    public function getMagentoOrderId()
+    public function getMagentoQuoteId()
     {
-        return $this->_getData(self::MAGENTO_ORDER_ID);
+        return $this->_getData(self::MAGENTO_QUOTE_ID);
     }
 
     /**
      * @inheritDoc
      */
-    public function setMagentoOrderId($magentoOrderId): OrderInterface
+    public function setMagentoQuoteId($magentoQuoteId): OrderInterface
     {
-        return $this->setData(self::MAGENTO_ORDER_ID, $magentoOrderId);
+        return $this->setData(self::MAGENTO_QUOTE_ID, $magentoQuoteId);
     }
 
     /**

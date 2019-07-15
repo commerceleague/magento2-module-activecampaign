@@ -31,14 +31,14 @@ class ExportCustomerCommandTest extends TestCase
     protected $customerCollection;
 
     /**
-     * @var MockObject|PublisherInterface
-     */
-    protected $publisher;
-
-    /**
      * @var MockObject|ProgressBarFactory
      */
     protected $progressBarFactory;
+
+    /**
+     * @var MockObject|PublisherInterface
+     */
+    protected $publisher;
 
     /**
      * @var ExportCustomerCommand
@@ -50,7 +50,7 @@ class ExportCustomerCommandTest extends TestCase
      */
     protected $exportCustomerCommandTester;
 
-    public function setUp()
+    protected function setUp()
     {
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
@@ -72,8 +72,8 @@ class ExportCustomerCommandTest extends TestCase
 
         $this->exportCustomerCommand = new ExportCustomerCommand(
             $this->customerCollectionFactory,
-            $this->publisher,
-            $this->progressBarFactory
+            $this->progressBarFactory,
+            $this->publisher
         );
 
         $this->exportCustomerCommandTester = new CommandTester($this->exportCustomerCommand);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer;
 
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Magento\CustomerCollection;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
 use Magento\Customer\Model\ResourceModel\Customer\Collection as ExtendCustomerCollection;
 
@@ -65,4 +64,3 @@ class Collection extends ExtendCustomerCollection
         return $this;
     }
 }
-

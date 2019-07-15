@@ -51,7 +51,7 @@ class ExportOrderObserver implements ObserverInterface
         /** @var MagentoOrder $magentoOrder */
         $magentoOrder = $observer->getEvent()->getData('order');
 
-        if ($magentoOrder->getStatus() !== MagentoOrder::STATE_COMPLETE || $magentoOrder->getCustomerIsGuest()) {
+        if ($magentoOrder->getCustomerIsGuest()) {
             return;
         }
 

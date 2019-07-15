@@ -27,6 +27,8 @@ class Collection extends ExtendSubscriberCollection
             'ac_contact.email = main_table.subscriber_email',
             ['ac_contact.activecampaign_id']
         );
+
+        return $this;
     }
 
     /**

@@ -104,7 +104,7 @@ class ExportOrderConsumerTest extends TestCase
             ->with($exceptionMessage);
 
         $this->orderRepository->expects($this->never())
-            ->method('getOrCreateByMagentoOrderId');
+            ->method('getOrCreateByMagentoQuoteId');
 
        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
@@ -112,6 +112,7 @@ class ExportOrderConsumerTest extends TestCase
     public function testConsumeApiRequestException()
     {
         $magentoOrderId = 123;
+        $magentoQuoteId = 456;
         $request = ['request'];
 
         $this->magentoOrderRepository->expects($this->once())
@@ -120,12 +121,12 @@ class ExportOrderConsumerTest extends TestCase
             ->willReturn($this->magentoOrder);
 
         $this->magentoOrder->expects($this->once())
-            ->method('getId')
-            ->willReturn($magentoOrderId);
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
 
         $this->orderRepository->expects($this->once())
-            ->method('getOrCreateByMagentoOrderId')
-            ->with($magentoOrderId)
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
             ->willReturn($this->order);
 
         $this->orderRequestBuilder->expects($this->once())
@@ -161,8 +162,9 @@ class ExportOrderConsumerTest extends TestCase
     public function testConsumeUpdate()
     {
         $magentoOrderId = 123;
+        $magentoQuoteId = 456;
         $request = ['request'];
-        $activeCampaignId = 456;
+        $activeCampaignId = 789;
         $response = ['ecomOrder' => ['id' => $activeCampaignId]];
 
         $this->magentoOrderRepository->expects($this->once())
@@ -171,12 +173,12 @@ class ExportOrderConsumerTest extends TestCase
             ->willReturn($this->magentoOrder);
 
         $this->magentoOrder->expects($this->once())
-            ->method('getId')
-            ->willReturn($magentoOrderId);
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
 
         $this->orderRepository->expects($this->once())
-            ->method('getOrCreateByMagentoOrderId')
-            ->with($magentoOrderId)
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
             ->willReturn($this->order);
 
         $this->orderRequestBuilder->expects($this->once())
@@ -212,8 +214,9 @@ class ExportOrderConsumerTest extends TestCase
     public function testConsumeCreate()
     {
         $magentoOrderId = 123;
+        $magentoQuoteId = 456;
         $request = ['request'];
-        $activeCampaignId = 456;
+        $activeCampaignId = 789;
         $response = ['ecomOrder' => ['id' => $activeCampaignId]];
 
         $this->magentoOrderRepository->expects($this->once())
@@ -222,12 +225,12 @@ class ExportOrderConsumerTest extends TestCase
             ->willReturn($this->magentoOrder);
 
         $this->magentoOrder->expects($this->once())
-            ->method('getId')
-            ->willReturn($magentoOrderId);
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
 
         $this->orderRepository->expects($this->once())
-            ->method('getOrCreateByMagentoOrderId')
-            ->with($magentoOrderId)
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
             ->willReturn($this->order);
 
         $this->orderRequestBuilder->expects($this->once())

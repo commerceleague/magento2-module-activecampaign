@@ -41,14 +41,14 @@ class ExportContactCommand extends AbstractExportCommand
     /**
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param SubscriberCollectionFactory $subscriberCollectionFactory
-     * @param PublisherInterface $publisher
      * @param ProgressBarFactory $progressBarFactory
+     * @param PublisherInterface $publisher
      */
     public function __construct(
         CustomerCollectionFactory $customerCollectionFactory,
         SubscriberCollectionFactory $subscriberCollectionFactory,
-        PublisherInterface $publisher,
-        ProgressBarFactory $progressBarFactory
+        ProgressBarFactory $progressBarFactory,
+        PublisherInterface $publisher
     ) {
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->subscriberCollectionFactory = $subscriberCollectionFactory;
@@ -159,8 +159,8 @@ class ExportContactCommand extends AbstractExportCommand
 
         $output->writeln(sprintf(
                 '<info>%s contact(s) have been scheduled for export.</info>',
-            ($customerIdsCount + $subscriberEmailsCount))
-        );
+            ($customerIdsCount + $subscriberEmailsCount)
+        ));
 
         return Cli::RETURN_SUCCESS;
     }

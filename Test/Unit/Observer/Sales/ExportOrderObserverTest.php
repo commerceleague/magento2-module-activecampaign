@@ -73,31 +73,6 @@ class ExportOrderObserverTest extends TestCase
         $this->exportOrderObserver->execute($this->observer);
     }
 
-    public function testExecuteWithIncompleteOrder()
-    {
-        $this->configHelper->expects($this->once())
-            ->method('isEnabled')
-            ->willReturn(true);
-
-        $this->observer->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($this->event);
-
-        $this->event->expects($this->once())
-            ->method('getData')
-            ->with('order')
-            ->willReturn($this->magentoOrder);
-
-        $this->magentoOrder->expects($this->once())
-            ->method('getStatus')
-            ->willReturn('pending');
-
-        $this->publisher->expects($this->never())
-            ->method('publish');
-
-        $this->exportOrderObserver->execute($this->observer);
-    }
-
     public function testExecuteWithGuestOrder()
     {
         $this->configHelper->expects($this->once())
@@ -112,10 +87,6 @@ class ExportOrderObserverTest extends TestCase
             ->method('getData')
             ->with('order')
             ->willReturn($this->magentoOrder);
-
-        $this->magentoOrder->expects($this->once())
-            ->method('getStatus')
-            ->willReturn('complete');
 
         $this->magentoOrder->expects($this->once())
             ->method('getCustomerIsGuest')
@@ -145,10 +116,6 @@ class ExportOrderObserverTest extends TestCase
             ->willReturn($this->magentoOrder);
 
         $this->magentoOrder->expects($this->once())
-            ->method('getStatus')
-            ->willReturn('complete');
-
-        $this->magentoOrder->expects($this->once())
             ->method('getCustomerIsGuest')
             ->willReturn(false);
 
@@ -165,7 +132,4 @@ class ExportOrderObserverTest extends TestCase
 
         $this->exportOrderObserver->execute($this->observer);
     }
-
-
-
 }

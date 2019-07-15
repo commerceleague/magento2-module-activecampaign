@@ -8,13 +8,13 @@ namespace CommerceLeague\ActiveCampaign\Console\Command;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
+use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
-use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as MagentoOrderCollectionFactory;
-use Magento\Sales\Model\ResourceModel\Order\Collection as MagentoOrderCollection;
-use Magento\Sales\Model\Order as MagentoOrder;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
 
 /**
  * Class ExportOrderCommand
@@ -22,23 +22,26 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ExportOrderCommand extends AbstractExportCommand
 {
     private const NAME = 'activecampaign:export:order';
+    private const ORDER_ID = 'order-id';
+    private const OPTION_OMITTED = 'omitted';
+    private const OPTION_ALL = 'all';
 
     /**
-     * @var MagentoOrderCollectionFactory
+     * @var OrderCollectionFactory
      */
-    private $magentoOrderCollectionFactory;
+    private $orderCollectionFactory;
 
     /**
-     * @param MagentoOrderCollectionFactory $magentoOrderCollectionFactory
+     * @param OrderCollectionFactory $orderCollectionFactory
      * @param PublisherInterface $publisher
      * @param ProgressBarFactory $progressBarFactory
      */
     public function __construct(
-        MagentoOrderCollectionFactory $magentoOrderCollectionFactory,
-        PublisherInterface $publisher,
-        ProgressBarFactory $progressBarFactory
+        OrderCollectionFactory $orderCollectionFactory,
+        ProgressBarFactory $progressBarFactory,
+        PublisherInterface $publisher
     ) {
-        $this->magentoOrderCollectionFactory = $magentoOrderCollectionFactory;
+        $this->orderCollectionFactory = $orderCollectionFactory;
         parent::__construct($progressBarFactory, $publisher);
     }
 
@@ -47,7 +50,48 @@ class ExportOrderCommand extends AbstractExportCommand
      */
     protected function configure()
     {
-        $this->setName(self::NAME);
+        $this->setName(self::NAME)
+            ->setDescription('Export orders')
+            ->addOption(
+                self::ORDER_ID,
+                null,
+                InputOption::VALUE_REQUIRED,
+                'The order id'
+            )
+            ->addOption(
+                self::OPTION_OMITTED,
+                null,
+                InputOption::VALUE_NONE,
+                'Only export omitted orders'
+            )
+            ->addOption(
+                self::OPTION_ALL,
+                null,
+                InputOption::VALUE_NONE,
+                'Export all orders'
+            );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function interact(InputInterface $input, OutputInterface $output)
+    {
+        $orderId = $input->getOption(self::ORDER_ID);
+        $omitted = $input->getOption(self::OPTION_OMITTED);
+        $all = $input->getOption(self::OPTION_ALL);
+
+        if ($orderId === null && $omitted === false && $all === false) {
+            throw new RuntimeException('Please provide at least one option');
+        }
+
+        if ($orderId !== null && ($omitted === true || $all === true)) {
+            throw new RuntimeException('You cannot use --order-id together with another option');
+        }
+
+        if ($omitted === true && $all === true) {
+            throw new RuntimeException('You cannot use --omitted and --all together');
+        }
     }
 
     /**
@@ -55,18 +99,24 @@ class ExportOrderCommand extends AbstractExportCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $magentoOrderIds = $this->getMagentoOrderIds();
+        $orderIds = $this->getOrderIds($input);
+        $orderIdsCount = count($orderIds);
+
+        if ($orderIdsCount === 0) {
+            $output->writeln('<error>No order(s) found matching your criteria</error>');
+            return Cli::RETURN_FAILURE;
+        }
 
         $progressBar = $this->createProgressBar(
             $output,
-            count($magentoOrderIds),
-            'Export Magento Order(s)'
+            $orderIdsCount,
+            'Order(s)'
         );
 
-        foreach ($magentoOrderIds as $magentoOrderId) {
+        foreach ($orderIds as $orderId) {
             $this->publisher->publish(
                 Topics::SALES_ORDER_EXPORT,
-                json_encode(['magento_order_id' => $magentoOrderId])
+                json_encode(['magento_order_id' => $orderId])
             );
 
             $progressBar->advance();
@@ -74,23 +124,31 @@ class ExportOrderCommand extends AbstractExportCommand
 
         $output->writeln('');
         $output->writeln(sprintf(
-                '<info>Exported %s order(s)</info>',
-                (count($magentoOrderIds)))
-        );
+            '<info>%s order(s) have been scheduled for export.</info>',
+            ($orderIdsCount)
+        ));
 
         return Cli::RETURN_SUCCESS;
     }
 
     /**
+     * @param InputInterface $input
      * @return array
      */
-    private function getMagentoOrderIds(): array
+    public function getOrderIds(InputInterface $input): array
     {
-        /** @var MagentoOrderCollection $magentoOrderCollection */
-        $magentoOrderCollection = $this->magentoOrderCollectionFactory->create();
-        $magentoOrderCollection->addFieldToFilter(MagentoOrder::STATUS, MagentoOrder::STATE_COMPLETE);
-        $magentoOrderCollection->addFieldToFilter(MagentoOrder::CUSTOMER_IS_GUEST, false);
+        /** @var OrderCollection $orderCollection */
+        $orderCollection = $this->orderCollectionFactory->create();
+        $orderCollection->addExcludeGuestFilter();
 
-        return $magentoOrderCollection->getAllIds();
+        if (($orderId = $input->getOption(self::ORDER_ID))) {
+            $orderCollection->addIdFilter((int)$orderId);
+        }
+
+        if ($input->getOption(self::OPTION_OMITTED)) {
+            $orderCollection->addOmittedFilter();
+        }
+
+        return $orderCollection->getAllIds();
     }
 }

@@ -35,12 +35,14 @@
             "magento_order_id": true,
             "activecampaign_id": true,
             "created_at": true,
-            "updated_at": true
+            "updated_at": true,
+            "magento_quote_id": true
         },
         "constraint": {
             "PRIMARY": true,
             "ACTIVECAMPAIGN_ORDER_MAGENTO_ORDER_ID_SALES_ORDER_ENTITY_ID": true,
-            "ACTIVECAMPAIGN_ORDER_MAGENTO_ORDER_ID": true
+            "ACTIVECAMPAIGN_ORDER_MAGENTO_ORDER_ID": true,
+            "ACTIVECAMPAIGN_ORDER_MAGENTO_QUOTE_ID_QUOTE_ENTITY_ID": true
         }
     },
     "activecampaign_abandoned": {

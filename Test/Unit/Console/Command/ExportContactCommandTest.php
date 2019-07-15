@@ -44,14 +44,14 @@ class ExportContactCommandTest extends TestCase
     protected $subscriberCollection;
 
     /**
-     * @var MockObject|PublisherInterface
-     */
-    protected $publisher;
-
-    /**
      * @var MockObject|ProgressBarFactory
      */
     protected $progressBarFactory;
+
+    /**
+     * @var MockObject|PublisherInterface
+     */
+    protected $publisher;
 
     /**
      * @var ExportContactCommand
@@ -87,18 +87,18 @@ class ExportContactCommandTest extends TestCase
             ->method('create')
             ->willReturn($this->subscriberCollection);
 
-        $this->publisher = $this->createMock(PublisherInterface::class);
-
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
 
+        $this->publisher = $this->createMock(PublisherInterface::class);
+
         $this->exportContactCommand = new ExportContactCommand(
             $this->customerCollectionFactory,
             $this->subscriberCollectionFactory,
-            $this->publisher,
-            $this->progressBarFactory
+            $this->progressBarFactory,
+            $this->publisher
         );
 
         $this->exportContactCommandTester = new CommandTester($this->exportContactCommand);

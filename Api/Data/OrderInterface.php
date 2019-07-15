@@ -11,6 +11,7 @@ interface OrderInterface
 {
     public const ENTITY_ID = 'entity_id';
     public const MAGENTO_ORDER_ID = 'magento_order_id';
+    public const MAGENTO_QUOTE_ID = 'magento_quote_id';
     public const ACTIVE_CAMPAIGN_ID = 'activecampaign_id';
     public const CREATED_AT = 'created_at';
     public const UPDATED_AT = 'updated_at';
@@ -29,13 +30,13 @@ interface OrderInterface
     /**
      * @return int|null
      */
-    public function getMagentoOrderId();
+    public function getMagentoQuoteId();
 
     /**
-     * @param int $magentoOrderId
+     * @param int $magentoQuoteId
      * @return OrderInterface
      */
-    public function setMagentoOrderId($magentoOrderId): self;
+    public function setMagentoQuoteId($magentoQuoteId): self;
 
     /**
      * @return int|null

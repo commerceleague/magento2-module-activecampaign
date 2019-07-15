@@ -86,7 +86,7 @@ class ExportOrderConsumer implements ConsumerInterface
             return;
         }
 
-        $order = $this->orderRepository->getOrCreateByMagentoOrderId($magentoOrder->getId());
+        $order = $this->orderRepository->getOrCreateByMagentoQuoteId($magentoOrder->getQuoteId());
         $request = $this->orderRequestBuilder->build($magentoOrder);
 
         try {

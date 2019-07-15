@@ -58,18 +58,18 @@ class OrderTest extends TestCase
         $this->assertEquals($entityId, $this->order->getData(OrderInterface::ENTITY_ID));
     }
 
-    public function testGetMagentoOrderId()
+    public function testGetMagentoQuoteId()
     {
-        $magentoOrderId = 123;
-        $this->order->setData(OrderInterface::MAGENTO_ORDER_ID, $magentoOrderId);
-        $this->assertEquals($magentoOrderId, $this->order->getMagentoOrderId());
+        $magentoQuoteId = 123;
+        $this->order->setData(OrderInterface::MAGENTO_QUOTE_ID, $magentoQuoteId);
+        $this->assertEquals($magentoQuoteId, $this->order->getMagentoQuoteId());
     }
 
-    public function testSetMagentoOrderId()
+    public function testSetMagentoQuoteId()
     {
-        $magentoOrderId = 123;
-        $this->order->setMagentoOrderId($magentoOrderId);
-        $this->assertEquals($magentoOrderId, $this->order->getData(OrderInterface::MAGENTO_ORDER_ID));
+        $magentoQuoteId = 123;
+        $this->order->setMagentoQuoteId($magentoQuoteId);
+        $this->assertEquals($magentoQuoteId, $this->order->getData(OrderInterface::MAGENTO_QUOTE_ID));
     }
 
     public function testGetActiveCampaignId()

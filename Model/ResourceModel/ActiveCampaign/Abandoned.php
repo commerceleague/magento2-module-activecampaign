@@ -20,6 +20,6 @@ class Abandoned extends AbstractDb
      */
     protected function _construct()
     {
-        $this->_init(SchemaInterface::ABANDONED_TABLE, AbandonedInterface::ENTITY_ID);
+        $this->_init(SchemaInterface::ABANDONED_CART_TABLE, AbandonedInterface::ENTITY_ID);
     }
 }

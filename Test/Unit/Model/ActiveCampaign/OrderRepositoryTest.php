@@ -99,26 +99,26 @@ class OrderRepositoryTest extends TestCase
         $this->assertSame($this->order, $this->orderRepository->getById($entityId));
     }
 
-    public function testGetByMagentoCustomerId()
+    public function testGetByMagentoQuoteId()
     {
-        $magentoOrderId = 123;
+        $magentoQuoteId = 123;
 
         $this->orderResource->expects($this->once())
             ->method('load')
-            ->with($this->order, $magentoOrderId, OrderInterface::MAGENTO_ORDER_ID)
+            ->with($this->order, $magentoQuoteId, OrderInterface::MAGENTO_QUOTE_ID)
             ->willReturn($this->order);
 
-        $this->assertSame($this->order, $this->orderRepository->getByMagentoOrderId($magentoOrderId));
+        $this->assertSame($this->order, $this->orderRepository->getByMagentoQuoteId($magentoQuoteId));
     }
 
 
-    public function testGetOrCreateByMagentoOrderIdWithKnownMagentoCustomer()
+    public function testGetOrCreateByMagentoQuoteIdWithKnownMagentoOrder()
     {
-        $magentoOrderId = 123;
+        $magentoQuoteId = 123;
 
         $this->orderResource->expects($this->once())
             ->method('load')
-            ->with($this->order, $magentoOrderId, OrderInterface::MAGENTO_ORDER_ID)
+            ->with($this->order, $magentoQuoteId, OrderInterface::MAGENTO_QUOTE_ID)
             ->willReturn($this->order);
 
         $this->order->expects($this->once())
@@ -126,18 +126,18 @@ class OrderRepositoryTest extends TestCase
             ->willReturn(123);
 
         $this->order->expects($this->never())
-            ->method('setMagentoOrderId');
+            ->method('setMagentoQuoteId');
 
-        $this->assertSame($this->order, $this->orderRepository->getOrCreateByMagentoOrderId($magentoOrderId));
+        $this->assertSame($this->order, $this->orderRepository->getOrCreateByMagentoQuoteId($magentoQuoteId));
     }
 
-    public function testGetOrCreateByMagentoOrderId()
+    public function testGetOrCreateByMagentoQuoteId()
     {
-        $magentoOrderId = 123;
+        $magentoQuoteId = 123;
 
         $this->orderResource->expects($this->once())
             ->method('load')
-            ->with($this->order, $magentoOrderId, OrderInterface::MAGENTO_ORDER_ID)
+            ->with($this->order, $magentoQuoteId, OrderInterface::MAGENTO_QUOTE_ID)
             ->willReturn($this->order);
 
         $this->order->expects($this->once())
@@ -145,8 +145,8 @@ class OrderRepositoryTest extends TestCase
             ->willReturn(null);
 
         $this->order->expects($this->once())
-            ->method('setMagentoOrderId')
-            ->with($magentoOrderId)
+            ->method('setMagentoQuoteId')
+            ->with($magentoQuoteId)
             ->willReturnSelf();
 
         $this->orderResource->expects($this->once())
@@ -154,7 +154,7 @@ class OrderRepositoryTest extends TestCase
             ->with($this->order)
             ->willReturn($this->order);
 
-        $this->assertSame($this->order, $this->orderRepository->getOrCreateByMagentoOrderId($magentoOrderId));
+        $this->assertSame($this->order, $this->orderRepository->getOrCreateByMagentoQuoteId($magentoQuoteId));
     }
 
 

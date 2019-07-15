@@ -68,14 +68,14 @@ class OrderRepository implements OrderRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function getByMagentoOrderId($magentoOrderId): Data\OrderInterface
+    public function getByMagentoQuoteId($magentoQuoteId): Data\OrderInterface
     {
         /** @var Order $order */
         $order = $this->orderFactory->create();
         $this->orderResource->load(
             $order,
-            $magentoOrderId,
-            Data\OrderInterface::MAGENTO_ORDER_ID
+            $magentoQuoteId,
+            Data\OrderInterface::MAGENTO_QUOTE_ID
         );
 
         return $order;
@@ -84,12 +84,12 @@ class OrderRepository implements OrderRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function getOrCreateByMagentoOrderId($magentoOrderId): Data\OrderInterface
+    public function getOrCreateByMagentoQuoteId($magentoQuoteId): Data\OrderInterface
     {
-        $order = $this->getByMagentoOrderId($magentoOrderId);
+        $order = $this->getByMagentoQuoteId($magentoQuoteId);
 
         if (!$order->getId()) {
-            $order->setMagentoOrderId($magentoOrderId);
+            $order->setMagentoQuoteId($magentoQuoteId);
             $this->save($order);
         }
 

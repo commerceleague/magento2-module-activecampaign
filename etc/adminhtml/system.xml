@@ -30,13 +30,6 @@
 					</depends>
 				</field>
 			</group>
-			<group id="abandoned_cart" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
-				<label>Abandoned Cart</label>
-				<field id="export_after" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Export After (min)</label>
-					<source_model>CommerceLeague\ActiveCampaign\Model\Config\Source\MinuteInterval</source_model>
-				</field>
-			</group>
 		</section>
 	</system>
 </config>
