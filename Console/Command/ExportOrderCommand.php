@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Console\Command;
 
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
@@ -32,17 +33,19 @@ class ExportOrderCommand extends AbstractExportCommand
     private $orderCollectionFactory;
 
     /**
+     * @param ConfigHelper $configHelper
      * @param OrderCollectionFactory $orderCollectionFactory
-     * @param PublisherInterface $publisher
      * @param ProgressBarFactory $progressBarFactory
+     * @param PublisherInterface $publisher
      */
     public function __construct(
+        ConfigHelper $configHelper,
         OrderCollectionFactory $orderCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
         $this->orderCollectionFactory = $orderCollectionFactory;
-        parent::__construct($progressBarFactory, $publisher);
+        parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
     /**
@@ -77,6 +80,10 @@ class ExportOrderCommand extends AbstractExportCommand
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
+        if (!$this->configHelper->isEnabled() || !$this->configHelper->isOrderExportEnabled()) {
+            throw new RuntimeException('Export disabled by system configuration');
+        }
+
         $orderId = $input->getOption(self::ORDER_ID);
         $omitted = $input->getOption(self::OPTION_OMITTED);
         $all = $input->getOption(self::OPTION_ALL);

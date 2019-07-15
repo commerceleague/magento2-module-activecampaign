@@ -73,10 +73,30 @@ class ExportContactObserverTest extends TestCase
         $this->exportContactObserver->execute($this->observer);
     }
 
+    public function testExecuteExportContactDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(false);
+
+        $this->observer->expects($this->never())
+            ->method('getEvent');
+
+        $this->exportContactObserver->execute($this->observer);
+    }
+
     public function testExecuteWithSubscriberAsCustomer()
     {
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())
@@ -105,6 +125,10 @@ class ExportContactObserverTest extends TestCase
 
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())

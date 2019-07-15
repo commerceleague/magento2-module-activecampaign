@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Console\Command;
 
 use CommerceLeague\ActiveCampaign\Console\Command\ExportAbandonedCartCommand;
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
@@ -20,6 +21,11 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class ExportAbandonedCartCommandTest extends TestCase
 {
+    /**
+     * @var MockObject|ConfigHelper
+     */
+    protected $configHelper;
+
     /**
      * @var MockObject|QuoteCollectionFactory
      */
@@ -52,6 +58,8 @@ class ExportAbandonedCartCommandTest extends TestCase
 
     protected function setUp()
     {
+        $this->configHelper = $this->createMock(ConfigHelper::class);
+
         $this->quoteCollectionFactory = $this->getMockBuilder(QuoteCollectionFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
@@ -71,6 +79,7 @@ class ExportAbandonedCartCommandTest extends TestCase
             ->getMock();
 
         $this->exportAbandonedCartCommand = new ExportAbandonedCartCommand(
+            $this->configHelper,
             $this->quoteCollectionFactory,
             $this->progressBarFactory,
             $this->publisher
@@ -79,8 +88,44 @@ class ExportAbandonedCartCommandTest extends TestCase
         $this->exportAbandonedCartCommandTester = new CommandTester($this->exportAbandonedCartCommand);
     }
 
+    public function testExecuteDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Export disabled by system configuration');
+
+        $this->exportAbandonedCartCommandTester->execute([]);
+    }
+
+    public function testExecuteAbandonedCartExportDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Export disabled by system configuration');
+
+        $this->exportAbandonedCartCommandTester->execute([]);
+    }
+
     public function testExecuteWithoutOptions()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Please provide at least one option');
 
@@ -89,6 +134,14 @@ class ExportAbandonedCartCommandTest extends TestCase
 
     public function testExecuteWithQuoteIdAndOtherOptions()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('You cannot use --quote-id together with another option');
 
@@ -99,6 +152,14 @@ class ExportAbandonedCartCommandTest extends TestCase
 
     public function testExecuteWithAllAndOmittedOption()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('You cannot use --omitted and --all together');
 
@@ -109,6 +170,14 @@ class ExportAbandonedCartCommandTest extends TestCase
 
     public function testExecuteWithoutQuoteIds()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
         $this->quoteCollection->expects($this->once())
             ->method('getAllIds')
             ->willReturn([]);
@@ -131,6 +200,14 @@ class ExportAbandonedCartCommandTest extends TestCase
     public function testExecuteWithQuoteIdOption()
     {
         $quoteId = 123;
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
 
         $this->quoteCollection->expects($this->once())
             ->method('addIdFilter')
@@ -173,6 +250,14 @@ class ExportAbandonedCartCommandTest extends TestCase
     {
         $quoteIds = [123, 456];
 
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
         $this->quoteCollection->expects($this->never())
             ->method('addIdFilter');
 
@@ -208,6 +293,14 @@ class ExportAbandonedCartCommandTest extends TestCase
     public function testExecuteWithAllOption()
     {
         $quoteIds = [123, 456, 789];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
 
         $this->quoteCollection->expects($this->never())
             ->method('addIdFilter');

@@ -30,6 +30,34 @@
 					</depends>
 				</field>
 			</group>
+			<group id="export" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+				<label>Export Settings</label>
+				<depends>
+					<field id="activecampaign/general/enabled">1</field>
+				</depends>
+				<field id="contact_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Enable Contact Export</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+				<field id="customer_enabled" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Enable Customer Export</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+				<field id="order_enabled" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Enable Order Export</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					<depends>
+						<field id="activecampaign/export/customer_enabled">1</field>
+					</depends>
+				</field>
+				<field id="abandoned_cart_enabled" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Enable Abandoned Cart Export</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					<depends>
+						<field id="activecampaign/export/customer_enabled">1</field>
+					</depends>
+				</field>
+			</group>
 		</section>
 	</system>
 </config>

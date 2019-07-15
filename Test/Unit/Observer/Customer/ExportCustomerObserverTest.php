@@ -73,12 +73,32 @@ class ExportCustomerObserverTest extends TestCase
         $this->exportCustomerObserver->execute($this->observer);
     }
 
+    public function testExecuteCustomerExportDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isCustomerExportEnabled')
+            ->willReturn(false);
+
+        $this->observer->expects($this->never())
+            ->method('getEvent');
+
+        $this->exportCustomerObserver->execute($this->observer);
+    }
+
     public function testExecute()
     {
         $magentoCustomerId = 123;
 
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isCustomerExportEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())

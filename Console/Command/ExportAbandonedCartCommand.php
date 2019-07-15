@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Console\Command;
 
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\Collection as QuoteCollection;
@@ -32,17 +33,19 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     private $quoteCollectionFactory;
 
     /**
+     * @param ConfigHelper $configHelper
      * @param QuoteCollectionFactory $quoteCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
      * @param PublisherInterface $publisher
      */
     public function __construct(
+        ConfigHelper $configHelper,
         QuoteCollectionFactory $quoteCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
         $this->quoteCollectionFactory = $quoteCollectionFactory;
-        parent::__construct($progressBarFactory, $publisher);
+        parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
     /**
@@ -77,6 +80,10 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
+        if (!$this->configHelper->isEnabled() || !$this->configHelper->isAbandonedCartExportEnabled()) {
+            throw new RuntimeException('Export disabled by system configuration');
+        }
+
         $quoteId = $input->getOption(self::QUOTE_ID);
         $omitted = $input->getOption(self::OPTION_OMITTED);
         $all = $input->getOption(self::OPTION_ALL);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Console\Command;
 
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
@@ -16,9 +17,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * Class ExportCustomerCommand
- */
 class ExportCustomerCommand extends AbstractExportCommand
 {
     private const NAME = 'activecampaign:export:customer';
@@ -32,17 +30,19 @@ class ExportCustomerCommand extends AbstractExportCommand
     private $customerCollectionFactory;
 
     /**
+     * @param ConfigHelper $configHelper
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
      * @param PublisherInterface $publisher
      */
     public function __construct(
+        ConfigHelper $configHelper,
         CustomerCollectionFactory $customerCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
         $this->customerCollectionFactory = $customerCollectionFactory;
-        parent::__construct($progressBarFactory, $publisher);
+        parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
     /**
@@ -77,6 +77,10 @@ class ExportCustomerCommand extends AbstractExportCommand
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
+        if (!$this->configHelper->isEnabled() || !$this->configHelper->isCustomerExportEnabled()) {
+            throw new RuntimeException('Export disabled by system configuration');
+        }
+
         $email = $input->getOption(self::OPTION_EMAIL);
         $omitted = $input->getOption(self::OPTION_OMITTED);
         $all = $input->getOption(self::OPTION_ALL);

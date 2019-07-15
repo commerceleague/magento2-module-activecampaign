@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Console\Command;
 
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -17,6 +18,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 abstract class AbstractExportCommand extends Command
 {
     /**
+     * @var ConfigHelper
+     */
+    protected $configHelper;
+
+    /**
      * @var ProgressBarFactory
      */
     private $progressBarFactory;
@@ -27,13 +33,16 @@ abstract class AbstractExportCommand extends Command
     protected $publisher;
 
     /**
+     * @param ConfigHelper $configHelper
      * @param ProgressBarFactory $progressBarFactory
      * @param PublisherInterface $publisher
      */
     public function __construct(
+        ConfigHelper $configHelper,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
+        $this->configHelper = $configHelper;
         $this->progressBarFactory = $progressBarFactory;
         $this->publisher = $publisher;
         parent::__construct();

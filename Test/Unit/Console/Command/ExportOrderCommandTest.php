@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Console\Command;
 
 use CommerceLeague\ActiveCampaign\Console\Command\ExportOrderCommand;
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
@@ -20,6 +21,11 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class ExportOrderCommandTest extends TestCase
 {
+    /**
+     * @var MockObject|ConfigHelper
+     */
+    protected $configHelper;
+
     /**
      * @var MockObject|OrderCollectionFactory
      */
@@ -52,6 +58,8 @@ class ExportOrderCommandTest extends TestCase
 
     protected function setUp()
     {
+        $this->configHelper = $this->createMock(ConfigHelper::class);
+
         $this->orderCollectionFactory = $this->getMockBuilder(OrderCollectionFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
@@ -71,6 +79,7 @@ class ExportOrderCommandTest extends TestCase
             ->getMock();
 
         $this->exportOrderCommand = new ExportOrderCommand(
+            $this->configHelper,
             $this->orderCollectionFactory,
             $this->progressBarFactory,
             $this->publisher
@@ -79,8 +88,44 @@ class ExportOrderCommandTest extends TestCase
         $this->exportOrderCommandTester = new CommandTester($this->exportOrderCommand);
     }
 
+    public function testExecuteDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Export disabled by system configuration');
+
+        $this->exportOrderCommandTester->execute([]);
+    }
+
+    public function testExecuteOrderExportDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Export disabled by system configuration');
+
+        $this->exportOrderCommandTester->execute([]);
+    }
+
     public function testExecuteWithoutOptions()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Please provide at least one option');
 
@@ -89,6 +134,14 @@ class ExportOrderCommandTest extends TestCase
 
     public function testExecuteWithOrderIdAndOtherOptions()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('You cannot use --order-id together with another option');
 
@@ -99,6 +152,14 @@ class ExportOrderCommandTest extends TestCase
 
     public function testExecuteWithAllAndOmittedOption()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('You cannot use --omitted and --all together');
 
@@ -109,6 +170,14 @@ class ExportOrderCommandTest extends TestCase
 
     public function testExecuteWithoutOrderIds()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
         $this->orderCollection->expects($this->once())
             ->method('getAllIds')
             ->willReturn([]);
@@ -131,6 +200,14 @@ class ExportOrderCommandTest extends TestCase
     public function testExecuteWithOrderIdOption()
     {
         $orderId = 123;
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
 
         $this->orderCollection->expects($this->once())
             ->method('addExcludeGuestFilter')
@@ -177,6 +254,14 @@ class ExportOrderCommandTest extends TestCase
     {
         $orderIds = [123, 456];
 
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
         $this->orderCollection->expects($this->once())
             ->method('addExcludeGuestFilter')
             ->willReturnSelf();
@@ -216,6 +301,14 @@ class ExportOrderCommandTest extends TestCase
     public function testExecuteWithAllOption()
     {
         $orderIds = [123, 456, 789];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
 
         $this->orderCollection->expects($this->once())
             ->method('addExcludeGuestFilter')

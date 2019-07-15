@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace Test\Unit\Console\Command;
 
 use CommerceLeague\ActiveCampaign\Console\Command\ExportContactCommand;
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
@@ -23,6 +24,11 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class ExportContactCommandTest extends TestCase
 {
+    /**
+     * @var MockObject|ConfigHelper
+     */
+    protected $configHelper;
+
     /**
      * @var MockObject|CustomerCollectionFactory
      */
@@ -65,6 +71,8 @@ class ExportContactCommandTest extends TestCase
 
     protected function setUp()
     {
+        $this->configHelper = $this->createMock(ConfigHelper::class);
+
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
@@ -95,6 +103,7 @@ class ExportContactCommandTest extends TestCase
         $this->publisher = $this->createMock(PublisherInterface::class);
 
         $this->exportContactCommand = new ExportContactCommand(
+            $this->configHelper,
             $this->customerCollectionFactory,
             $this->subscriberCollectionFactory,
             $this->progressBarFactory,
@@ -104,9 +113,44 @@ class ExportContactCommandTest extends TestCase
         $this->exportContactCommandTester = new CommandTester($this->exportContactCommand);
     }
 
+    public function testExecuteDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Export disabled by system configuration');
+
+        $this->exportContactCommandTester->execute([]);
+    }
+
+    public function testExecuteContactExportDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Export disabled by system configuration');
+
+        $this->exportContactCommandTester->execute([]);
+    }
 
     public function testExecuteWithoutOptions()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Please provide at least one option');
 
@@ -115,6 +159,14 @@ class ExportContactCommandTest extends TestCase
 
     public function testExecuteWithEmailAndOtherOptions()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('You cannot use --email together with another option');
 
@@ -125,6 +177,14 @@ class ExportContactCommandTest extends TestCase
 
     public function testExecuteWithAllAndOmittedOption()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('You cannot use --omitted and --all together');
 
@@ -135,6 +195,14 @@ class ExportContactCommandTest extends TestCase
 
     public function testExecuteWithoutCustomerIdsAndSubscriberEmails()
     {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
         $this->customerCollection->expects($this->once())
             ->method('getAllIds')
             ->willReturn([]);
@@ -162,6 +230,14 @@ class ExportContactCommandTest extends TestCase
     {
         $email = 'email@example.com';
         $customerId = 123;
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
 
         $this->customerCollection->expects($this->once())
             ->method('addEmailFilter')
@@ -203,6 +279,14 @@ class ExportContactCommandTest extends TestCase
     public function testExecuteWithEmailFromSubscriberOption()
     {
         $email = 'email@example.com';
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
 
         $this->customerCollection->expects($this->once())
             ->method('addEmailFilter')
@@ -261,6 +345,14 @@ class ExportContactCommandTest extends TestCase
         $customerIds = [123, 456];
         $emails = ['example1@example.com', 'example2@example.com'];
 
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
         $this->customerCollection->expects($this->never())
             ->method('addEmailFilter');
 
@@ -309,6 +401,14 @@ class ExportContactCommandTest extends TestCase
     {
         $customerIds = [123, 456];
         $emails = ['example1@example.com', 'example2@example.com'];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
 
         $this->customerCollection->expects($this->never())
             ->method('addEmailFilter');

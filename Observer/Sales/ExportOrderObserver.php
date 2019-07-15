@@ -44,7 +44,7 @@ class ExportOrderObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (!$this->configHelper->isEnabled()) {
+        if (!$this->configHelper->isEnabled() || !$this->configHelper->isOrderExportEnabled()) {
             return;
         }
 

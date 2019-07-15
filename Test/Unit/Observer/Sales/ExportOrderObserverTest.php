@@ -73,10 +73,30 @@ class ExportOrderObserverTest extends TestCase
         $this->exportOrderObserver->execute($this->observer);
     }
 
+    public function testExecuteOrderExportDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(false);
+
+        $this->observer->expects($this->never())
+            ->method('getEvent');
+
+        $this->exportOrderObserver->execute($this->observer);
+    }
+
     public function testExecuteWithGuestOrder()
     {
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())
@@ -104,6 +124,10 @@ class ExportOrderObserverTest extends TestCase
 
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())

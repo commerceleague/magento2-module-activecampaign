@@ -73,12 +73,32 @@ class ExportContactObserverTest extends TestCase
         $this->exportContactObserver->execute($this->observer);
     }
 
+    public function testExecuteContactExportDisabled()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(false);
+
+        $this->observer->expects($this->never())
+            ->method('getEvent');
+
+        $this->exportContactObserver->execute($this->observer);
+    }
+
     public function testExecute()
     {
         $magentoCustomerId = 123;
 
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
             ->willReturn(true);
 
         $this->observer->expects($this->once())

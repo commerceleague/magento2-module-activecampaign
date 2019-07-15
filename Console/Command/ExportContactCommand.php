@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Console\Command;
 
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
@@ -39,12 +40,14 @@ class ExportContactCommand extends AbstractExportCommand
     private $subscriberCollectionFactory;
 
     /**
+     * @param ConfigHelper $configHelper
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param SubscriberCollectionFactory $subscriberCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
      * @param PublisherInterface $publisher
      */
     public function __construct(
+        ConfigHelper $configHelper,
         CustomerCollectionFactory $customerCollectionFactory,
         SubscriberCollectionFactory $subscriberCollectionFactory,
         ProgressBarFactory $progressBarFactory,
@@ -52,7 +55,7 @@ class ExportContactCommand extends AbstractExportCommand
     ) {
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->subscriberCollectionFactory = $subscriberCollectionFactory;
-        parent::__construct($progressBarFactory, $publisher);
+        parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
     /**
@@ -87,6 +90,10 @@ class ExportContactCommand extends AbstractExportCommand
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
+        if (!$this->configHelper->isEnabled() || !$this->configHelper->isContactExportEnabled()) {
+            throw new RuntimeException('Export disabled by system configuration');
+        }
+
         $email = $input->getOption(self::OPTION_EMAIL);
         $omitted = $input->getOption(self::OPTION_OMITTED);
         $all = $input->getOption(self::OPTION_ALL);

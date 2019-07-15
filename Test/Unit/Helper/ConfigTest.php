@@ -94,4 +94,84 @@ class ConfigTest extends TestCase
 
         $this->assertEquals($connectionId, $this->config->getConnectionId());
     }
+
+    public function testIsContactExportEnabledFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/contact_enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isContactExportEnabled());
+    }
+
+    public function testIsContactExportEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/contact_enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isContactExportEnabled());
+    }
+
+    public function testIsCustomerExportEnabledFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/customer_enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isCustomerExportEnabled());
+    }
+
+    public function testIsCustomerExportEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/customer_enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isCustomerExportEnabled());
+    }
+
+    public function testIsOrderExportEnabledFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/order_enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isOrderExportEnabled());
+    }
+
+    public function testIsOrderExportEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/order_enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isOrderExportEnabled());
+    }
+
+    public function testIsAbandonedCartExportEnabledFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/abandoned_cart_enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isAbandonedCartExportEnabled());
+    }
+
+    public function testIsAbandonedCartExportEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/abandoned_cart_enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isAbandonedCartExportEnabled());
+    }
 }
