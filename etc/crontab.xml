@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+	<group id="default">
+		<job name="activecampaign_export_omitted_contacts" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedContacts" method="run">
+			<schedule>*/10 * * * *</schedule>
+		</job>
+		<job name="activecampaign_export_omitted_customers" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedCustomers" method="run">
+			<schedule>*/10 * * * *</schedule>
+		</job>
+		<job name="activecampaign_export_omitted_orders" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedOrders" method="run">
+			<schedule>*/10 * * * *</schedule>
+		</job>
+		<job name="activecampaign_export_omitted_abandoned_carts" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedAbandonedCarts" method="run">
+			<schedule>*/10 * * * *</schedule>
+		</job>
+	</group>
+</config>

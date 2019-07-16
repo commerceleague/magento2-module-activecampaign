@@ -37,14 +37,14 @@ class ExportAbandonedCartCommandTest extends TestCase
     protected $quoteCollection;
 
     /**
-     * @var MockObject|PublisherInterface
-     */
-    protected $publisher;
-
-    /**
      * @var MockObject|ProgressBarFactory
      */
     protected $progressBarFactory;
+
+    /**
+     * @var MockObject|PublisherInterface
+     */
+    protected $publisher;
 
     /**
      * @var ExportAbandonedCartCommand
@@ -71,12 +71,12 @@ class ExportAbandonedCartCommandTest extends TestCase
             ->method('create')
             ->willReturn($this->quoteCollection);
 
-        $this->publisher = $this->createMock(PublisherInterface::class);
-
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
+
+        $this->publisher = $this->createMock(PublisherInterface::class);
 
         $this->exportAbandonedCartCommand = new ExportAbandonedCartCommand(
             $this->configHelper,

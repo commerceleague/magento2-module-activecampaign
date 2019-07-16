@@ -37,14 +37,14 @@ class ExportOrderCommandTest extends TestCase
     protected $orderCollection;
 
     /**
-     * @var MockObject|PublisherInterface
-     */
-    protected $publisher;
-
-    /**
      * @var MockObject|ProgressBarFactory
      */
     protected $progressBarFactory;
+
+    /**
+     * @var MockObject|PublisherInterface
+     */
+    protected $publisher;
 
     /**
      * @var ExportOrderCommand
@@ -71,12 +71,12 @@ class ExportOrderCommandTest extends TestCase
             ->method('create')
             ->willReturn($this->orderCollection);
 
-        $this->publisher = $this->createMock(PublisherInterface::class);
-
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
+
+        $this->publisher = $this->createMock(PublisherInterface::class);
 
         $this->exportOrderCommand = new ExportOrderCommand(
             $this->configHelper,
