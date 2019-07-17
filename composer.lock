@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "02aa7ea7184a64bf324350121aaf7e62",
+    "content-hash": "a948ca5c2cc0a56e53111e6776ca3f90",
     "packages": [
         {
             "name": "colinmollenhour/credis",
@@ -85,16 +85,16 @@
         },
         {
             "name": "commerceleague/api-client-activecampaign",
-            "version": "0.2.1",
+            "version": "0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/commerceleague/api-client-activecampaign.git",
-                "reference": "6cd6f9f100e672dad17649c1e114818315e13836"
+                "reference": "73cd98c1ff77fb36cdf85dbd45b117506dbf0848"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/commerceleague/api-client-activecampaign/zipball/6cd6f9f100e672dad17649c1e114818315e13836",
-                "reference": "6cd6f9f100e672dad17649c1e114818315e13836",
+                "url": "https://api.github.com/repos/commerceleague/api-client-activecampaign/zipball/73cd98c1ff77fb36cdf85dbd45b117506dbf0848",
+                "reference": "73cd98c1ff77fb36cdf85dbd45b117506dbf0848",
                 "shasum": ""
             },
             "require": {
@@ -126,7 +126,7 @@
                 "MIT"
             ],
             "description": "N/A",
-            "time": "2019-06-26T15:53:58+00:00"
+            "time": "2019-07-17T12:32:26+00:00"
         },
         {
             "name": "composer/ca-bundle",
