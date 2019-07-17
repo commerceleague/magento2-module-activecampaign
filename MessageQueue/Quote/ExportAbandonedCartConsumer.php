@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Request\AbandonedCartBuilder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
+use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteFactory;
@@ -89,6 +90,10 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
 
         try {
             $apiResponse = $this->client->getOrderApi()->create(['ecomOrder' => $request]);
+        } catch (UnprocessableEntityHttpException $e) {
+            $this->logger->error($e->getMessage());
+            $this->logger->error(print_r($e->getResponseErrors(), true));
+            return;
         } catch (HttpException $e) {
             $this->logger->error($e->getMessage());
             return;

@@ -13,6 +13,7 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Sales\ExportOrderConsumer;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
+use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Phrase;
 use Magento\Sales\Api\OrderRepositoryInterface as MagentoOrderRepositoryInterface;
@@ -109,7 +110,7 @@ class ExportOrderConsumerTest extends TestCase
        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
-    public function testConsumeApiRequestException()
+    public function testConsumeApiHttpException()
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
@@ -152,6 +153,65 @@ class ExportOrderConsumerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error');
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testConsumeApiUnprocessableEntityHttpExceptionException()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request'];
+        $responseErrors = ['first error', 'second error'];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $this->logger->expects($this->exactly(2))
+            ->method('error');
+
+        $unprocessableEntityHttpException->expects($this->once())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        $this->logger->expects($this->at(1))
+            ->method('error')
+            ->with(print_r($responseErrors, true));
 
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');

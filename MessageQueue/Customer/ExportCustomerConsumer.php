@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerReq
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
+use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
@@ -88,6 +89,10 @@ class ExportCustomerConsumer implements ConsumerInterface
 
         try {
             $apiResponse = $this->performApiRequest($customer, $request);
+        } catch (UnprocessableEntityHttpException $e) {
+            $this->logger->error($e->getMessage());
+            $this->logger->error(print_r($e->getResponseErrors(), true));
+            return;
         } catch (HttpException $e) {
             $this->logger->error($e->getMessage());
             return;

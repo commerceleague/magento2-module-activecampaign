@@ -13,6 +13,7 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Newsletter\ExportContactConsumer;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
+use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Framework\Phrase;
 use Magento\Newsletter\Model\Subscriber;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -21,7 +22,6 @@ use Magento\Newsletter\Model\SubscriberFactory;
 
 class ExportContactConsumerTest extends TestCase
 {
-
     /**
      * @var MockObject|SubscriberFactory
      */
@@ -119,7 +119,7 @@ class ExportContactConsumerTest extends TestCase
         $this->exportContactConsumer->consume(json_encode(['email' => $email]));
     }
 
-    public function testConsumeApiRequestException()
+    public function testConsumeApiHttpException()
     {
         $email = 'example@example.com';
         $request = ['request'];
@@ -160,6 +160,63 @@ class ExportContactConsumerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error');
+
+        $this->contact->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->exportContactConsumer->consume(json_encode(['email' => $email]));
+    }
+
+    public function testConsumeApiUnprocessableEntityHttpExceptionException()
+    {
+        $email = 'example@example.com';
+        $request = ['request'];
+        $responseErrors = ['first error', 'second error'];
+
+        $this->subscriber->expects($this->once())
+            ->method('loadByEmail')
+            ->with($email)
+            ->willReturnSelf();
+
+        $this->subscriber->expects($this->once())
+            ->method('getId')
+            ->willReturn(123);
+
+        $this->subscriber->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactRepository->expects($this->once())
+            ->method('getOrCreateByEmail')
+            ->with($email)
+            ->willReturn($this->contact);
+
+        $this->contactRequestBuilder->expects($this->once())
+            ->method('buildWithSubscriber')
+            ->willReturn($request);
+
+        $this->client->expects($this->once())
+            ->method('getContactApi')
+            ->willReturn($this->contactApi);
+
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->contactApi->expects($this->once())
+            ->method('upsert')
+            ->with(['contact' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $this->logger->expects($this->exactly(2))
+            ->method('error');
+
+        $unprocessableEntityHttpException->expects($this->once())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        $this->logger->expects($this->at(1))
+            ->method('error')
+            ->with(print_r($responseErrors, true));
 
         $this->contact->expects($this->never())
             ->method('setActiveCampaignId');

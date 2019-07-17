@@ -13,6 +13,7 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportCustomerConsumer;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
+use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
 use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -109,7 +110,7 @@ class ExportCustomerConsumerTest extends TestCase
         $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
     }
 
-    public function testConsumeApiRequestException()
+    public function testConsumeApiHttpException()
     {
         $magentoCustomerId = 123;
         $request = ['request'];
@@ -142,6 +143,55 @@ class ExportCustomerConsumerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error');
+
+        $this->customer->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
+    public function testConsumeApiUnprocessableEntityHttpExceptionException()
+    {
+        $magentoCustomerId = 123;
+        $request = ['request'];
+        $responseErrors = ['first error', 'second error'];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $this->logger->expects($this->exactly(2))
+            ->method('error');
+
+        $unprocessableEntityHttpException->expects($this->once())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        $this->logger->expects($this->at(1))
+            ->method('error')
+            ->with(print_r($responseErrors, true));
 
         $this->customer->expects($this->never())
             ->method('setActiveCampaignId');

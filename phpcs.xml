@@ -8,5 +8,8 @@
 	<file>Observer</file>
 	<file>Setup</file>
 	<exclude-pattern>Test/*</exclude-pattern>
-	<rule ref="Magento2" />
+	<rule ref="Magento2">
+		<!-- TODO::check how print_r could be whitelisted -->
+		<exclude name="Magento2.Functions.DiscouragedFunction" />
+	</rule>
 </ruleset>
