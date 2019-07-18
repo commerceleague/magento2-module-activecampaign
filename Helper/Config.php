@@ -21,6 +21,9 @@ class Config extends AbstractHelper
     private const XML_PATH_EXPORT_ORDER_ENABLED = 'activecampaign/export/order_enabled';
     private const XML_PATH_EXPORT_ABANDONED_CART_ENABLED = 'activecampaign/export/abandoned_cart_enabled';
 
+    private const XML_PATH_WEBHOOK_ENABLED = 'activecampaign/webhook/enabled';
+    private const XML_PATH_WEBHOOK_TOKEN = 'activecampaign/webhook/token';
+
     /**
      * @return bool
      */
@@ -83,5 +86,21 @@ class Config extends AbstractHelper
     public function isAbandonedCartExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_ABANDONED_CART_ENABLED);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isWebhookEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_WEBHOOK_ENABLED);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getWebhookToken(): ?string
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_WEBHOOK_TOKEN);
     }
 }

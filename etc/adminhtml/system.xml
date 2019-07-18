@@ -30,7 +30,7 @@
 					</depends>
 				</field>
 			</group>
-			<group id="export" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+			<group id="export" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
 				<label>Export Settings</label>
 				<depends>
 					<field id="activecampaign/general/enabled">1</field>
@@ -55,6 +55,19 @@
 					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					<depends>
 						<field id="activecampaign/export/customer_enabled">1</field>
+					</depends>
+				</field>
+			</group>
+			<group id="webhook" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+				<label>Webhook Settings</label>
+				<field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Enabled</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+				<field id="token" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Webhook Token</label>
+					<depends>
+						<field id="enabled">1</field>
 					</depends>
 				</field>
 			</group>

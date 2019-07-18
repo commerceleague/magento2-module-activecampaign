@@ -174,4 +174,36 @@ class ConfigTest extends TestCase
 
         $this->assertTrue($this->config->isAbandonedCartExportEnabled());
     }
+
+    public function testIsWebhookEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/webhook/enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isWebhookEnabled());
+    }
+
+    public function testIsWebhookEnabledFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/webhook/enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isWebhookEnabled());
+    }
+
+    public function testGetWebhookToken()
+    {
+        $token = 'THE_TOKEN';
+
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with('activecampaign/webhook/token')
+            ->willReturn($token);
+
+        $this->assertEquals($token, $this->config->getWebhookToken());
+    }
 }
