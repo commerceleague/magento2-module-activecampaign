@@ -25,6 +25,7 @@ class ExportContactConsumer implements ConsumerInterface
      * @var SubscriberFactory
      */
     private $subscriberFactory;
+
     /**
      * @var Logger
      */

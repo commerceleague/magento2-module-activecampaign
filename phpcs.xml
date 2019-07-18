@@ -11,5 +11,6 @@
 	<rule ref="Magento2">
 		<!-- TODO::check how print_r could be whitelisted -->
 		<exclude name="Magento2.Functions.DiscouragedFunction" />
+		<exclude name="Magento2.PHP.FinalImplementation" />
 	</rule>
 </ruleset>
