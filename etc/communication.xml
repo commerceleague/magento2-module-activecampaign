@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Communication/etc/communication.xsd">
-	<topic name="activecampaign.customer.export.contact" request="string" />
-	<topic name="activecampaign.customer.export.customer" request="string" />
-	<topic name="activecampaign.newsletter.export.contact" request="string" />
-	<topic name="activecampaign.sales.export.order" request="string" />
-	<topic name="activecampaign.quote.export.abandoned_cart" request="string" />
+    <topic name="activecampaign.customer.export.contact" request="string"/>
+    <topic name="activecampaign.customer.export.customer" request="string"/>
+    <topic name="activecampaign.newsletter.export.contact" request="string"/>
+    <topic name="activecampaign.sales.export.order" request="string"/>
+    <topic name="activecampaign.quote.export.abandoned_cart" request="string"/>
+    <topic name="activecampaign.customer.assign.contact.to.list" request="string"/>
 </config>
