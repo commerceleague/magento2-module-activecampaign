@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /**
  */
+
 namespace CommerceLeague\ActiveCampaign\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
@@ -11,18 +12,22 @@ use Magento\Framework\App\Helper\AbstractHelper;
  */
 class Config extends AbstractHelper
 {
-    private const XML_PATH_GENERAL_ENABLED = 'activecampaign/general/enabled';
-    private const XML_PATH_GENERAL_API_URL = 'activecampaign/general/api_url';
-    private const XML_PATH_GENERAL_API_TOKEN = 'activecampaign/general/api_token';
+
+    private const XML_PATH_GENERAL_ENABLED       = 'activecampaign/general/enabled';
+    private const XML_PATH_GENERAL_API_URL       = 'activecampaign/general/api_url';
+    private const XML_PATH_GENERAL_API_TOKEN     = 'activecampaign/general/api_token';
     private const XML_PATH_GENERAL_CONNECTION_ID = 'activecampaign/general/connection_id';
 
-    private const XML_PATH_EXPORT_CONTACT_ENABLED = 'activecampaign/export/contact_enabled';
-    private const XML_PATH_EXPORT_CUSTOMER_ENABLED = 'activecampaign/export/customer_enabled';
-    private const XML_PATH_EXPORT_ORDER_ENABLED = 'activecampaign/export/order_enabled';
+    private const XML_PATH_EXPORT_CONTACT_ENABLED        = 'activecampaign/export/contact_enabled';
+    private const XML_PATH_EXPORT_CUSTOMER_ENABLED       = 'activecampaign/export/customer_enabled';
+    private const XML_PATH_EXPORT_ORDER_ENABLED          = 'activecampaign/export/order_enabled';
     private const XML_PATH_EXPORT_ABANDONED_CART_ENABLED = 'activecampaign/export/abandoned_cart_enabled';
 
     private const XML_PATH_WEBHOOK_ENABLED = 'activecampaign/webhook/enabled';
-    private const XML_PATH_WEBHOOK_TOKEN = 'activecampaign/webhook/token';
+    private const XML_PATH_WEBHOOK_TOKEN   = 'activecampaign/webhook/token';
+
+    private const XML_PATH_REGISTERED_CUSTOMER_LIST_ID = 'activecampaign/customer_export/registered_customer_list_id';
+    private const XML_PATH_GUEST_CUSTOMER_LIST_ID      = 'activecampaign/customer_export/guest_customer_list_id';
 
     /**
      * @return bool
@@ -102,5 +107,25 @@ class Config extends AbstractHelper
     public function getWebhookToken(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_WEBHOOK_TOKEN);
+    }
+
+    /**
+     * Get the list id for registered customers, if set
+     *
+     * @return int|null
+     */
+    public function getRegisteredCustomerListId(): ?int
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_REGISTERED_CUSTOMER_LIST_ID);
+    }
+
+    /**
+     * Get the list id for guest customers, if set
+     *
+     * @return int|null
+     */
+    public function getGuestCustomerListId(): ?int
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_GUEST_CUSTOMER_LIST_ID);
     }
 }

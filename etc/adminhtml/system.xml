@@ -1,76 +1,92 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
-	<system>
-		<section id="activecampaign" translate="label" type="text" sortOrder="1200" showInDefault="1" showInWebsite="1" showInStore="0">
-			<label>Active Campaign</label>
-			<tab>general</tab>
-			<resource>CommerceLeague_ActiveCampaign::activecampaign_config</resource>
-			<group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-				<label>General</label>
-				<field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Enabled</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-				</field>
-				<field id="api_url" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Api Url</label>
-					<depends>
-						<field id="enabled">1</field>
-					</depends>
-				</field>
-				<field id="api_token" translate="label" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Api Token</label>
-					<depends>
-						<field id="enabled">1</field>
-					</depends>
-				</field>
-				<field id="connection_id" translate="label" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Connection Id</label>
-					<depends>
-						<field id="enabled">1</field>
-					</depends>
-				</field>
-			</group>
-			<group id="export" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
-				<label>Export Settings</label>
-				<depends>
-					<field id="activecampaign/general/enabled">1</field>
-				</depends>
-				<field id="contact_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Enable Contact Export</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-				</field>
-				<field id="customer_enabled" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Enable Customer Export</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-				</field>
-				<field id="order_enabled" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Enable Order Export</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-					<depends>
-						<field id="activecampaign/export/customer_enabled">1</field>
-					</depends>
-				</field>
-				<field id="abandoned_cart_enabled" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Enable Abandoned Cart Export</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-					<depends>
-						<field id="activecampaign/export/customer_enabled">1</field>
-					</depends>
-				</field>
-			</group>
-			<group id="webhook" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
-				<label>Webhook Settings</label>
-				<field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Enabled</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-				</field>
-				<field id="token" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Webhook Token</label>
-					<depends>
-						<field id="enabled">1</field>
-					</depends>
-				</field>
-			</group>
-		</section>
-	</system>
+    <system>
+        <section id="activecampaign" translate="label" type="text" sortOrder="1200" showInDefault="1" showInWebsite="1" showInStore="0">
+            <label>Active Campaign</label>
+            <tab>general</tab>
+            <resource>CommerceLeague_ActiveCampaign::activecampaign_config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>General</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="api_url" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Api Url</label>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="api_token" translate="label" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Api Token</label>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="connection_id" translate="label" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Connection Id</label>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+            <group id="export" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Export Settings</label>
+                <depends>
+                    <field id="activecampaign/general/enabled">1</field>
+                </depends>
+                <field id="contact_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Contact Export</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="contact_list" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Assign Contact To List</label>
+                    <source_model></source_model>
+                </field>
+                <field id="customer_enabled" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Customer Export</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="order_enabled" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Order Export</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="activecampaign/export/customer_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="abandoned_cart_enabled" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Abandoned Cart Export</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="activecampaign/export/customer_enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+            <group id="customer_export" translate="label" type="text" sortOrder="21" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Customer Export Settings</label>
+                <depends>
+                    <field id="activecampaing/export/customer_enabled">1</field>
+                </depends>
+                <field id="registered_customer_list_id" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>List ID for Registered Magento Customers</label>
+                </field>
+                <field id="guest_customer_list_id" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>List ID for Guest Magento Customers</label>
+                </field>
+            </group>
+            <group id="webhook" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Webhook Settings</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="token" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Webhook Token</label>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
 </config>

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /**
  */
+
 namespace CommerceLeague\ActiveCampaign\Gateway;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
@@ -9,7 +10,9 @@ use CommerceLeague\ActiveCampaignApi\Api\AbandonedCartApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Api\ConnectionApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
+use CommerceLeague\ActiveCampaignApi\Api\ListsApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
+use CommerceLeague\ActiveCampaignApi\Api\TagsApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\ClientBuilder;
 use CommerceLeague\ActiveCampaignApi\CommonClientInterface;
 use Http\Adapter\Guzzle6\Client as GuzzleClient;
@@ -21,6 +24,7 @@ use Http\Factory\Guzzle\StreamFactory as GuzzleStreamFactory;
  */
 class Client
 {
+
     /**
      * @var ConfigHelper
      */
@@ -32,22 +36,6 @@ class Client
     public function __construct(ConfigHelper $configHelper)
     {
         $this->configHelper = $configHelper;
-    }
-
-    /**
-     * @return CommonClientInterface
-     */
-    private function getCommonClient(): CommonClientInterface
-    {
-        $url = $this->configHelper->getApiUrl();
-        $token = $this->configHelper->getApiToken();
-
-        $clientBuilder = new ClientBuilder();
-        $clientBuilder->setHttpClient(new GuzzleClient());
-        $clientBuilder->setRequestFactory(new GuzzleRequestFactory());
-        $clientBuilder->setStreamFactory(new GuzzleStreamFactory());
-
-        return $clientBuilder->buildCommonClient($url, $token);
     }
 
     /**
@@ -88,5 +76,37 @@ class Client
     public function getOrderApi(): OrderApiResourceInterface
     {
         return $this->getCommonClient()->getOrderApi();
+    }
+
+    /**
+     * @return TagsApiResourceInterface
+     */
+    public function getTagsApi(): TagsApiResourceInterface
+    {
+        return $this->getCommonClient()->getTagsApi();
+    }
+
+    /**
+     * @return ListsApiResourceInterface
+     */
+    public function getListsApi(): ListsApiResourceInterface
+    {
+        return $this->getCommonClient()->getListsApi();
+    }
+
+    /**
+     * @return CommonClientInterface
+     */
+    private function getCommonClient(): CommonClientInterface
+    {
+        $url   = $this->configHelper->getApiUrl();
+        $token = $this->configHelper->getApiToken();
+
+        $clientBuilder = new ClientBuilder();
+        $clientBuilder->setHttpClient(new GuzzleClient());
+        $clientBuilder->setRequestFactory(new GuzzleRequestFactory());
+        $clientBuilder->setStreamFactory(new GuzzleStreamFactory());
+
+        return $clientBuilder->buildCommonClient($url, $token);
     }
 }
