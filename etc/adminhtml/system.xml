@@ -39,10 +39,7 @@
                     <label>Enable Contact Export</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="contact_list" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>Assign Contact To List</label>
-                    <source_model></source_model>
-                </field>
+
                 <field id="customer_enabled" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Enable Customer Export</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -67,11 +64,13 @@
                 <depends>
                     <field id="activecampaing/export/customer_enabled">1</field>
                 </depends>
-                <field id="registered_customer_list_id" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="registered_customer_list_id" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>List ID for Registered Magento Customers</label>
+                    <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Lists</source_model>
                 </field>
                 <field id="guest_customer_list_id" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>List ID for Guest Magento Customers</label>
+                    <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Lists</source_model>
                 </field>
             </group>
             <group id="webhook" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
