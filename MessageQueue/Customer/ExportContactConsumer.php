@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /**
  */
+
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Customer;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
@@ -12,6 +13,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
+use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -21,6 +23,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
  */
 class ExportContactConsumer implements ConsumerInterface
 {
+
     /**
      * @var MagentoCustomerRepositoryInterface
      */
@@ -47,28 +50,36 @@ class ExportContactConsumer implements ConsumerInterface
     private $client;
 
     /**
+     * @var ManagerInterface
+     */
+    private $eventManager;
+
+    /**
      * @param MagentoCustomerRepositoryInterface $magentoCustomerRepository
-     * @param Logger $logger
-     * @param ContactRequestBuilder $contactRequestBuilder
-     * @param ContactRepositoryInterface $contactRepository
-     * @param Client $client
+     * @param Logger                             $logger
+     * @param ContactRequestBuilder              $contactRequestBuilder
+     * @param ContactRepositoryInterface         $contactRepository
+     * @param Client                             $client
      */
     public function __construct(
         MagentoCustomerRepositoryInterface $magentoCustomerRepository,
         Logger $logger,
         ContactRepositoryInterface $contactRepository,
         ContactRequestBuilder $contactRequestBuilder,
-        Client $client
+        Client $client,
+        ManagerInterface $eventManager
     ) {
         $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->logger = $logger;
-        $this->contactRepository = $contactRepository;
-        $this->contactRequestBuilder = $contactRequestBuilder;
-        $this->client = $client;
+        $this->logger                    = $logger;
+        $this->contactRepository         = $contactRepository;
+        $this->contactRequestBuilder     = $contactRequestBuilder;
+        $this->client                    = $client;
+        $this->eventManager              = $eventManager;
     }
 
     /**
      * @param string $message
+     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
@@ -98,5 +109,7 @@ class ExportContactConsumer implements ConsumerInterface
 
         $contact->setActiveCampaignId($apiResponse['contact']['id']);
         $this->contactRepository->save($contact);
+        // trigger event after contact has been saved
+        $this->eventManager->dispatch('commmerceleague_activecampaign_export_contact_success', ['contact' => $contact]);
     }
 }
