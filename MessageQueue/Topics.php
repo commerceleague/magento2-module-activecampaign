@@ -15,4 +15,5 @@ class Topics
     public const NEWSLETTER_CONTACT_EXPORT = 'activecampaign.newsletter.export.contact';
     public const SALES_ORDER_EXPORT = 'activecampaign.sales.export.order';
     public const QUOTE_ABANDONED_CART_EXPORT = 'activecampaign.quote.export.abandoned_cart';
+    public const ASSIGN_CONTACT_TO_LIST = 'activecampaign.customer.assign.contact.to.list';
 }

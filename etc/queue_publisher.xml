@@ -1,18 +1,21 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/publisher.xsd">
-	<publisher topic="activecampaign.customer.export.contact">
-		<connection name="db" exchange="magento-db" />
-	</publisher>
-	<publisher topic="activecampaign.customer.export.customer">
-		<connection name="db" exchange="magento-db" />
-	</publisher>
-	<publisher topic="activecampaign.newsletter.export.contact">
-		<connection name="db" exchange="magento-db" />
-	</publisher>
-	<publisher topic="activecampaign.sales.export.order">
-		<connection name="db" exchange="magento-db" />
-	</publisher>
-	<publisher topic="activecampaign.quote.export.abandoned_cart">
-		<connection name="db" exchange="magento-db" />
-	</publisher>
+    <publisher topic="activecampaign.customer.export.contact">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
+    <publisher topic="activecampaign.customer.export.customer">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
+    <publisher topic="activecampaign.newsletter.export.contact">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
+    <publisher topic="activecampaign.sales.export.order">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
+    <publisher topic="activecampaign.quote.export.abandoned_cart">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
+    <publisher topic="activecampaign.customer.assign.contact.to.list">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
 </config>
