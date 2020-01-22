@@ -64,12 +64,8 @@
                 <depends>
                     <field id="activecampaing/export/customer_enabled">1</field>
                 </depends>
-                <field id="registered_customer_list_id" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>List ID for Registered Magento Customers</label>
-                    <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Lists</source_model>
-                </field>
-                <field id="guest_customer_list_id" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>List ID for Guest Magento Customers</label>
+                <field id="customer_list_id" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Assign Customers to this list</label>
                     <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Lists</source_model>
                 </field>
             </group>
