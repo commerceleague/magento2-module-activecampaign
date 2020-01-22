@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /**
  */
+
 namespace CommerceLeague\ActiveCampaign\Observer\Customer;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
@@ -16,6 +17,7 @@ use Magento\Framework\MessageQueue\PublisherInterface;
  */
 class ExportContactObserver implements ObserverInterface
 {
+
     /**
      * @var ConfigHelper
      */
@@ -27,7 +29,7 @@ class ExportContactObserver implements ObserverInterface
     private $publisher;
 
     /**
-     * @param ConfigHelper $configHelper
+     * @param ConfigHelper       $configHelper
      * @param PublisherInterface $publisher
      */
     public function __construct(
@@ -35,7 +37,7 @@ class ExportContactObserver implements ObserverInterface
         PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
-        $this->publisher = $publisher;
+        $this->publisher    = $publisher;
     }
 
     /**

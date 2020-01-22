@@ -5,7 +5,11 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Helper;
 
+use Magento\Customer\Api\AccountManagementInterface;
+use Magento\Customer\Model\AccountConfirmation;
 use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Class Config
@@ -30,6 +34,30 @@ class Config extends AbstractHelper
 
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_LIST = 'activecampaign/newsletter_export/newsletter_subscribers_list';
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_TAGS = 'activecampaign/newsletter_export/newsletter_subscribers_tags';
+
+    /**
+     * @var AccountConfirmation
+     */
+    private $accountConfirmation;
+
+    /**
+     * @var AccountManagementInterface
+     */
+    private $accountManagement;
+
+    /**
+     * Config constructor.
+     *
+     * @param Context                    $context
+     * @param AccountManagementInterface $accountManagement
+     */
+    public function __construct(
+        Context $context,
+        AccountManagementInterface $accountManagement
+    ) {
+        parent::__construct($context);
+        $this->accountManagement = $accountManagement;
+    }
 
     /**
      * @return bool
@@ -118,7 +146,11 @@ class Config extends AbstractHelper
      */
     public function getCustomerListId(): ?int
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_LIST_ID);
+        $listId = $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_LIST_ID);
+        if (null !== $listId) {
+            return (int)$listId;
+        }
+        return $listId;
     }
 
     /**
@@ -128,7 +160,11 @@ class Config extends AbstractHelper
      */
     public function getNewsletterSubscriberList(): ?int
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_NEWSLETTER_SUBSCRIBER_LIST);
+        $listId = $this->scopeConfig->getValue(self::XML_PATH_NEWSLETTER_SUBSCRIBER_LIST);
+        if (null !== $listId) {
+            return (int)$listId;
+        }
+        return $listId;
     }
 
     /**
@@ -144,5 +180,26 @@ class Config extends AbstractHelper
         }
 
         return explode(',', $tags);
+    }
+
+    /**
+     * Is customer confirmation required
+     *
+     * @param int $customerId
+     *
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function isConfirmationRequired(int $customerId): bool
+    {
+        $status                 = $this->accountManagement->getConfirmationStatus($customerId);
+        $noConfirmationRequired = [
+            AccountManagementInterface::ACCOUNT_CONFIRMATION_NOT_REQUIRED,
+            AccountManagementInterface::ACCOUNT_CONFIRMED
+        ];
+        if (in_array($status, $noConfirmationRequired)) {
+            return false;
+        }
+        return true;
     }
 }

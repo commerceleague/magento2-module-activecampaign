@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
+use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Newsletter\Model\Subscriber;
@@ -21,6 +22,7 @@ use Magento\Newsletter\Model\Subscriber;
  */
 class ExportContactConsumer implements ConsumerInterface
 {
+
     /**
      * @var SubscriberFactory
      */
@@ -47,28 +49,37 @@ class ExportContactConsumer implements ConsumerInterface
     private $client;
 
     /**
-     * @param SubscriberFactory $subscriberFactory
-     * @param Logger $logger
+     * @var ManagerInterface
+     */
+    private $eventManager;
+
+    /**
+     * @param SubscriberFactory          $subscriberFactory
+     * @param Logger                     $logger
      * @param ContactRepositoryInterface $contactRepository
-     * @param ContactRequestBuilder $contactRequestBuilder
-     * @param Client $client
+     * @param ContactRequestBuilder      $contactRequestBuilder
+     * @param Client                     $client
+     * @param ManagerInterface           $eventManager
      */
     public function __construct(
         SubscriberFactory $subscriberFactory,
         Logger $logger,
         ContactRepositoryInterface $contactRepository,
         ContactRequestBuilder $contactRequestBuilder,
-        Client $client
+        Client $client,
+        ManagerInterface $eventManager
     ) {
-        $this->subscriberFactory = $subscriberFactory;
-        $this->logger = $logger;
-        $this->contactRepository = $contactRepository;
+        $this->subscriberFactory     = $subscriberFactory;
+        $this->logger                = $logger;
+        $this->contactRepository     = $contactRepository;
         $this->contactRequestBuilder = $contactRequestBuilder;
-        $this->client = $client;
+        $this->client                = $client;
+        $this->eventManager          = $eventManager;
     }
 
     /**
      * @param string $message
+     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void

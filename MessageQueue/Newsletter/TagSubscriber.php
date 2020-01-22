@@ -91,7 +91,7 @@ class TagSubscriber implements ConsumerInterface
         $requestBuilder = $this->requestBuilder;
         return array_map(
             function ($tagId) use ($requestBuilder, $contact) {
-                return $requestBuilder->buildWithContact($contact, $tagId);
+                return $requestBuilder->buildWithContact($contact, (int)$tagId);
             },
             $tagIds
         );
