@@ -5,7 +5,7 @@ declare(strict_types=1);
  * See license.md for license details.
  */
 
-namespace CommerceLeague\ActiveCampaign\MessageQueue\Customer;
+namespace CommerceLeague\ActiveCampaign\MessageQueue\Newsletter;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
@@ -15,11 +15,11 @@ use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 
 /**
- * Class AssignContactToListConsumer
+ * Class AssignSubscriberToList
  *
- * @package CommerceLeague\ActiveCampaign\MessageQueue\Customer
+ * @package CommerceLeague\ActiveCampaign\MessageQueue\Newsletter
  */
-class AssignContactToListConsumer implements ConsumerInterface
+class AssignSubscriberToList implements ConsumerInterface
 {
 
     /**

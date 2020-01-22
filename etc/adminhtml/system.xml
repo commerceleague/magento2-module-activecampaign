@@ -69,6 +69,20 @@
                     <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Lists</source_model>
                 </field>
             </group>
+            <group id="newsletter_export" translate="label" type="text" sortOrder="22" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Newsletter Export Settings</label>
+                <depends>
+                    <field id="activecampaing/export/contact_enabled">1</field>
+                </depends>
+                <field id="newsletter_subscribers_list" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Assign Newsletter subscribers to this list</label>
+                    <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Lists</source_model>
+                </field>
+                <field id="newsletter_subscribers_tags" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Tag Newsletter subscribers with these tags</label>
+                    <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Tags</source_model>
+                </field>
+            </group>
             <group id="webhook" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Webhook Settings</label>
                 <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">

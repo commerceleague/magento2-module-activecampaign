@@ -16,4 +16,6 @@ class Topics
     public const SALES_ORDER_EXPORT = 'activecampaign.sales.export.order';
     public const QUOTE_ABANDONED_CART_EXPORT = 'activecampaign.quote.export.abandoned_cart';
     public const ASSIGN_CONTACT_TO_LIST = 'activecampaign.customer.assign.contact.to.list';
+    public const ASSIGN_NEWSLETTER_SUBSCRIBER_TO_LIST = 'activecampaign.newsletter.assign.subscriber.to.list';
+    public const TAG_NEWSLETTER_SUBSCRIBER = 'activecampaign.newsletter.tag.subscriber';
 }

@@ -28,6 +28,9 @@ class Config extends AbstractHelper
 
     private const XML_PATH_CUSTOMER_LIST_ID = 'activecampaign/customer_export/customer_list_id';
 
+    private const XML_PATH_NEWSLETTER_SUBSCRIBER_LIST = 'activecampaign/newsletter_export/newsletter_subscribers_list';
+    private const XML_PATH_NEWSLETTER_SUBSCRIBER_TAGS = 'activecampaign/newsletter_export/newsletter_subscribers_tags';
+
     /**
      * @return bool
      */
@@ -118,4 +121,28 @@ class Config extends AbstractHelper
         return $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_LIST_ID);
     }
 
+    /**
+     * Get the list id for newsletter subscribers
+     *
+     * @return int|null
+     */
+    public function getNewsletterSubscriberList(): ?int
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_NEWSLETTER_SUBSCRIBER_LIST);
+    }
+
+    /**
+     * Get the tags selected to be added to the Newsletter subscriber
+     *
+     * @return array|null
+     */
+    public function getNewsletterSubscriberTags(): ?array
+    {
+        $tags = $this->scopeConfig->getValue(self::XML_PATH_NEWSLETTER_SUBSCRIBER_TAGS);
+        if (null == $tags) {
+            return $tags;
+        }
+
+        return explode(',', $tags);
+    }
 }

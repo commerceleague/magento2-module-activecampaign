@@ -6,4 +6,6 @@
 	<consumer name="activeCampaignSalesExportOrder" queue="activecampaign_sales_export_order" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Sales\ExportOrderConsumer::consume" />
 	<consumer name="activeCampaignQuoteExportAbandonedCart" queue="activecampaign_quote_export_abandoned_cart" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Quote\ExportAbandonedCartConsumer::consume" />
 	<consumer name="activeCampaignCustomerAssignContactToList" queue="activecampaign_customer_assign_contact_to_list" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Customer\AssignContactToListConsumer::consume" />
+	<consumer name="activeCampaignNewsletterAssignSubscriberToList" queue="activecampaign_newsletter_assign_subscriber_to_list" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Newsletter\AssignSubscriberToList::consume" />
+	<consumer name="activeCampaignNewsletterTagSubscriber" queue="activecampaign_newsletter_tag_subscriber" connection="db" handler="CommerceLeague\ActiveCampaign\MessageQueue\Newsletter\TagSubscriber::consume" />
 </config>

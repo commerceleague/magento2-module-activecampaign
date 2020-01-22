@@ -18,4 +18,10 @@
     <publisher topic="activecampaign.customer.assign.contact.to.list">
         <connection name="db" exchange="magento-db"/>
     </publisher>
+    <publisher topic="activecampaign.newsletter.assign.subscriber.to.list">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
+    <publisher topic="activecampaign.newsletter.tag.subscriber">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
 </config>

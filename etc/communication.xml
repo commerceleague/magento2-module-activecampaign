@@ -6,4 +6,6 @@
     <topic name="activecampaign.sales.export.order" request="string"/>
     <topic name="activecampaign.quote.export.abandoned_cart" request="string"/>
     <topic name="activecampaign.customer.assign.contact.to.list" request="string"/>
+    <topic name="activecampaign.newsletter.assign.subscriber.to.list" request="string"/>
+    <topic name="activecampaign.newsletter.tag.subscriber" request="string"/>
 </config>

@@ -18,4 +18,10 @@
     <broker topic="activecampaign.customer.assign.contact.to.list" exchange="magento-db" type="db">
         <queue name="activecampaign_customer_assign_contact_to_list" consumer="activeCampaignCustomerAssignContactToList"/>
     </broker>
+    <broker topic="activecampaign.newsletter.assign.subscriber.to.list" exchange="magento-db" type="db">
+        <queue name="activecampaign_newsletter_assign_subscriber_to_list" consumer="activeCampaignNewsletterAssignSubscriberToList"/>
+    </broker>
+    <broker topic="activecampaign.newsletter.tag.subscriber" exchange="magento-db" type="db">
+        <queue name="activecampaign_newsletter_tag_subscriber" consumer="activeCampaignNewsletterTagSubscriber"/>
+    </broker>
 </config>

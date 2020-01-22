@@ -100,5 +100,11 @@ class ExportContactConsumer implements ConsumerInterface
 
         $contact->setActiveCampaignId($apiResponse['contact']['id']);
         $this->contactRepository->save($contact);
+
+        // trigger event after contact has been saved
+        $this->eventManager->dispatch(
+            'commmerceleague_activecampaign_export_newsletter_subscriber_success',
+            ['contact' => $contact]
+        );
     }
 }

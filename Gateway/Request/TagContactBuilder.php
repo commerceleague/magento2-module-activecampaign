@@ -10,28 +10,24 @@ namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 
 /**
- * Class ContactListBuilder
+ * Class TagContactBuilder
  *
  * @package CommerceLeague\ActiveCampaign\Gateway\Request
  */
-class ContactListBuilder
+class TagContactBuilder
 {
 
     /**
-     * Build the contactList Request with Contact
-     *
      * @param ContactInterface $contact
-     * @param int              $listId
-     * @param int              $status
+     * @param int              $tagId
      *
      * @return array
      */
-    public function buildWithContact(ContactInterface $contact, int $listId, int $status = 1): array
+    public function buildWithContact(ContactInterface $contact, int $tagId): array
     {
         return [
-            'list'    => $listId,
             'contact' => $contact->getActiveCampaignId(),
-            'status'  => $status
+            'tag'     => $tagId
         ];
     }
 }

@@ -13,4 +13,8 @@
 	<event name="commmerceleague_activecampaign_export_contact_success">
 		<observer name="activecampaign_assign_contact_to_list" instance="CommerceLeague\ActiveCampaign\Observer\Customer\AssignContactToListObserver"/>
 	</event>
+	<event name="commmerceleague_activecampaign_export_newsletter_subscriber_success">
+		<observer name="activecampaign_assign_newsletter_subscriber_to_list" instance="CommerceLeague\ActiveCampaign\Observer\Newsletter\AssignNewsletterSubscriberToListObserver"/>
+		<observer name="activecampaign_assign_tag_newsletter_subscriber" instance="CommerceLeague\ActiveCampaign\Observer\Newsletter\TagNewsletterSubscriberObserver"/>
+	</event>
 </config>
