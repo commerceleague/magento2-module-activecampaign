@@ -63,7 +63,7 @@ class AssignContactToListObserver implements ObserverInterface
             json_encode(
                 [
                     'contact_id' => $contact->getId(),
-                    'list_id'    => $this->configHelper->getRegisteredCustomerListId()
+                    'list_id'    => $this->configHelper->getCustomerListId()
                 ]
             )
         );

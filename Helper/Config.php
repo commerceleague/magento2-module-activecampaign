@@ -26,8 +26,7 @@ class Config extends AbstractHelper
     private const XML_PATH_WEBHOOK_ENABLED = 'activecampaign/webhook/enabled';
     private const XML_PATH_WEBHOOK_TOKEN   = 'activecampaign/webhook/token';
 
-    private const XML_PATH_REGISTERED_CUSTOMER_LIST_ID = 'activecampaign/customer_export/registered_customer_list_id';
-    private const XML_PATH_GUEST_CUSTOMER_LIST_ID      = 'activecampaign/customer_export/guest_customer_list_id';
+    private const XML_PATH_CUSTOMER_LIST_ID = 'activecampaign/customer_export/customer_list_id';
 
     /**
      * @return bool
@@ -114,18 +113,9 @@ class Config extends AbstractHelper
      *
      * @return int|null
      */
-    public function getRegisteredCustomerListId(): ?int
+    public function getCustomerListId(): ?int
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_REGISTERED_CUSTOMER_LIST_ID);
+        return $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_LIST_ID);
     }
 
-    /**
-     * Get the list id for guest customers, if set
-     *
-     * @return int|null
-     */
-    public function getGuestCustomerListId(): ?int
-    {
-        return $this->scopeConfig->getValue(self::XML_PATH_GUEST_CUSTOMER_LIST_ID);
-    }
 }
