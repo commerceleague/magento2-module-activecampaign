@@ -6,6 +6,9 @@
     <broker topic="activecampaign.customer.export.customer" exchange="magento-db" type="db">
         <queue name="activecampaign_customer_export_customer" consumer="activeCampaignCustomerExportCustomer"/>
     </broker>
+    <broker topic="activecampaign.customer.export.guest.customer" exchange="magento-db" type="db">
+        <queue name="activecampaign_customer_export_guest_customer" consumer="activeCampaignCustomerExportGuestCustomer"/>
+    </broker>
     <broker topic="activecampaign.newsletter.export.contact" exchange="magento-db" type="db">
         <queue name="activecampaign_newsletter_export_contact" consumer="activeCampaignNewsletterExportContact"/>
     </broker>

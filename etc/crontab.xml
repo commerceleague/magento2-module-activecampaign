@@ -13,5 +13,9 @@
 		<job name="activecampaign_export_omitted_abandoned_carts" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedAbandonedCarts" method="run">
 			<schedule>*/10 * * * *</schedule>
 		</job>
+
+		<job name="activecampaign_export_omitted_guest_customers" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedGuestCustomers" method="run">
+			<schedule>*/10 * * * *</schedule>
+		</job>
 	</group>
 </config>

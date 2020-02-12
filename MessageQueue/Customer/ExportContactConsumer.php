@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Customer;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
+use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
@@ -68,6 +69,7 @@ class ExportContactConsumer implements ConsumerInterface
         ContactRequestBuilder $contactRequestBuilder,
         Client $client,
         ManagerInterface $eventManager
+
     ) {
         $this->magentoCustomerRepository = $magentoCustomerRepository;
         $this->logger                    = $logger;
@@ -88,13 +90,22 @@ class ExportContactConsumer implements ConsumerInterface
 
         try {
             $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
+            $contact         = $this->contactRepository->getOrCreateByEmail($magentoCustomer->getEmail());
+            $request         = $this->contactRequestBuilder->buildWithMagentoCustomer($magentoCustomer);
         } catch (NoSuchEntityException|LocalizedException $e) {
-            $this->logger->error($e->getMessage());
-            return;
+            if ($message['customer_is_guest']) {
+                // not a customer but a guest
+                $guestCustomerData = $message['customer_data'];
+                $contact      = $this->contactRepository->getOrCreateByEmail(
+                    $guestCustomerData[GuestCustomerInterface::EMAIL]
+                );
+                $request           = $this->contactRequestBuilder->buildWithGuestContact(
+                    $contact,
+                    $guestCustomerData[GuestCustomerInterface::FIRSTNAME],
+                    $guestCustomerData[GuestCustomerInterface::LASTNAME]
+                );
+            }
         }
-
-        $contact = $this->contactRepository->getOrCreateByEmail($magentoCustomer->getEmail());
-        $request = $this->contactRequestBuilder->buildWithMagentoCustomer($magentoCustomer);
 
         try {
             $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);

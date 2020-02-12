@@ -6,6 +6,9 @@
     <publisher topic="activecampaign.customer.export.customer">
         <connection name="db" exchange="magento-db"/>
     </publisher>
+    <publisher topic="activecampaign.customer.export.guest.customer">
+        <connection name="db" exchange="magento-db"/>
+    </publisher>
     <publisher topic="activecampaign.newsletter.export.contact">
         <connection name="db" exchange="magento-db"/>
     </publisher>

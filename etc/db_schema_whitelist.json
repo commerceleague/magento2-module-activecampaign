@@ -42,7 +42,8 @@
             "PRIMARY": true,
             "ACTIVECAMPAIGN_ORDER_MAGENTO_ORDER_ID_SALES_ORDER_ENTITY_ID": true,
             "ACTIVECAMPAIGN_ORDER_MAGENTO_ORDER_ID": true,
-            "ACTIVECAMPAIGN_ORDER_MAGENTO_QUOTE_ID_QUOTE_ENTITY_ID": true
+            "ACTIVECAMPAIGN_ORDER_MAGENTO_QUOTE_ID_QUOTE_ENTITY_ID": true,
+            "ACTIVECAMPAIGN_ORDER_MAGENTO_QUOTE_ID": true
         }
     },
     "activecampaign_abandoned": {
@@ -57,6 +58,20 @@
             "PRIMARY": true,
             "ACTIVECAMPAIGN_ABANDONED_QUOTE_ID_QUOTE_ENTITY_ID": true,
             "ACTIVECAMPAIGN_ABANDONED_QUOTE_ID": true
+        }
+    },
+    "activecampaign_guest_customer": {
+        "column": {
+            "entity_id": true,
+            "activecampaign_id": true,
+            "firstname": true,
+            "lastname": true,
+            "email": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
         }
     }
 }
