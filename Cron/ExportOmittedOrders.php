@@ -73,7 +73,7 @@ class ExportOmittedOrders implements CronInterface
     {
         /** @var OrderCollection $orderCollection */
         $orderCollection = $this->orderCollectionFactory->create();
-        $orderCollection->addExcludeGuestFilter();
+//        $orderCollection->addExcludeGuestFilter();
         $orderCollection->addOmittedFilter();
 
         return $orderCollection->getAllIds();
