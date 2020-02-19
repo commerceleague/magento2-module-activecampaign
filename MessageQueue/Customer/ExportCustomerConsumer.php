@@ -10,6 +10,7 @@ use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
@@ -21,17 +22,13 @@ use Magento\Framework\Exception\NoSuchEntityException;
 /**
  * Class ExportCustomerConsumer
  */
-class ExportCustomerConsumer implements ConsumerInterface
+class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterface
 {
+
     /**
      * @var MagentoCustomerRepositoryInterface
      */
     private $magentoCustomerRepository;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
 
     /**
      * @var CustomerRepositoryInterface
@@ -50,10 +47,10 @@ class ExportCustomerConsumer implements ConsumerInterface
 
     /**
      * @param MagentoCustomerRepositoryInterface $magentoCustomerRepository
-     * @param Logger $logger
-     * @param CustomerRepositoryInterface $customerRepository
-     * @param CustomerRequestBuilder $customerRequestBuilder
-     * @param Client $client
+     * @param Logger                             $logger
+     * @param CustomerRepositoryInterface        $customerRepository
+     * @param CustomerRequestBuilder             $customerRequestBuilder
+     * @param Client                             $client
      */
     public function __construct(
         MagentoCustomerRepositoryInterface $magentoCustomerRepository,
@@ -62,15 +59,16 @@ class ExportCustomerConsumer implements ConsumerInterface
         CustomerRequestBuilder $customerRequestBuilder,
         Client $client
     ) {
+        parent::__construct($logger);
         $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->logger = $logger;
-        $this->customerRepository = $customerRepository;
-        $this->customerRequestBuilder = $customerRequestBuilder;
-        $this->client = $client;
+        $this->customerRepository        = $customerRepository;
+        $this->customerRequestBuilder    = $customerRequestBuilder;
+        $this->client                    = $client;
     }
 
     /**
      * @param string $message
+     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
@@ -80,21 +78,20 @@ class ExportCustomerConsumer implements ConsumerInterface
         try {
             $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
         } catch (NoSuchEntityException|LocalizedException $e) {
-            $this->logger->error($e->getMessage());
+            $this->getLogger()->error($e);
             return;
         }
 
         $customer = $this->customerRepository->getOrCreateByMagentoCustomerId($magentoCustomer->getId());
-        $request = $this->customerRequestBuilder->build($magentoCustomer);
+        $request  = $this->customerRequestBuilder->build($magentoCustomer);
 
         try {
             $apiResponse = $this->performApiRequest($customer, $request);
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error(print_r($e->getResponseErrors(), true));
+            $this->logUnprocessableEntityHttpException($e, $request);
             return;
         } catch (HttpException $e) {
-            $this->logger->error($e->getMessage());
+            $this->logException($e);
             return;
         }
 
@@ -104,7 +101,8 @@ class ExportCustomerConsumer implements ConsumerInterface
 
     /**
      * @param CustomerInterface $customer
-     * @param array $request
+     * @param array             $request
+     *
      * @return array
      * @throws HttpException
      */

@@ -59,6 +59,7 @@
             <argument name="commands" xsi:type="array">
                 <item name="activecampaign_export_contact" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportContactCommand</item>
                 <item name="activecampaign_export_customer" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportCustomerCommand</item>
+                <item name="activecampaign_export_guest_customer" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportGuestCustomerCommand</item>
                 <item name="activecampaign_export_order" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportOrderCommand</item>
                 <item name="activecampaign_export_abandoned_cart" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportAbandonedCartCommand</item>
             </argument>

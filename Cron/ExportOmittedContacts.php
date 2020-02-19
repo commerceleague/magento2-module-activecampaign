@@ -61,6 +61,7 @@ class ExportOmittedContacts implements CronInterface
      */
     public function run(): void
     {
+
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isContactExportEnabled()) {
             return;
         }

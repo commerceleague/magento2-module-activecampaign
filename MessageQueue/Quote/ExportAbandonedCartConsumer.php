@@ -8,10 +8,12 @@ namespace CommerceLeague\ActiveCampaign\MessageQueue\Quote;
 use CommerceLeague\ActiveCampaign\Api\OrderRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Request\AbandonedCartBuilder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
+use Exception;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteFactory;
@@ -19,8 +21,9 @@ use Magento\Quote\Model\QuoteFactory;
 /**
  * Class ExportAbandonedCartConsumer
  */
-class ExportAbandonedCartConsumer implements ConsumerInterface
+class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerInterface
 {
+
     /**
      * @var QuoteFactory
      */
@@ -47,11 +50,11 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
     private $client;
 
     /**
-     * @param QuoteFactory $quoteFactory
-     * @param Logger $logger
+     * @param QuoteFactory             $quoteFactory
+     * @param Logger                   $logger
      * @param OrderRepositoryInterface $orderRepository
-     * @param AbandonedCartBuilder $abandonedCartRequestBuilder
-     * @param Client $client
+     * @param AbandonedCartBuilder     $abandonedCartRequestBuilder
+     * @param Client                   $client
      */
     public function __construct(
         QuoteFactory $quoteFactory,
@@ -60,17 +63,19 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
         AbandonedCartBuilder $abandonedCartRequestBuilder,
         Client $client
     ) {
-        $this->quoteFactory = $quoteFactory;
-        $this->logger = $logger;
-        $this->orderRepository = $orderRepository;
+        parent::__construct($logger);
+        $this->quoteFactory                = $quoteFactory;
+        $this->logger                      = $logger;
+        $this->orderRepository             = $orderRepository;
         $this->abandonedCartRequestBuilder = $abandonedCartRequestBuilder;
-        $this->client = $client;
+        $this->client                      = $client;
     }
 
     /**
      * @param string $message
+     *
      * @throws CouldNotSaveException
-     * @throws \Exception
+     * @throws Exception
      */
     public function consume(string $message): void
     {
@@ -85,17 +90,16 @@ class ExportAbandonedCartConsumer implements ConsumerInterface
             return;
         }
 
-        $order = $this->orderRepository->getOrCreateByMagentoQuoteId($quote->getId());
+        $order   = $this->orderRepository->getOrCreateByMagentoQuoteId($quote->getId());
         $request = $this->abandonedCartRequestBuilder->build($quote);
 
         try {
             $apiResponse = $this->client->getOrderApi()->create(['ecomOrder' => $request]);
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error(print_r($e->getResponseErrors(), true));
+            $this->logUnprocessableEntityHttpException($e, $request);
             return;
         } catch (HttpException $e) {
-            $this->logger->error($e->getMessage());
+            $this->logException($e);
             return;
         }
 

@@ -10,6 +10,7 @@ use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
@@ -22,18 +23,13 @@ use Magento\Framework\Exception\NoSuchEntityException;
 /**
  * Class ExportContactConsumer
  */
-class ExportContactConsumer implements ConsumerInterface
+class ExportContactConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
     /**
      * @var MagentoCustomerRepositoryInterface
      */
     private $magentoCustomerRepository;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
 
     /**
      * @var ContactRepositoryInterface
@@ -71,8 +67,8 @@ class ExportContactConsumer implements ConsumerInterface
         ManagerInterface $eventManager
 
     ) {
+        parent::__construct($logger);
         $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->logger                    = $logger;
         $this->contactRepository         = $contactRepository;
         $this->contactRequestBuilder     = $contactRequestBuilder;
         $this->client                    = $client;
@@ -93,10 +89,10 @@ class ExportContactConsumer implements ConsumerInterface
             $contact         = $this->contactRepository->getOrCreateByEmail($magentoCustomer->getEmail());
             $request         = $this->contactRequestBuilder->buildWithMagentoCustomer($magentoCustomer);
         } catch (NoSuchEntityException|LocalizedException $e) {
-            if ($message['customer_is_guest']) {
+            if (array_key_exists('customer_is_guest', $message)) {
                 // not a customer but a guest
                 $guestCustomerData = $message['customer_data'];
-                $contact      = $this->contactRepository->getOrCreateByEmail(
+                $contact           = $this->contactRepository->getOrCreateByEmail(
                     $guestCustomerData[GuestCustomerInterface::EMAIL]
                 );
                 $request           = $this->contactRequestBuilder->buildWithGuestContact(
@@ -104,17 +100,19 @@ class ExportContactConsumer implements ConsumerInterface
                     $guestCustomerData[GuestCustomerInterface::FIRSTNAME],
                     $guestCustomerData[GuestCustomerInterface::LASTNAME]
                 );
+            } else {
+                $this->getLogger()->error($e->getMessage());
+                return;
             }
         }
 
         try {
             $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error(print_r($e->getResponseErrors(), true));
+            $this->logUnprocessableEntityHttpException($e, $request);
             return;
         } catch (HttpException $e) {
-            $this->logger->error($e->getMessage());
+            $this->logException($e);
             return;
         }
 

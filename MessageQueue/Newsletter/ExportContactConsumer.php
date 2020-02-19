@@ -9,6 +9,7 @@ use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
@@ -20,18 +21,13 @@ use Magento\Newsletter\Model\Subscriber;
 /**
  * Class ExportContactConsumer
  */
-class ExportContactConsumer implements ConsumerInterface
+class ExportContactConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
     /**
      * @var SubscriberFactory
      */
     private $subscriberFactory;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
 
     /**
      * @var ContactRepositoryInterface
@@ -63,14 +59,14 @@ class ExportContactConsumer implements ConsumerInterface
      */
     public function __construct(
         SubscriberFactory $subscriberFactory,
-        Logger $logger,
         ContactRepositoryInterface $contactRepository,
         ContactRequestBuilder $contactRequestBuilder,
         Client $client,
-        ManagerInterface $eventManager
+        ManagerInterface $eventManager,
+        Logger $logger
     ) {
+        parent::__construct($logger);
         $this->subscriberFactory     = $subscriberFactory;
-        $this->logger                = $logger;
         $this->contactRepository     = $contactRepository;
         $this->contactRequestBuilder = $contactRequestBuilder;
         $this->client                = $client;
@@ -91,7 +87,7 @@ class ExportContactConsumer implements ConsumerInterface
         $subscriber = $subscriber->loadByEmail($message['email']);
 
         if (!$subscriber->getId()) {
-            $this->logger->error(__('The Subscriber with the "%1" email doesn\'t exist', $message['email']));
+            $this->getLogger()->error(__('The Subscriber with the "%1" email doesn\'t exist', $message['email']));
             return;
         }
 
@@ -101,11 +97,10 @@ class ExportContactConsumer implements ConsumerInterface
         try {
             $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error(print_r($e->getResponseErrors(), true));
+            $this->logUnprocessableEntityHttpException($e, $request);
             return;
         } catch (HttpException $e) {
-            $this->logger->error($e->getMessage());
+            $this->logException($e);
             return;
         }
 

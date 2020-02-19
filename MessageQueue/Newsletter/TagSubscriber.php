@@ -11,6 +11,8 @@ use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\TagContactBuilder;
+use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
@@ -20,7 +22,7 @@ use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
  *
  * @package CommerceLeague\ActiveCampaign\MessageQueue\Newsletter
  */
-class TagSubscriber implements ConsumerInterface
+class TagSubscriber extends AbstractConsumer implements ConsumerInterface
 {
 
     /**
@@ -48,8 +50,10 @@ class TagSubscriber implements ConsumerInterface
     public function __construct(
         TagContactBuilder $tagContactBuilder,
         Client $client,
-        ContactRepositoryInterface $contactRepository
+        ContactRepositoryInterface $contactRepository,
+        Logger $logger
     ) {
+        parent::__construct($logger);
         $this->requestBuilder    = $tagContactBuilder;
         $this->client            = $client;
         $this->contactRepository = $contactRepository;
@@ -70,11 +74,10 @@ class TagSubscriber implements ConsumerInterface
             try {
                 $apiResponse = $this->client->getContactApi()->tagContact(['contactTag' => $request]);
             } catch (UnprocessableEntityHttpException $e) {
-                $this->logger->error($e->getMessage());
-                $this->logger->error(print_r($e->getResponseErrors(), true));
+                $this->logUnprocessableEntityHttpException($e, $request);
                 return;
             } catch (HttpException $e) {
-                $this->logger->error($e->getMessage());
+                $this->logException($e);
                 return;
             }
         }

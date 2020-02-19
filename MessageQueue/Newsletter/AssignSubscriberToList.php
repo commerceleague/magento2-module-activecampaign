@@ -10,6 +10,8 @@ namespace CommerceLeague\ActiveCampaign\MessageQueue\Newsletter;
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactListBuilder;
+use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
@@ -19,7 +21,7 @@ use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
  *
  * @package CommerceLeague\ActiveCampaign\MessageQueue\Newsletter
  */
-class AssignSubscriberToList implements ConsumerInterface
+class AssignSubscriberToList extends AbstractConsumer implements ConsumerInterface
 {
 
     /**
@@ -43,12 +45,15 @@ class AssignSubscriberToList implements ConsumerInterface
      * @param ContactListBuilder         $contactListBuilder
      * @param Client                     $client
      * @param ContactRepositoryInterface $contactRepository
+     * @param Logger                     $logger
      */
     public function __construct(
         ContactListBuilder $contactListBuilder,
         Client $client,
-        ContactRepositoryInterface $contactRepository
+        ContactRepositoryInterface $contactRepository,
+        Logger $logger
     ) {
+        parent::__construct($logger);
         $this->requestBuilder    = $contactListBuilder;
         $this->client            = $client;
         $this->contactRepository = $contactRepository;
@@ -67,11 +72,10 @@ class AssignSubscriberToList implements ConsumerInterface
         try {
             $apiResponse = $this->client->getContactApi()->updateListStatus(['contactList' => $request]);
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error(print_r($e->getResponseErrors(), true));
+            $this->logUnprocessableEntityHttpException($e, $request);
             return;
         } catch (HttpException $e) {
-            $this->logger->error($e->getMessage());
+            $this->logException($e);
             return;
         }
     }

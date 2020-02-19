@@ -10,9 +10,11 @@ use CommerceLeague\ActiveCampaign\Api\OrderRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder as OrderRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
+use Exception;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\Data\OrderInterface as MagentoOrderInterface;
@@ -22,17 +24,13 @@ use Magento\Sales\Model\Order as MagentoOrder;
 /**
  * Class ExportOrderConsumer
  */
-class ExportOrderConsumer implements ConsumerInterface
+class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
 {
+
     /**
      * @var MagentoOrderRepositoryInterface
      */
     private $magentoOrderRepository;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
 
     /**
      * @var OrderRepositoryInterface
@@ -51,10 +49,10 @@ class ExportOrderConsumer implements ConsumerInterface
 
     /**
      * @param MagentoOrderRepositoryInterface $magentoOrderRepository
-     * @param Logger $logger
-     * @param OrderRepositoryInterface $orderRepository
-     * @param OrderRequestBuilder $orderRequestBuilder
-     * @param Client $client
+     * @param Logger                          $logger
+     * @param OrderRepositoryInterface        $orderRepository
+     * @param OrderRequestBuilder             $orderRequestBuilder
+     * @param Client                          $client
      */
     public function __construct(
         MagentoOrderRepositoryInterface $magentoOrderRepository,
@@ -63,17 +61,18 @@ class ExportOrderConsumer implements ConsumerInterface
         OrderRequestBuilder $orderRequestBuilder,
         Client $client
     ) {
+        parent::__construct($logger);
         $this->magentoOrderRepository = $magentoOrderRepository;
-        $this->logger = $logger;
-        $this->orderRepository = $orderRepository;
-        $this->orderRequestBuilder = $orderRequestBuilder;
-        $this->client = $client;
+        $this->orderRepository        = $orderRepository;
+        $this->orderRequestBuilder    = $orderRequestBuilder;
+        $this->client                 = $client;
     }
 
     /**
      * @param string $message
+     *
      * @throws CouldNotSaveException
-     * @throws \Exception
+     * @throws Exception
      */
     public function consume(string $message): void
     {
@@ -83,21 +82,20 @@ class ExportOrderConsumer implements ConsumerInterface
             /** @var MagentoOrderInterface|MagentoOrder $magentoOrder */
             $magentoOrder = $this->magentoOrderRepository->get($message['magento_order_id']);
         } catch (NoSuchEntityException $e) {
-            $this->logger->error($e->getMessage());
+            $this->logException($e);
             return;
         }
 
-        $order = $this->orderRepository->getOrCreateByMagentoQuoteId($magentoOrder->getQuoteId());
+        $order   = $this->orderRepository->getOrCreateByMagentoQuoteId($magentoOrder->getQuoteId());
         $request = $this->orderRequestBuilder->build($magentoOrder);
 
         try {
             $apiResponse = $this->performApiRequest($order, $request);
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error(print_r($e->getResponseErrors(), true));
+            $this->logUnprocessableEntityHttpException($e, $request);
             return;
         } catch (HttpException $e) {
-            $this->logger->error($e->getMessage());
+            $this->logException($e);
             return;
         }
 
@@ -108,7 +106,8 @@ class ExportOrderConsumer implements ConsumerInterface
 
     /**
      * @param OrderInterface $order
-     * @param array $request
+     * @param array          $request
+     *
      * @return array
      */
     private function performApiRequest(OrderInterface $order, array $request): array
