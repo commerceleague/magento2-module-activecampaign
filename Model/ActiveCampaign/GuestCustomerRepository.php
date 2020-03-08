@@ -133,7 +133,7 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
             if (!$guestCustomer->getId()) {
                 $guestCustomer->setEmail($customerData[Data\GuestCustomerInterface::EMAIL])
                     ->setFirstname($customerData[Data\GuestCustomerInterface::FIRSTNAME])
-                    ->setLastname(Data\GuestCustomerInterface::LASTNAME);
+                    ->setLastname($customerData[Data\GuestCustomerInterface::LASTNAME]);
                 $this->save($guestCustomer);
             }
             return $guestCustomer;
