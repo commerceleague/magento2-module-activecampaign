@@ -16,6 +16,7 @@ use Magento\Framework\MessageQueue\PublisherInterface;
  */
 class ExportOmittedOrders implements CronInterface
 {
+
     /**
      * @var ConfigHelper
      */
@@ -32,20 +33,19 @@ class ExportOmittedOrders implements CronInterface
     private $publisher;
 
     /**
-     * @param ConfigHelper $configHelper
+     * @param ConfigHelper           $configHelper
      * @param OrderCollectionFactory $orderCollectionFactory
-     * @param PublisherInterface $publisher
+     * @param PublisherInterface     $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
         OrderCollectionFactory $orderCollectionFactory,
         PublisherInterface $publisher
     ) {
-        $this->configHelper = $configHelper;
+        $this->configHelper           = $configHelper;
         $this->orderCollectionFactory = $orderCollectionFactory;
-        $this->publisher = $publisher;
+        $this->publisher              = $publisher;
     }
-
 
     /**
      * @inheritDoc
@@ -74,6 +74,7 @@ class ExportOmittedOrders implements CronInterface
         /** @var OrderCollection $orderCollection */
         $orderCollection = $this->orderCollectionFactory->create();
 //        $orderCollection->addExcludeGuestFilter();
+        $orderCollection->addStatusFilter();
         $orderCollection->addOmittedFilter();
 
         return $orderCollection->getAllIds();

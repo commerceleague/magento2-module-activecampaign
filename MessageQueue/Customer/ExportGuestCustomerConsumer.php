@@ -66,21 +66,24 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
 
         $customerData = $message['customer_data'];
 
+        /** @var GuestCustomerInterface $guestCustomer */
         $guestCustomer = $this->customerRepository->getOrCreate($customerData);
         $request       = $this->customerRequestBuilder->buildWithGuest($guestCustomer);
 
-        try {
-            $apiResponse = $this->performApiRequest($guestCustomer, $request);
-        } catch (UnprocessableEntityHttpException $e) {
-            $this->logUnprocessableEntityHttpException($e, $request);
-            return;
-        } catch (HttpException $e) {
-            $this->logException($e);
-            return;
-        }
+        if (!$guestCustomer->getActiveCampaignId()) {
+            try {
+                $apiResponse = $this->performApiRequest($guestCustomer, $request);
+            } catch (UnprocessableEntityHttpException $e) {
+                $this->logUnprocessableEntityHttpException($e, $request);
+                return;
+            } catch (HttpException $e) {
+                $this->logException($e);
+                return;
+            }
 
-        $guestCustomer->setActiveCampaignId($apiResponse['ecomCustomer']['id']);
-        $this->customerRepository->save($guestCustomer);
+            $guestCustomer->setActiveCampaignId($apiResponse['ecomCustomer']['id']);
+            $this->customerRepository->save($guestCustomer);
+        }
     }
 
     /**

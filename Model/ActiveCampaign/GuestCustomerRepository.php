@@ -9,6 +9,7 @@ use CommerceLeague\ActiveCampaign\Api\Data;
 use CommerceLeague\ActiveCampaign\Api\GuestCustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer as GuestCustomerResource;
 use Exception;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -31,15 +32,31 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
     private $guestCustomerFactory;
 
     /**
-     * @param GuestCustomerResource $customerResource
-     * @param GuestCustomerFactory  $GuestCustomerFactory
+     * @var CustomerRepositoryInterface
+     */
+    private $magentoCustomerRepository;
+
+    /**
+     * @var CustomerRepository
+     */
+    private $customerRepository;
+
+    /**
+     * @param GuestCustomerResource       $customerResource
+     * @param GuestCustomerFactory        $GuestCustomerFactory
+     * @param CustomerRepositoryInterface $magentoCustomerRepository
+     * @param CustomerRepository          $customerRepository
      */
     public function __construct(
         GuestCustomerResource $customerResource,
-        GuestCustomerFactory $GuestCustomerFactory
+        GuestCustomerFactory $GuestCustomerFactory,
+        CustomerRepositoryInterface $magentoCustomerRepository,
+        CustomerRepository $customerRepository
     ) {
-        $this->guestCustomerResource = $customerResource;
-        $this->guestCustomerFactory  = $GuestCustomerFactory;
+        $this->guestCustomerResource     = $customerResource;
+        $this->guestCustomerFactory      = $GuestCustomerFactory;
+        $this->magentoCustomerRepository = $magentoCustomerRepository;
+        $this->customerRepository        = $customerRepository;
     }
 
     /**
@@ -127,15 +144,41 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
     {
 
         if (array_key_exists(Data\GuestCustomerInterface::EMAIL, $customerData)) {
+
+            $customerEmail = $customerData[Data\GuestCustomerInterface::EMAIL];
+            $firstname     = $customerData[Data\GuestCustomerInterface::FIRSTNAME];
+            $lastname      = $customerData[Data\GuestCustomerInterface::LASTNAME];
+
             /** @var Data\GuestCustomerInterface $guestCustomer */
-            $guestCustomer = $this->getByEmail($customerData[Data\GuestCustomerInterface::EMAIL]);
+            $guestCustomer = $this->getByEmail($customerEmail);
+
+            try {
+                $magentoCustomer = $this->magentoCustomerRepository->get($customerEmail);
+                if ($magentoCustomer->getId()) {
+                    $guestCustomer->setEmail($customerEmail)
+                        ->setFirstname($firstname)
+                        ->setLastname($lastname);
+
+                    // set the activecampaign_id if set in activecampaign_customer
+                    $activeCampaignCustomer = $this->customerRepository->getByMagentoCustomerId(
+                        $magentoCustomer->getId()
+                    );
+                    if ($activeCampaignCustomer->getActiveCampaignId()) {
+                        $guestCustomer->setActiveCampaignId($activeCampaignCustomer->getActiveCampaignId());
+                    }
+                }
+            } catch (NoSuchEntityException $e) {
+
+            }
 
             if (!$guestCustomer->getId()) {
-                $guestCustomer->setEmail($customerData[Data\GuestCustomerInterface::EMAIL])
-                    ->setFirstname($customerData[Data\GuestCustomerInterface::FIRSTNAME])
-                    ->setLastname($customerData[Data\GuestCustomerInterface::LASTNAME]);
-                $this->save($guestCustomer);
+                $guestCustomer->setEmail($customerEmail)
+                    ->setFirstname($firstname)
+                    ->setLastname($lastname);
             }
+
+            $this->save($guestCustomer);
+
             return $guestCustomer;
         }
     }
