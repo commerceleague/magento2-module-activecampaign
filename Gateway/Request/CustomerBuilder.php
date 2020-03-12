@@ -53,7 +53,7 @@ class CustomerBuilder
     {
         return [
             'connectionid'     => $this->configHelper->getConnectionId(),
-            'externalid'       => $guestCustomer->getId(),
+            'externalid'       => 'guest-' . $guestCustomer->getId(),
             'email'            => $guestCustomer->getEmail(),
             'acceptsMarketing' => Contants::CONTACT_STATUS_ACTIVE
         ];
