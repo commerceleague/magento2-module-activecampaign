@@ -73,6 +73,7 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
             $apiResponse = $this->performApiRequest($guestCustomer, $request);
         } catch (UnprocessableEntityHttpException $e) {
             $this->logUnprocessableEntityHttpException($e, $request);
+            return;
         } catch (HttpException $e) {
             $this->logException($e);
             return;
