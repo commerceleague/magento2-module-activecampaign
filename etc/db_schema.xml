@@ -58,7 +58,7 @@
     <table name="activecampaign_order" resource="default" engine="innodb" comment="ActiveCampaign Order Table">
         <column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true"
                 comment="Entity Id"/>
-        <column xsi:type="int" name="magento_quote_id" padding="10" unsigned="true" nullable="true" identity="false"
+        <column xsi:type="int" name="magento_quote_id" padding="11" unsigned="false" nullable="true" identity="false"
                 comment="Magento Quote Id"/>
         <column xsi:type="int" name="activecampaign_id" padding="10" unsigned="true" nullable="true" identity="false"
                 comment="Active Campaign Id"/>
@@ -66,14 +66,14 @@
                 comment="Created At"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
                 comment="Updated At"/>
-        <constraint xsi:type="primary" referenceId="PRIMARY">
-            <column name="entity_id"/>
-        </constraint>
-        <constraint xsi:type="foreign" referenceId="ACTIVECAMPAIGN_ORDER_MAGENTO_QUOTE_ID_QUOTE_ENTITY_ID"
-                    table="activecampaign_order" column="magento_quote_id" referenceTable="quote"
-                    referenceColumn="entity_id" onDelete="SET NULL"/>
         <constraint xsi:type="unique" referenceId="ACTIVECAMPAIGN_ORDER_MAGENTO_QUOTE_ID">
             <column name="magento_quote_id"/>
         </constraint>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ACTIVECAMPAIGN_ORDER_MAGENTO_QUOTE_ID_SALES_ORDER_QUOTE_ID"
+                    table="activecampaign_order" column="magento_quote_id" referenceTable="sales_order"
+                    referenceColumn="quote_id" onDelete="SET NULL"/>
     </table>
 </schema>
