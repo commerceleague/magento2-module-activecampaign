@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\ExportOmittedAbandonedCarts;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedAbandonedCarts;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\Collection as QuoteCollection;
@@ -37,7 +37,7 @@ class ExportOmittedAbandonedCartsTest extends TestCase
     protected $publisher;
 
     /**
-     * @var ExportOmittedAbandonedCarts
+     * @var PublishOmittedAbandonedCarts
      */
     protected $exportOmittedAbandonedCarts;
 
@@ -58,7 +58,7 @@ class ExportOmittedAbandonedCartsTest extends TestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedAbandonedCarts = new ExportOmittedAbandonedCarts(
+        $this->exportOmittedAbandonedCarts = new PublishOmittedAbandonedCarts(
             $this->configHelper,
             $this->quoteCollectionFactory,
             $this->publisher

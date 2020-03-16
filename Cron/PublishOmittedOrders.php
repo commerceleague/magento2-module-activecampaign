@@ -12,9 +12,9 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
- * Class ExportOmittedOrders
+ * Class PublishOmittedOrders
  */
-class ExportOmittedOrders implements CronInterface
+class PublishOmittedOrders implements CronInterface
 {
 
     /**
@@ -74,7 +74,8 @@ class ExportOmittedOrders implements CronInterface
         /** @var OrderCollection $orderCollection */
         $orderCollection = $this->orderCollectionFactory->create();
 //        $orderCollection->addExcludeGuestFilter();
-        $orderCollection->addStatusFilter();
+        $orderCollection->addExportFilterOrderStatus();
+        $orderCollection->addExportFilterStartDate();
         $orderCollection->addOmittedFilter();
 
         return $orderCollection->getAllIds();
