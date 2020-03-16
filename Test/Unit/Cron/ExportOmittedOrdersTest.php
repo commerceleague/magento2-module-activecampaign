@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\ExportOmittedOrders;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedOrders;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
@@ -37,7 +37,7 @@ class ExportOmittedOrdersTest extends TestCase
     protected $publisher;
 
     /**
-     * @var ExportOmittedOrders
+     * @var PublishOmittedOrders
      */
     protected $exportOmittedOrders;
 
@@ -58,7 +58,7 @@ class ExportOmittedOrdersTest extends TestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedOrders = new ExportOmittedOrders(
+        $this->exportOmittedOrders = new PublishOmittedOrders(
             $this->configHelper,
             $this->orderCollectionFactory,
             $this->publisher
