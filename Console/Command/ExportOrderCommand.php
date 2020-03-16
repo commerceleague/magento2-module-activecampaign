@@ -22,10 +22,11 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class ExportOrderCommand extends AbstractExportCommand
 {
-    private const NAME = 'activecampaign:export:order';
-    private const ORDER_ID = 'order-id';
+
+    private const NAME           = 'activecampaign:export:order';
+    private const ORDER_ID       = 'order-id';
     private const OPTION_OMITTED = 'omitted';
-    private const OPTION_ALL = 'all';
+    private const OPTION_ALL     = 'all';
 
     /**
      * @var OrderCollectionFactory
@@ -33,10 +34,10 @@ class ExportOrderCommand extends AbstractExportCommand
     private $orderCollectionFactory;
 
     /**
-     * @param ConfigHelper $configHelper
+     * @param ConfigHelper           $configHelper
      * @param OrderCollectionFactory $orderCollectionFactory
-     * @param ProgressBarFactory $progressBarFactory
-     * @param PublisherInterface $publisher
+     * @param ProgressBarFactory     $progressBarFactory
+     * @param PublisherInterface     $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
@@ -46,6 +47,30 @@ class ExportOrderCommand extends AbstractExportCommand
     ) {
         $this->orderCollectionFactory = $orderCollectionFactory;
         parent::__construct($configHelper, $progressBarFactory, $publisher);
+    }
+
+    /**
+     * @param InputInterface $input
+     *
+     * @return array
+     */
+    public function getOrderIds(InputInterface $input): array
+    {
+        /** @var OrderCollection $orderCollection */
+        $orderCollection = $this->orderCollectionFactory->create();
+//        $orderCollection->addExcludeGuestFilter();
+
+        if (($orderId = $input->getOption(self::ORDER_ID))) {
+            $orderCollection->addIdFilter((int)$orderId);
+        }
+
+        if ($input->getOption(self::OPTION_OMITTED)) {
+            $orderCollection->addOmittedFilter();
+        }
+        $orderCollection->addExportFilterOrderStatus();
+        $orderCollection->addExportFilterStartDate();
+
+        return $orderCollection->getAllIds();
     }
 
     /**
@@ -86,7 +111,7 @@ class ExportOrderCommand extends AbstractExportCommand
 
         $orderId = $input->getOption(self::ORDER_ID);
         $omitted = $input->getOption(self::OPTION_OMITTED);
-        $all = $input->getOption(self::OPTION_ALL);
+        $all     = $input->getOption(self::OPTION_ALL);
 
         if ($orderId === null && $omitted === false && $all === false) {
             throw new RuntimeException('Please provide at least one option');
@@ -106,7 +131,7 @@ class ExportOrderCommand extends AbstractExportCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $orderIds = $this->getOrderIds($input);
+        $orderIds      = $this->getOrderIds($input);
         $orderIdsCount = count($orderIds);
 
         if ($orderIdsCount === 0) {
@@ -130,32 +155,13 @@ class ExportOrderCommand extends AbstractExportCommand
         }
 
         $output->writeln('');
-        $output->writeln(sprintf(
-            '<info>%s order(s) have been scheduled for export.</info>',
-            ($orderIdsCount)
-        ));
+        $output->writeln(
+            sprintf(
+                '<info>%s order(s) have been scheduled for export.</info>',
+                ($orderIdsCount)
+            )
+        );
 
         return Cli::RETURN_SUCCESS;
-    }
-
-    /**
-     * @param InputInterface $input
-     * @return array
-     */
-    public function getOrderIds(InputInterface $input): array
-    {
-        /** @var OrderCollection $orderCollection */
-        $orderCollection = $this->orderCollectionFactory->create();
-        $orderCollection->addExcludeGuestFilter();
-
-        if (($orderId = $input->getOption(self::ORDER_ID))) {
-            $orderCollection->addIdFilter((int)$orderId);
-        }
-
-        if ($input->getOption(self::OPTION_OMITTED)) {
-            $orderCollection->addOmittedFilter();
-        }
-
-        return $orderCollection->getAllIds();
     }
 }

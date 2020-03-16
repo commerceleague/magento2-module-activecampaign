@@ -59,7 +59,20 @@
                     </depends>
                 </field>
             </group>
-            <group id="customer_export" translate="label" type="text" sortOrder="21" showInDefault="1" showInWebsite="0" showInStore="0">
+            <group id="order_export" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Order Export Settings</label>
+                <field id="filter_order_statuses" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Only Export Orders with these statuses</label>
+                    <source_model>CommerceLeague\ActiveCampaign\Model\System\Config\Source\Status</source_model>
+                    <comment>Only Export orders with selected statuses</comment>
+                </field>
+                <field id="filter_date_from" type="date" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Start Date</label>
+                    <frontend_model>\CommerceLeague\ActiveCampaign\Block\Adminhtml\System\Config\Date</frontend_model>
+                    <comment>Do not export orders older than this date</comment>
+                </field>
+            </group>
+            <group id="customer_export" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Customer Export Settings</label>
                 <depends>
                     <field id="activecampaing/export/customer_enabled">1</field>
@@ -69,7 +82,7 @@
                     <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Lists</source_model>
                 </field>
             </group>
-            <group id="newsletter_export" translate="label" type="text" sortOrder="22" showInDefault="1" showInWebsite="0" showInStore="0">
+            <group id="newsletter_export" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Newsletter Export Settings</label>
                 <depends>
                     <field id="activecampaing/export/contact_enabled">1</field>
@@ -83,7 +96,7 @@
                     <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Tags</source_model>
                 </field>
             </group>
-            <group id="webhook" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+            <group id="webhook" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Webhook Settings</label>
                 <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Enabled</label>
