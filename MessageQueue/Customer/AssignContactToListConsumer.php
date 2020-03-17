@@ -79,4 +79,12 @@ class AssignContactToListConsumer extends AbstractConsumer implements ConsumerIn
             return;
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key)
+    {
+        return;
+    }
 }
