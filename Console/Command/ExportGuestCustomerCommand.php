@@ -162,11 +162,6 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
         /** @var CustomerCollection $customerCollection */
         $customerCollection = $this->customerCollectionFactory->create();
 
-        $customerCollection->addFieldToFilter(
-            'status',
-            ['in' => ['complete', 'processing_mgm', 'pending']]
-        );
-
         if (($email = $input->getOption(self::OPTION_EMAIL)) !== null) {
             $customerCollection->addEmailFilter($email);
         }

@@ -121,4 +121,12 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
         // trigger event after contact has been saved
         $this->eventManager->dispatch('commmerceleague_activecampaign_export_contact_success', ['contact' => $contact]);
     }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key)
+    {
+        return;
+    }
 }

@@ -92,8 +92,12 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         try {
             $apiResponse = $this->performApiRequest($order, $request);
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logUnprocessableEntityHttpException($e, $request);
-            return;
+            try {
+                $apiResponse = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
+            } catch (UnprocessableEntityHttpException $e) {
+                $this->logUnprocessableEntityHttpException($e, $request);
+                return;
+            }
         } catch (HttpException $e) {
             $this->logException($e);
             return;
@@ -102,6 +106,23 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
 
         $this->orderRepository->save($order);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key)
+    {
+        $response = $this->client->getOrderApi()->listPerPage(
+            1,
+            0,
+            [
+                'filters' => [
+                    'externalid' => $request['externalid']
+                ]
+            ]
+        );
+        return [$key => $response->getItems()[0]];
     }
 
     /**
