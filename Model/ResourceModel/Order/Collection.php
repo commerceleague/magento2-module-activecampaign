@@ -5,8 +5,17 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Order;
 
+use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
+use Magento\Framework\Data\Collection\Db\FetchStrategyInterface;
+use Magento\Framework\Data\Collection\EntityFactory;
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\DB\Helper;
+use Magento\Framework\Event\ManagerInterface;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+use Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot;
 use Magento\Sales\Model\ResourceModel\Order\Collection as ExtendCollection;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Collection
@@ -15,6 +24,47 @@ use Magento\Sales\Model\ResourceModel\Order\Collection as ExtendCollection;
  */
 class Collection extends ExtendCollection
 {
+
+    /**
+     * @var Config
+     */
+    private $configHelper;
+
+    /**
+     * Collection constructor.
+     *
+     * @param EntityFactory          $entityFactory
+     * @param LoggerInterface        $logger
+     * @param FetchStrategyInterface $fetchStrategy
+     * @param ManagerInterface       $eventManager
+     * @param Snapshot               $entitySnapshot
+     * @param Helper                 $coreResourceHelper
+     * @param AdapterInterface|null  $connection
+     * @param AbstractDb|null        $resource
+     * @param Config                 $configHelper
+     */
+    public function __construct(
+        EntityFactory $entityFactory, LoggerInterface $logger,
+        FetchStrategyInterface $fetchStrategy,
+        ManagerInterface $eventManager,
+        Snapshot $entitySnapshot,
+        Helper $coreResourceHelper,
+        AdapterInterface $connection = null,
+        AbstractDb $resource = null,
+        Config $configHelper
+    ) {
+        $this->configHelper = $configHelper;
+        parent::__construct(
+            $entityFactory,
+            $logger,
+            $fetchStrategy,
+            $eventManager,
+            $entitySnapshot,
+            $coreResourceHelper,
+            $connection,
+            $resource
+        );
+    }
 
     /**
      * @return Collection
@@ -48,9 +98,21 @@ class Collection extends ExtendCollection
     /**
      * @return Collection
      */
-    public function addStatusFilter(): self
+    public function addExportFilterOrderStatus(): self
     {
-        $this->getSelect()->where('main_table.status IN (?)', ['complete', 'processing_mgm', 'pending']);
+        $orderStatuses = $this->configHelper->getOrderExportStatuses();
+        if ($orderStatuses) {
+            $this->getSelect()->where('main_table.status IN (?)', $orderStatuses);
+        }
+        return $this;
+    }
+
+    public function addExportFilterStartDate()
+    {
+        $startDateFilter = $this->configHelper->getOrderExportStartDate();
+        if ($startDateFilter) {
+            $this->getSelect()->where('main_table.created_at > ?', $startDateFilter);
+        }
         return $this;
     }
 

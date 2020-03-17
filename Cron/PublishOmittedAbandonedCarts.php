@@ -12,9 +12,9 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\CollectionFactory as
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
- * Class ExportOmittedAbandonedCarts
+ * Class PublishOmittedAbandonedCarts
  */
-class ExportOmittedAbandonedCarts implements CronInterface
+class PublishOmittedAbandonedCarts implements CronInterface
 {
     /**
      * @var ConfigHelper

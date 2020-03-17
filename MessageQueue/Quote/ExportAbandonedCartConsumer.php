@@ -106,4 +106,12 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
         $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
         $this->orderRepository->save($order);
     }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key)
+    {
+        return;
+    }
 }

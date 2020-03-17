@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\ExportOmittedContacts;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedContacts;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
@@ -49,7 +49,7 @@ class ExportOmittedContactsTest extends TestCase
     protected $publisher;
 
     /**
-     * @var ExportOmittedContacts
+     * @var PublishOmittedContacts
      */
     protected $exportOmittedContacts;
 
@@ -81,7 +81,7 @@ class ExportOmittedContactsTest extends TestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedContacts = new ExportOmittedContacts(
+        $this->exportOmittedContacts = new PublishOmittedContacts(
             $this->configHelper,
             $this->customerCollectionFactory,
             $this->subscriberCollectionFactory,

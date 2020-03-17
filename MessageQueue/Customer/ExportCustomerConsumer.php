@@ -114,4 +114,12 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key)
+    {
+        return;
+    }
 }

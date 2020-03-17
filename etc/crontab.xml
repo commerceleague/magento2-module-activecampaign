@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
 	<group id="default">
-		<job name="activecampaign_export_omitted_contacts" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedContacts" method="run">
+		<job name="activecampaign_publish_omitted_contacts" instance="CommerceLeague\ActiveCampaign\Cron\PublishOmittedContacts" method="run">
 			<schedule>*/10 * * * *</schedule>
 		</job>
-		<job name="activecampaign_export_omitted_customers" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedCustomers" method="run">
+		<job name="activecampaign_publish_omitted_customers" instance="CommerceLeague\ActiveCampaign\Cron\PublishOmittedCustomers" method="run">
 			<schedule>*/10 * * * *</schedule>
 		</job>
-		<job name="activecampaign_export_omitted_orders" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedOrders" method="run">
+		<job name="activecampaign_publish_omitted_orders" instance="CommerceLeague\ActiveCampaign\Cron\PublishOmittedOrders" method="run">
 			<schedule>*/10 * * * *</schedule>
 		</job>
-		<job name="activecampaign_export_omitted_abandoned_carts" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedAbandonedCarts" method="run">
+		<job name="activecampaign_publish_omitted_abandoned_carts" instance="CommerceLeague\ActiveCampaign\Cron\PublishOmittedAbandonedCarts" method="run">
 			<schedule>*/10 * * * *</schedule>
 		</job>
 
-		<job name="activecampaign_export_omitted_guest_customers" instance="CommerceLeague\ActiveCampaign\Cron\ExportOmittedGuestCustomers" method="run">
+		<job name="activecampaign_publish_omitted_guest_customers" instance="CommerceLeague\ActiveCampaign\Cron\PublishOmittedGuestCustomers" method="run">
 			<schedule>*/10 * * * *</schedule>
 		</job>
 	</group>
