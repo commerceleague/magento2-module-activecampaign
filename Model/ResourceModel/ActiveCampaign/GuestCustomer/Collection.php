@@ -89,8 +89,12 @@ class Collection extends AbstractCollection
         $this->getSelect()->joinLeft(
             ['sales_order' => $this->_resource->getTable('sales_order')],
             'sales_order.customer_email = main_table.email AND sales_order.customer_is_guest = 1',
-            ['sales_order.customer_is_guest', 'sales_order.customer_email']
+            [
+                'sales_order.customer_is_guest',
+                'sales_order.customer_email',
+                'count(sales_order.entity_id) as order_count']
         );
+        $this->getSelect()->group('main_table.email');
 
         return $this;
     }
