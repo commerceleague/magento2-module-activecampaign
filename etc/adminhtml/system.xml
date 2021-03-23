@@ -81,6 +81,10 @@
                     <label>Assign Customers to this list</label>
                     <source_model>CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign\Lists</source_model>
                 </field>
+                <field id="allowed_group_id_list" translate="label" type="multiselect" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Customer groups to export</label>
+                    <source_model>Magento\Customer\Model\Config\Source\Group</source_model>
+                </field>
             </group>
             <group id="newsletter_export" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Newsletter Export Settings</label>

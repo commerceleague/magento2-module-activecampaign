@@ -33,7 +33,8 @@ class Config extends AbstractHelper
     private const XML_PATH_WEBHOOK_ENABLED = 'activecampaign/webhook/enabled';
     private const XML_PATH_WEBHOOK_TOKEN   = 'activecampaign/webhook/token';
 
-    private const XML_PATH_CUSTOMER_LIST_ID = 'activecampaign/customer_export/customer_list_id';
+    private const XML_PATH_CUSTOMER_LIST_ID               = 'activecampaign/customer_export/customer_list_id';
+    private const XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST = 'activecampaign/customer_export/allowed_group_id_list';
 
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_LIST = 'activecampaign/newsletter_export/newsletter_subscribers_list';
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_TAGS = 'activecampaign/newsletter_export/newsletter_subscribers_tags';
@@ -228,5 +229,14 @@ class Config extends AbstractHelper
     public function getOrderExportStartDate(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_EXPORT_ORDER_START_DATE);
+    }
+
+    public function getAllowedCustomerGroupIds(): array
+    {
+        $list = $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST);
+        if ($list) {
+            return explode(',', $list);
+        }
+        return [];
     }
 }
