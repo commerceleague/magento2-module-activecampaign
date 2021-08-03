@@ -86,17 +86,63 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
         $request  = $this->customerRequestBuilder->build($magentoCustomer);
 
         try {
-            $apiResponse = $this->performApiRequest($customer, $request);
+            $apiResponse                  = $this->performApiRequest($customer, $request);
+            $activeCampaignEcomCustomerId = $apiResponse['ecomCustomer']['id'];
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logUnprocessableEntityHttpException($e, $request);
-            return;
+            $activeCampaignEcomCustomerId = $this->logUnprocessableEntityHttpException($e, $request);
+            if ($activeCampaignEcomCustomerId === null) {
+                return;
+            }
+
         } catch (HttpException $e) {
             $this->logException($e);
             return;
         }
 
-        $customer->setActiveCampaignId($apiResponse['ecomCustomer']['id']);
+        $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
         $this->customerRepository->save($customer);
+    }
+
+    /**
+     * override the default logging to update the entry in database
+     *
+     * @param UnprocessableEntityHttpException $unprocessableEntityHttpException
+     * @param                                  $request
+     *
+     * @return mixed|void|null
+     */
+    public function logUnprocessableEntityHttpException(
+        UnprocessableEntityHttpException $unprocessableEntityHttpException, $request
+    ) {
+
+        $activeCampaignEcommerceId = null;
+        $errors                    = $unprocessableEntityHttpException->getResponseErrors();
+        if (count($errors) > 0) {
+            foreach ($errors as $error) {
+                if ($error['code'] == 'duplicate') {
+                    $filters = [
+                        'filters' => [
+                            'email'        => $request['email'],
+                            'connectionid' => $request['connectionid']
+                        ]
+                    ];
+                    $this->getLogger()->info(print_r($filters, true));
+                    $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
+                    $items    = $response->getItems();
+                    $customer = $items[0];
+                    $this->getLogger()->info(print_r($customer, true));
+                    if (strtolower($customer['email']) == strtolower($request['email'])) {
+                        $activeCampaignEcommerceId = $customer['id'];
+                    }
+                }
+            }
+        }
+        if (null === $activeCampaignEcommerceId) {
+            parent::logUnprocessableEntityHttpException(
+                $unprocessableEntityHttpException, $request
+            );
+        }
+        return $activeCampaignEcommerceId;
     }
 
     /**
