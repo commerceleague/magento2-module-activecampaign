@@ -49,10 +49,10 @@ abstract class AbstractConsumer
         UnprocessableEntityHttpException $unprocessableEntityHttpException,
         $request
     ) {
-        $this->logger->error(__CLASS__);
-        $this->logger->error($unprocessableEntityHttpException->getMessage());
-        $this->logger->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
-        $this->logger->error(print_r($request, true));
+        $this->getLogger()->error(get_class($this));
+        $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
+        $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
+        $this->getLogger()->error(print_r($request, true));
     }
 
     /**
@@ -60,7 +60,7 @@ abstract class AbstractConsumer
      */
     public function logException(Exception $exception)
     {
-        $this->logger->error($exception);
+        $this->getLogger()->error($exception);
     }
 
     /**
