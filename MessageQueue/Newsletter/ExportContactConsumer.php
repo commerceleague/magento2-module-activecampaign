@@ -84,7 +84,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
 
         /** @var Subscriber $subscriber */
         $subscriber = $this->subscriberFactory->create();
-        $subscriber = $subscriber->loadByEmail($message['email']);
+        $subscriber = $subscriber->load($message['email'], 'subscriber_email');
 
         if (!$subscriber->getId()) {
             $this->getLogger()->error(__('The Subscriber with the "%1" email doesn\'t exist', $message['email']));
