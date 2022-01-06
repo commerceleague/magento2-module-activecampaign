@@ -239,4 +239,15 @@ class Config extends AbstractHelper
         }
         return [];
     }
+
+    public function isConnectionSet(): bool
+    {
+        $token  = $this->getApiToken();
+        $apiUrl = $this->getApiUrl();
+
+        if ($token !== null && $apiUrl !== null) {
+            return true;
+        }
+        return false;
+    }
 }
