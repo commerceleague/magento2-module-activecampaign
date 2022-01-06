@@ -18,6 +18,7 @@ use CommerceLeague\ActiveCampaignApi\CommonClientInterface;
 use Http\Adapter\Guzzle6\Client as GuzzleClient;
 use Http\Factory\Guzzle\RequestFactory as GuzzleRequestFactory;
 use Http\Factory\Guzzle\StreamFactory as GuzzleStreamFactory;
+use Magento\Framework\Exception\InvalidArgumentException;
 
 /**
  * Class Client
@@ -40,6 +41,7 @@ class Client
 
     /**
      * @return AbandonedCartApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getAbandonedCartApi(): AbandonedCartApiResourceInterface
     {
@@ -56,6 +58,7 @@ class Client
 
     /**
      * @return ContactApiResourceInterface
+     * @throws MissingCredentialsException
      */
     public function getContactApi(): ContactApiResourceInterface
     {
@@ -72,6 +75,7 @@ class Client
 
     /**
      * @return OrderApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getOrderApi(): OrderApiResourceInterface
     {
@@ -80,6 +84,7 @@ class Client
 
     /**
      * @return TagsApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getTagsApi(): TagsApiResourceInterface
     {
@@ -88,6 +93,7 @@ class Client
 
     /**
      * @return ListsApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getListsApi(): ListsApiResourceInterface
     {
@@ -96,11 +102,18 @@ class Client
 
     /**
      * @return CommonClientInterface
+     * @throws InvalidArgumentException
      */
     private function getCommonClient(): CommonClientInterface
     {
         $url   = $this->configHelper->getApiUrl();
         $token = $this->configHelper->getApiToken();
+
+        if ($this->configHelper->isConnectionSet() === false) {
+            throw new InvalidArgumentException(
+                __('Connection Credentials are not set')
+            );
+        }
 
         $clientBuilder = new ClientBuilder();
         $clientBuilder->setHttpClient(new GuzzleClient());
