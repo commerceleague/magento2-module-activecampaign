@@ -8,6 +8,9 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Gateway\Client;
+use CommerceLeague\ActiveCampaignApi\Exception\NotFoundHttpException;
+use CommerceLeague\ActiveCampaignApi\Exception\UnauthorizedHttpException;
+use Magento\Framework\Exception\InvalidArgumentException;
 use Magento\Framework\Option\ArrayInterface;
 
 /**
@@ -37,17 +40,25 @@ class Tags implements ArrayInterface
      */
     public function toOptionArray()
     {
-
         if (count($this->options) == 0) {
             $options = [];
-            $page    = $this->client->getTagsApi()->listPerPage(100);
-            $lists   = $page->getItems();
-            foreach ($lists as $list) {
-                $options[] = [
-                    'value' => $list['id'],
-                    'label' => $list['tag']
-                ];
+            try {
+                $page  = $this->client->getTagsApi()->listPerPage(100);
+                $lists = $page->getItems();
+                foreach ($lists as $list) {
+                    $options[] = [
+                        'value' => $list['id'],
+                        'label' => $list['tag']
+                    ];
+                }
+            } catch (UnauthorizedHttpException $exception) {
+                // fail silently for the moment
+            } catch (NotFoundHttpException $exception) {
+                // fail silently for the moment
+            } catch (InvalidArgumentException $exception) {
+                // fail silently for the moment
             }
+
             $this->options = $options;
         }
         return $this->options;
