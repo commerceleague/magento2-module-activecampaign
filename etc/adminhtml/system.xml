@@ -31,6 +31,13 @@
                         <field id="enabled">1</field>
                     </depends>
                 </field>
+                <field id="connect" translate="label" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Test Connection</label>
+                    <frontend_model>\CommerceLeague\ActiveCampaign\Block\Adminhtml\System\Config\Connection</frontend_model>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
             </group>
             <group id="export" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Export Settings</label>
