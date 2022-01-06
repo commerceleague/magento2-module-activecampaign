@@ -7,6 +7,7 @@
 					<resource id="Magento_Backend::stores_settings">
 						<resource id="Magento_Config::config">
 							<resource id="CommerceLeague_ActiveCampaign::activecampaign_config" title="ActiveCampaign Config" translate="title" sortOrder="1200" />
+							<resource id="CommerceLeague_ActiveCampaign::activecampaign_config_connectionChecker" title="ActiveCampaign Config Connection Checker" translate="title" sortOrder="1300" />
 						</resource>
 					</resource>
 				</resource>
