@@ -34,9 +34,10 @@ class Collection extends ExtendCustomerCollection
      * @param \Magento\Framework\Validator\UniversalFactory                     $universalFactory
      * @param \Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot $entitySnapshot
      * @param \Magento\Framework\DataObject\Copy\Config                         $fieldsetConfig
+     * @param ConfigHelper                                                      $configHelper
      * @param \Magento\Framework\DB\Adapter\AdapterInterface|null               $connection
      * @param string                                                            $modelName
-     * @param ConfigHelper                                                      $configHelper
+
      */
     public function __construct(
         \Magento\Framework\Data\Collection\EntityFactory $entityFactory,
@@ -50,9 +51,9 @@ class Collection extends ExtendCustomerCollection
         \Magento\Framework\Validator\UniversalFactory $universalFactory,
         \Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot $entitySnapshot,
         \Magento\Framework\DataObject\Copy\Config $fieldsetConfig,
+        ConfigHelper $configHelper,
         \Magento\Framework\DB\Adapter\AdapterInterface $connection = null,
-        $modelName = ExtendCustomerCollection::CUSTOMER_MODEL_NAME,
-        ConfigHelper $configHelper
+        $modelName = ExtendCustomerCollection::CUSTOMER_MODEL_NAME
     ) {
         parent::__construct(
             $entityFactory,
