@@ -8,12 +8,12 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Console\Command;
 use CommerceLeague\ActiveCampaign\Console\Command\ExportOrderCommand;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
@@ -210,10 +210,6 @@ class ExportOrderCommandTest extends TestCase
             ->willReturn(true);
 
         $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
-            ->willReturnSelf();
-
-        $this->orderCollection->expects($this->once())
             ->method('addIdFilter')
             ->with($orderId)
             ->willReturnSelf();
@@ -262,10 +258,6 @@ class ExportOrderCommandTest extends TestCase
             ->method('isOrderExportEnabled')
             ->willReturn(true);
 
-        $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
-            ->willReturnSelf();
-
         $this->orderCollection->expects($this->never())
             ->method('addIdFilter');
 
@@ -310,9 +302,6 @@ class ExportOrderCommandTest extends TestCase
             ->method('isOrderExportEnabled')
             ->willReturn(true);
 
-        $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
-            ->willReturnSelf();
 
         $this->orderCollection->expects($this->never())
             ->method('addIdFilter');

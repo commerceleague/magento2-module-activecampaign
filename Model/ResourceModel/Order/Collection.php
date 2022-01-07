@@ -66,15 +66,6 @@ class Collection extends ExtendCollection
     }
 
     /**
-     * @return Collection
-     */
-    public function addExcludeGuestFilter(): self
-    {
-        $this->getSelect()->where('main_table.customer_is_guest = 0');
-        return $this;
-    }
-
-    /**
      * @param int $orderId
      *
      * @return Collection

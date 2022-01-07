@@ -71,9 +71,6 @@ class ExportOmittedOrdersTest extends TestCase
             ->method('isEnabled')
             ->willReturn(false);
 
-        $this->orderCollection->expects($this->never())
-            ->method('addExcludeGuestFilter');
-
         $this->exportOmittedOrders->run();
     }
 
@@ -86,9 +83,6 @@ class ExportOmittedOrdersTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isOrderExportEnabled')
             ->willReturn(false);
-
-        $this->orderCollection->expects($this->never())
-            ->method('addExcludeGuestFilter');
 
         $this->exportOmittedOrders->run();
     }
@@ -104,10 +98,6 @@ class ExportOmittedOrdersTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isOrderExportEnabled')
             ->willReturn(true);
-
-        $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
-            ->willReturnSelf();
 
         $this->orderCollection->expects($this->once())
             ->method('addOmittedFilter')
