@@ -17,7 +17,7 @@
                     <depends>
                         <field id="enabled">1</field>
                     </depends>
-                    <comment><![CDATA[Should be in the form https://<your-account>.api-us1.com/]]></comment>
+                    <comment><![CDATA[Should be in the form https://{your-account}.api-us1.com]]></comment>
                 </field>
                 <field id="api_token" translate="label" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Api Token</label>
