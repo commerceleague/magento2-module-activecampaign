@@ -33,9 +33,9 @@ class Collection extends AbstractCollection
         EntityFactoryInterface $entityFactory, LoggerInterface $logger,
         FetchStrategyInterface $fetchStrategy,
         ManagerInterface $eventManager,
+        Config $configHelper,
         AdapterInterface $connection = null,
-        AbstractDb $resource = null,
-        Config $configHelper
+        AbstractDb $resource = null
     ) {
         $this->configHelper = $configHelper;
         parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
