@@ -31,17 +31,15 @@ class Collection extends ExtendCollection
     private $configHelper;
 
     /**
-     * Collection constructor.
-     *
      * @param EntityFactory          $entityFactory
      * @param LoggerInterface        $logger
      * @param FetchStrategyInterface $fetchStrategy
      * @param ManagerInterface       $eventManager
      * @param Snapshot               $entitySnapshot
      * @param Helper                 $coreResourceHelper
+     * @param Config                 $configHelper
      * @param AdapterInterface|null  $connection
      * @param AbstractDb|null        $resource
-     * @param Config                 $configHelper
      */
     public function __construct(
         EntityFactory $entityFactory, LoggerInterface $logger,
@@ -49,9 +47,10 @@ class Collection extends ExtendCollection
         ManagerInterface $eventManager,
         Snapshot $entitySnapshot,
         Helper $coreResourceHelper,
+        Config $configHelper,
         AdapterInterface $connection = null,
-        AbstractDb $resource = null,
-        Config $configHelper
+        AbstractDb $resource = null
+
     ) {
         $this->configHelper = $configHelper;
         parent::__construct(
