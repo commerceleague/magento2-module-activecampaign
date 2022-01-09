@@ -46,59 +46,11 @@ class ContactBuilderTest extends TestCase
         $this->contactBuilder = new ContactBuilder();
     }
 
-    public function testBuildWithMagentoCustomerNotSubscribed()
-    {
-        $email = 'email@example.com';
-        $firstName = 'firstName';
-        $lastName = 'lastName';
-
-        $this->magentoCustomer->expects($this->once())
-            ->method('getExtensionAttributes')
-            ->willReturn($this->extensionAttributes);
-
-        $this->extensionAttributes->expects($this->once())
-            ->method('getIsSubscribed')
-            ->willReturn(false);
-
-        $this->magentoCustomer->expects($this->once())
-            ->method('getEmail')
-            ->willReturn($email);
-
-        $this->magentoCustomer->expects($this->once())
-            ->method('getFirstname')
-            ->willReturn($firstName);
-
-        $this->magentoCustomer->expects($this->once())
-            ->method('getLastname')
-            ->willReturn($lastName);
-
-        $expected = [
-            'status' => Contants::CONTACT_STATUS_UNSUBSCRIBED,
-            'email' => $email,
-            'firstName' => $firstName,
-            'lastName' => $lastName
-        ];
-
-        $this->assertEquals(
-            $expected,
-            $this->contactBuilder->buildWithMagentoCustomer($this->magentoCustomer)
-        );
-    }
-
-
     public function testBuildWithMagentoCustomerSubscribed()
     {
         $email = 'email@example.com';
         $firstName = 'firstName';
         $lastName = 'lastName';
-
-        $this->magentoCustomer->expects($this->once())
-            ->method('getExtensionAttributes')
-            ->willReturn($this->extensionAttributes);
-
-        $this->extensionAttributes->expects($this->once())
-            ->method('getIsSubscribed')
-            ->willReturn(true);
 
         $this->magentoCustomer->expects($this->once())
             ->method('getEmail')
@@ -125,36 +77,9 @@ class ContactBuilderTest extends TestCase
         );
     }
 
-    public function testBuildWithSubscriberNotSubscribed()
-    {
-        $email = 'email@example.com';
-
-        $this->subscriber->expects($this->once())
-            ->method('isSubscribed')
-            ->willReturn(false);
-
-        $this->subscriber->expects($this->once())
-            ->method('getEmail')
-            ->willReturn($email);
-
-        $expected = [
-            'status' => Contants::CONTACT_STATUS_UNSUBSCRIBED,
-            'email' => $email
-        ];
-
-        $this->assertEquals(
-            $expected,
-            $this->contactBuilder->buildWithSubscriber($this->subscriber)
-        );
-    }
-
     public function testBuildWithSubscriberSubscribed()
     {
         $email = 'email@example.com';
-
-        $this->subscriber->expects($this->once())
-            ->method('isSubscribed')
-            ->willReturn(true);
 
         $this->subscriber->expects($this->once())
             ->method('getEmail')
