@@ -1,7 +1,7 @@
 language: php
 
 php:
-    - 7.2
+    - 7.4
 
 cache:
     directories:
@@ -17,7 +17,7 @@ install:
 
 before_script:
     - php vendor/bin/phpcs --config-set installed_paths vendor/magento/magento-coding-standard
-    - php vendor/bin/phpcs --config-set php7.0_path $(which php)
+    - php vendor/bin/phpcs --config-set php7.4_path $(which php)
 
 script:
     - php vendor/bin/phpunit --coverage-clover=coverage.xml
