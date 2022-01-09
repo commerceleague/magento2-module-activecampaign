@@ -37,6 +37,10 @@ class ClientTest extends TestCase
             ->method('getApiToken')
             ->willReturn('API_TOKEN');
 
+        $this->configHelper->expects($this->once())
+            ->method('isConnectionSet')
+            ->willReturn(true);
+
         $this->client->getAbandonedCartApi();
     }
 }
