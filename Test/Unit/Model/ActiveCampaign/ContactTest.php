@@ -7,13 +7,14 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Contact;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact as ContactResource;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\Model\Context;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
 
-class ContactTest extends TestCase
+class ContactTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|Context
      */

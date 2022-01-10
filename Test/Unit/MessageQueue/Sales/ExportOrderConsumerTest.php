@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder as OrderRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Sales\ExportOrderConsumer;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
@@ -19,10 +20,10 @@ use Magento\Framework\Phrase;
 use Magento\Sales\Api\OrderRepositoryInterface as MagentoOrderRepositoryInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportOrderConsumerTest extends TestCase
+class ExportOrderConsumerTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|MagentoOrderRepositoryInterface
      */

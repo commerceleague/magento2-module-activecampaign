@@ -7,14 +7,15 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder;
 use CommerceLeague\ActiveCampaign\Helper\Contants;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 use Magento\Framework\Api\ExtensionAttributesInterface;
 use Magento\Newsletter\Model\Subscriber;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 
-class ContactBuilderTest extends TestCase
+class ContactBuilderTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|MagentoCustomerInterface
      */
