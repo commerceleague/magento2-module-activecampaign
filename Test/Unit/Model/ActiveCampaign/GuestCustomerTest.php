@@ -7,12 +7,12 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomer;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer as CustomerResource;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\Model\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class GuestCustomerTest extends TestCase
+class GuestCustomerTest extends AbstractTestCase
 {
 
     /**

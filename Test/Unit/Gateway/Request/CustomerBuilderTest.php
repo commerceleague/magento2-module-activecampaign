@@ -7,13 +7,14 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 use Magento\Framework\Api\ExtensionAttributesInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class CustomerBuilderTest extends TestCase
+class CustomerBuilderTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */

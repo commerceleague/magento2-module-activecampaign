@@ -6,18 +6,19 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Customer;
+use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\CustomerFactory;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\CustomerRepository;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer as CustomerResource;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer as CustomerResource;
-use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\CustomerFactory;
 
-class CustomerRepositoryTest extends TestCase
+class CustomerRepositoryTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|CustomerResource
      */

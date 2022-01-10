@@ -8,15 +8,16 @@ namespace CommerceLeague\ActiveCampaign\Test\Observer\Newsletter;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Observer\Newsletter\ExportContactObserver;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Newsletter\Model\Subscriber;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportContactObserverTest extends TestCase
+class ExportContactObserverTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
