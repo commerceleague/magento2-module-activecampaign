@@ -119,20 +119,22 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
         $errors                    = $unprocessableEntityHttpException->getResponseErrors();
         if (count($errors) > 0) {
             foreach ($errors as $error) {
-                if ($error['code'] == 'duplicate') {
-                    $filters = [
-                        'filters' => [
-                            'email'        => $request['email'],
-                            'connectionid' => $request['connectionid']
-                        ]
-                    ];
-                    $this->getLogger()->info(print_r($filters, true));
-                    $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
-                    $items    = $response->getItems();
-                    $customer = $items[0];
-                    $this->getLogger()->info(print_r($customer, true));
-                    if (strtolower($customer['email']) == strtolower($request['email'])) {
-                        $activeCampaignEcommerceId = $customer['id'];
+                if (isset($error['code'])) {
+                    if ($error['code'] == 'duplicate') {
+                        $filters = [
+                            'filters' => [
+                                'email'        => $request['email'],
+                                'connectionid' => $request['connectionid']
+                            ]
+                        ];
+                        $this->getLogger()->info(print_r($filters, true));
+                        $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
+                        $items    = $response->getItems();
+                        $customer = $items[0];
+                        $this->getLogger()->info(print_r($customer, true));
+                        if (strtolower($customer['email']) == strtolower($request['email'])) {
+                            $activeCampaignEcommerceId = $customer['id'];
+                        }
                     }
                 }
             }
