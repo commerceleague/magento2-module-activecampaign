@@ -102,7 +102,7 @@ class ExportCustomerConsumerTest extends AbstractTestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with($exceptionMessage);
+            ->with($exception);
 
         $this->customerRepository->expects($this->never())
             ->method('getOrCreateByMagentoCustomerId');

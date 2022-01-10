@@ -113,7 +113,7 @@ class ExportOrderObserverTest extends AbstractTestCase
             ->method('getCustomerIsGuest')
             ->willReturn(true);
 
-        $this->publisher->expects($this->never())
+        $this->publisher->expects($this->atLeastOnce())
             ->method('publish');
 
         $this->exportOrderObserver->execute($this->observer);
