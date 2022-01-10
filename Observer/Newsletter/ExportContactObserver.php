@@ -17,6 +17,7 @@ use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
  */
 class ExportContactObserver implements ObserverInterface
 {
+
     /**
      * @var ConfigHelper
      */
@@ -28,7 +29,7 @@ class ExportContactObserver implements ObserverInterface
     private $publisher;
 
     /**
-     * @param ConfigHelper $configHelper
+     * @param ConfigHelper       $configHelper
      * @param PublisherInterface $publisher
      */
     public function __construct(
@@ -36,7 +37,7 @@ class ExportContactObserver implements ObserverInterface
         PublisherInterface $publisher
     ) {
         $this->configHelper = $configHelper;
-        $this->publisher = $publisher;
+        $this->publisher    = $publisher;
     }
 
     /**
@@ -51,7 +52,7 @@ class ExportContactObserver implements ObserverInterface
         /** @var Subscriber $subscriber */
         $subscriber = $observer->getEvent()->getData('subscriber');
 
-        if ($subscriber->getData('customer_id')) {
+        if ($subscriber->getStatus() != Subscriber::STATUS_SUBSCRIBED) {
             return;
         }
 

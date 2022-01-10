@@ -10,14 +10,15 @@ use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Order;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\OrderFactory;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\OrderRepository;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Order as OrderResource;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class OrderRepositoryTest extends TestCase
+class OrderRepositoryTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|OrderResource
      */

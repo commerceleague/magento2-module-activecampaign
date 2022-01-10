@@ -27,10 +27,14 @@ class Config extends AbstractHelper
     private const XML_PATH_EXPORT_ORDER_ENABLED          = 'activecampaign/export/order_enabled';
     private const XML_PATH_EXPORT_ABANDONED_CART_ENABLED = 'activecampaign/export/abandoned_cart_enabled';
 
+    private const XML_PATH_EXPORT_ORDER_STATUSES   = 'activecampaign/order_export/filter_order_statuses';
+    private const XML_PATH_EXPORT_ORDER_START_DATE = 'activecampaign/order_export/filter_date_from';
+
     private const XML_PATH_WEBHOOK_ENABLED = 'activecampaign/webhook/enabled';
     private const XML_PATH_WEBHOOK_TOKEN   = 'activecampaign/webhook/token';
 
-    private const XML_PATH_CUSTOMER_LIST_ID = 'activecampaign/customer_export/customer_list_id';
+    private const XML_PATH_CUSTOMER_LIST_ID               = 'activecampaign/customer_export/customer_list_id';
+    private const XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST = 'activecampaign/customer_export/allowed_group_id_list';
 
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_LIST = 'activecampaign/newsletter_export/newsletter_subscribers_list';
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_TAGS = 'activecampaign/newsletter_export/newsletter_subscribers_tags';
@@ -201,5 +205,49 @@ class Config extends AbstractHelper
             return false;
         }
         return true;
+    }
+
+    /**
+     * Get the set order status filters
+     *
+     * @return array|null
+     */
+    public function getOrderExportStatuses(): ?array
+    {
+        $orderStatuses = $this->scopeConfig->getValue(self::XML_PATH_EXPORT_ORDER_STATUSES);
+        if (null !== $orderStatuses) {
+            return explode(',', $orderStatuses);
+        }
+        return null;
+    }
+
+    /**
+     * Get the set order export start date filter
+     *
+     * @return string|null
+     */
+    public function getOrderExportStartDate(): ?string
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_EXPORT_ORDER_START_DATE);
+    }
+
+    public function getAllowedCustomerGroupIds(): array
+    {
+        $list = $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST);
+        if ($list) {
+            return explode(',', $list);
+        }
+        return [];
+    }
+
+    public function isConnectionSet(): bool
+    {
+        $token  = $this->getApiToken();
+        $apiUrl = $this->getApiUrl();
+
+        if ($token !== null && $apiUrl !== null) {
+            return true;
+        }
+        return false;
     }
 }

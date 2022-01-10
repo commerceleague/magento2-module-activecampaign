@@ -13,9 +13,9 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustom
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
- * Class ExportOmittedCustomers
+ * Class PublishOmittedGuestCustomers
  */
-class ExportOmittedGuestCustomers implements CronInterface
+class PublishOmittedGuestCustomers implements CronInterface
 {
 
     /**
@@ -86,6 +86,8 @@ class ExportOmittedGuestCustomers implements CronInterface
         /** @var CustomerCollection $customerCollection */
         $customerCollection = $this->customerCollectionFactory->create();
         $customerCollection->addOmittedFilter();
+        $customerCollection->addExportFilterOrderStatus();
+        $customerCollection->addExportFilterStartDate();
 
         return $customerCollection->getItems();
     }

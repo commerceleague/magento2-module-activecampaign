@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder as OrderRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Sales\ExportOrderConsumer;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
@@ -19,10 +20,10 @@ use Magento\Framework\Phrase;
 use Magento\Sales\Api\OrderRepositoryInterface as MagentoOrderRepositoryInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportOrderConsumerTest extends TestCase
+class ExportOrderConsumerTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|MagentoOrderRepositoryInterface
      */
@@ -102,7 +103,7 @@ class ExportOrderConsumerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with($exceptionMessage);
+            ->with($exception);
 
         $this->orderRepository->expects($this->never())
             ->method('getOrCreateByMagentoQuoteId');
@@ -165,14 +166,14 @@ class ExportOrderConsumerTest extends TestCase
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
         $request = ['request'];
-        $responseErrors = ['first error', 'second error'];
+        $responseErrors = [['code' => 'duplicate']];
 
         $this->magentoOrderRepository->expects($this->once())
             ->method('get')
             ->with($magentoOrderId)
             ->willReturn($this->magentoOrder);
 
-        $this->magentoOrder->expects($this->once())
+        $this->magentoOrder->expects($this->atLeastOnce())
             ->method('getQuoteId')
             ->willReturn($magentoQuoteId);
 
@@ -190,7 +191,7 @@ class ExportOrderConsumerTest extends TestCase
             ->method('getActiveCampaignId')
             ->willReturn(null);
 
-        $this->client->expects($this->once())
+        $this->client->expects($this->atLeastOnce())
             ->method('getOrderApi')
             ->willReturn($this->orderApi);
 
@@ -202,18 +203,12 @@ class ExportOrderConsumerTest extends TestCase
             ->with(['ecomOrder' => $request])
             ->willThrowException($unprocessableEntityHttpException);
 
-        $this->logger->expects($this->exactly(2))
-            ->method('error');
 
         $unprocessableEntityHttpException->expects($this->once())
             ->method('getResponseErrors')
             ->willReturn($responseErrors);
 
-        $this->logger->expects($this->at(1))
-            ->method('error')
-            ->with(print_r($responseErrors, true));
-
-        $this->order->expects($this->never())
+        $this->order->expects($this->once())
             ->method('setActiveCampaignId');
 
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
