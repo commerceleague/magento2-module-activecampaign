@@ -14,7 +14,7 @@ use Magento\Framework\View\Result\Page as ResultPage;
  */
 abstract class AbstractAbandoned extends Action
 {
-    const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_abandoned';
+    public const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_abandoned';
 
     /**
      * @param ResultPage|ResultPageModel $resultPage

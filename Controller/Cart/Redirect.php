@@ -16,20 +16,14 @@ use Magento\Framework\App\Action\HttpGetActionInterface;
 class Redirect extends Action implements HttpGetActionInterface
 {
     /**
-     * @var CustomerSession
-     */
-    private $customerSession;
-
-    /**
      * @param Context $context
      * @param CustomerSession $customerSession
      */
     public function __construct(
         Context $context,
-        CustomerSession $customerSession
+        private readonly CustomerSession $customerSession
     ) {
         parent::__construct($context);
-        $this->customerSession = $customerSession;
     }
 
     /**

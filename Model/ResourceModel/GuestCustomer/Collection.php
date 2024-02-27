@@ -17,8 +17,6 @@ class Collection extends ExtendCollection
 {
 
     /**
-     * @param int $orderId
-     *
      * @return Collection
      */
     public function addIdFilter(int $orderId): self

@@ -25,38 +25,20 @@ class AssignSubscriberToList extends AbstractConsumer implements ConsumerInterfa
 {
 
     /**
-     * @var ContactListBuilder
-     */
-    private $requestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
-     * @var ContactRepositoryInterface
-     */
-    private $contactRepository;
-
-    /**
      * AssignContactToListConsumer constructor.
      *
-     * @param ContactListBuilder         $contactListBuilder
+     * @param ContactListBuilder $requestBuilder
      * @param Client                     $client
      * @param ContactRepositoryInterface $contactRepository
      * @param Logger                     $logger
      */
     public function __construct(
-        ContactListBuilder $contactListBuilder,
-        Client $client,
-        ContactRepositoryInterface $contactRepository,
+        private readonly ContactListBuilder $requestBuilder,
+        private readonly Client $client,
+        private readonly ContactRepositoryInterface $contactRepository,
         Logger $logger
     ) {
         parent::__construct($logger);
-        $this->requestBuilder    = $contactListBuilder;
-        $this->client            = $client;
-        $this->contactRepository = $contactRepository;
     }
 
     /**
@@ -64,7 +46,7 @@ class AssignSubscriberToList extends AbstractConsumer implements ConsumerInterfa
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
 
         $contact = $this->contactRepository->getById($message['contact_id']);
         $request = $this->requestBuilder->buildWithContact($contact, $message['list_id']);

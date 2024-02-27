@@ -22,41 +22,20 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
 {
 
     /**
-     * @var GuestCustomerResource
-     */
-    private $guestCustomerResource;
-
-    /**
      * @var GuestCustomerFactory
      */
     private $guestCustomerFactory;
 
     /**
-     * @var CustomerRepositoryInterface
-     */
-    private $magentoCustomerRepository;
-
-    /**
-     * @var CustomerRepository
-     */
-    private $customerRepository;
-
-    /**
-     * @param GuestCustomerResource       $customerResource
      * @param GuestCustomerFactory        $GuestCustomerFactory
-     * @param CustomerRepositoryInterface $magentoCustomerRepository
-     * @param CustomerRepository          $customerRepository
      */
     public function __construct(
-        GuestCustomerResource $customerResource,
+        private readonly GuestCustomerResource $guestCustomerResource,
         GuestCustomerFactory $GuestCustomerFactory,
-        CustomerRepositoryInterface $magentoCustomerRepository,
-        CustomerRepository $customerRepository
+        private readonly CustomerRepositoryInterface $magentoCustomerRepository,
+        private readonly CustomerRepository $customerRepository
     ) {
-        $this->guestCustomerResource     = $customerResource;
         $this->guestCustomerFactory      = $GuestCustomerFactory;
-        $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->customerRepository        = $customerRepository;
     }
 
     /**
@@ -167,7 +146,7 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
                         $guestCustomer->setActiveCampaignId($activeCampaignCustomer->getActiveCampaignId());
                     }
                 }
-            } catch (NoSuchEntityException $e) {
+            } catch (NoSuchEntityException) {
 
             }
 

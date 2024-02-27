@@ -19,24 +19,17 @@ use Magento\Framework\Model\AbstractModel;
 class CustomerRepository implements CustomerRepositoryInterface
 {
     /**
-     * @var CustomerResource
-     */
-    private $customerResource;
-
-    /**
      * @var CustomerFactory
      */
     private $customerFactory;
 
     /**
-     * @param CustomerResource $customerResource
      * @param CustomerFactory $customerFactory
      */
     public function __construct(
-        CustomerResource $customerResource,
+        private readonly CustomerResource $customerResource,
         CustomerFactory $customerFactory
     ) {
-        $this->customerResource = $customerResource;
         $this->customerFactory = $customerFactory;
     }
 

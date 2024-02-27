@@ -26,26 +26,6 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
 {
 
     /**
-     * @var MagentoCustomerRepositoryInterface
-     */
-    private $magentoCustomerRepository;
-
-    /**
-     * @var CustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
-     * @var CustomerRequestBuilder
-     */
-    private $customerRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
      * @param MagentoCustomerRepositoryInterface $magentoCustomerRepository
      * @param Logger                             $logger
      * @param CustomerRepositoryInterface        $customerRepository
@@ -53,17 +33,13 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
      * @param Client                             $client
      */
     public function __construct(
-        MagentoCustomerRepositoryInterface $magentoCustomerRepository,
+        private readonly MagentoCustomerRepositoryInterface $magentoCustomerRepository,
         Logger $logger,
-        CustomerRepositoryInterface $customerRepository,
-        CustomerRequestBuilder $customerRequestBuilder,
-        Client $client
+        private readonly CustomerRepositoryInterface $customerRepository,
+        private readonly CustomerRequestBuilder $customerRequestBuilder,
+        private readonly Client $client
     ) {
         parent::__construct($logger);
-        $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->customerRepository        = $customerRepository;
-        $this->customerRequestBuilder    = $customerRequestBuilder;
-        $this->client                    = $client;
     }
 
     /**
@@ -73,7 +49,7 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
 
         try {
             $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
@@ -100,9 +76,6 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     }
 
     /**
-     * @param CustomerInterface $customer
-     * @param array             $request
-     *
      * @return array
      * @throws HttpException
      */

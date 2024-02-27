@@ -25,11 +25,6 @@ class Unsubscribe extends AbstractWebhook
     private $subscriberFactory;
 
     /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
      * @param Context $context
      * @param ConfigHelper $configHelper
      * @param RawResultFactory $rawResultFactory
@@ -41,11 +36,10 @@ class Unsubscribe extends AbstractWebhook
         ConfigHelper $configHelper,
         RawResultFactory $rawResultFactory,
         SubscriberFactory $subscriberFactory,
-        Logger $logger
+        private readonly Logger $logger
     ) {
         parent::__construct($context, $configHelper, $rawResultFactory);
         $this->subscriberFactory = $subscriberFactory;
-        $this->logger = $logger;
     }
 
     /**

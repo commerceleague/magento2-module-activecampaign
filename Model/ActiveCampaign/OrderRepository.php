@@ -16,24 +16,17 @@ use Magento\Framework\Model\AbstractModel;
 class OrderRepository implements OrderRepositoryInterface
 {
     /**
-     * @var OrderResource
-     */
-    private $orderResource;
-
-    /**
      * @var OrderFactory
      */
     private $orderFactory;
 
     /**
-     * @param OrderResource $orderResource
      * @param OrderFactory $orderFactory
      */
     public function __construct(
-        OrderResource $orderResource,
+        private readonly OrderResource $orderResource,
         OrderFactory $orderFactory
     ) {
-        $this->orderResource = $orderResource;
         $this->orderFactory = $orderFactory;
     }
 

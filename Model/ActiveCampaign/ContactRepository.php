@@ -18,24 +18,17 @@ use Magento\Framework\Model\AbstractModel;
 class ContactRepository implements ContactRepositoryInterface
 {
     /**
-     * @var ContactResource
-     */
-    private $contactResource;
-
-    /**
      * @var ContactFactory
      */
     private $contactFactory;
 
     /**
-     * @param ContactResource $contactResource
      * @param ContactFactory $contactFactory
      */
     public function __construct(
-        ContactResource $contactResource,
+        private readonly ContactResource $contactResource,
         ContactFactory $contactFactory
     ) {
-        $this->contactResource = $contactResource;
         $this->contactFactory = $contactFactory;
     }
 

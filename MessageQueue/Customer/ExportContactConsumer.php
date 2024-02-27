@@ -27,31 +27,6 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
 {
 
     /**
-     * @var MagentoCustomerRepositoryInterface
-     */
-    private $magentoCustomerRepository;
-
-    /**
-     * @var ContactRepositoryInterface
-     */
-    private $contactRepository;
-
-    /**
-     * @var ContactRequestBuilder
-     */
-    private $contactRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
-     * @var ManagerInterface
-     */
-    private $eventManager;
-
-    /**
      * @param MagentoCustomerRepositoryInterface $magentoCustomerRepository
      * @param Logger                             $logger
      * @param ContactRequestBuilder              $contactRequestBuilder
@@ -59,20 +34,15 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
      * @param Client                             $client
      */
     public function __construct(
-        MagentoCustomerRepositoryInterface $magentoCustomerRepository,
+        private readonly MagentoCustomerRepositoryInterface $magentoCustomerRepository,
         Logger $logger,
-        ContactRepositoryInterface $contactRepository,
-        ContactRequestBuilder $contactRequestBuilder,
-        Client $client,
-        ManagerInterface $eventManager
+        private readonly ContactRepositoryInterface $contactRepository,
+        private readonly ContactRequestBuilder $contactRequestBuilder,
+        private readonly Client $client,
+        private readonly ManagerInterface $eventManager
 
     ) {
         parent::__construct($logger);
-        $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->contactRepository         = $contactRepository;
-        $this->contactRequestBuilder     = $contactRequestBuilder;
-        $this->client                    = $client;
-        $this->eventManager              = $eventManager;
     }
 
     /**
@@ -82,7 +52,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
 
         try {
             $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);

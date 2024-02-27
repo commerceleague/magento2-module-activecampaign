@@ -20,9 +20,6 @@ class ContactListBuilder
     /**
      * Build the contactList Request with Contact
      *
-     * @param ContactInterface $contact
-     * @param int              $listId
-     * @param int              $status
      *
      * @return array
      */

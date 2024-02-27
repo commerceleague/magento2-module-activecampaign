@@ -23,11 +23,6 @@ use Psr\Log\LoggerInterface;
 class Collection extends ExtendCollection
 {
     /**
-     * @var TimezoneInterface
-     */
-    private $timezone;
-
-    /**
      * @param EntityFactoryInterface $entityFactory
      * @param LoggerInterface $logger
      * @param FetchStrategyInterface $fetchStrategy
@@ -43,11 +38,10 @@ class Collection extends ExtendCollection
         FetchStrategyInterface $fetchStrategy,
         ManagerInterface $eventManager,
         Snapshot $entitySnapshot,
-        TimezoneInterface $timezone,
+        private readonly TimezoneInterface $timezone,
         AdapterInterface $connection = null,
         AbstractDb $resource = null
     ) {
-        $this->timezone = $timezone;
         parent::__construct(
             $entityFactory,
             $logger,
@@ -95,7 +89,6 @@ class Collection extends ExtendCollection
     }
 
     /**
-     * @param int $quoteId
      * @return Collection
      */
     public function addIdFilter(int $quoteId): self

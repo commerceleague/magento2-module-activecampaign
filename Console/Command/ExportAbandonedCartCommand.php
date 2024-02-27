@@ -28,11 +28,6 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     private const OPTION_ALL = 'all';
 
     /**
-     * @var QuoteCollectionFactory
-     */
-    private $quoteCollectionFactory;
-
-    /**
      * @param ConfigHelper $configHelper
      * @param QuoteCollectionFactory $quoteCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
@@ -40,11 +35,10 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
      */
     public function __construct(
         ConfigHelper $configHelper,
-        QuoteCollectionFactory $quoteCollectionFactory,
+        private readonly QuoteCollectionFactory $quoteCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
-        $this->quoteCollectionFactory = $quoteCollectionFactory;
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
@@ -126,7 +120,7 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
         foreach ($quoteIds as $quoteId) {
             $this->publisher->publish(
                 Topics::QUOTE_ABANDONED_CART_EXPORT,
-                json_encode(['quote_id' => $quoteId])
+                json_encode(['quote_id' => $quoteId], JSON_THROW_ON_ERROR)
             );
 
             $progressBar->advance();
@@ -142,7 +136,6 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
      * @return array
      * @throws \Exception
      */

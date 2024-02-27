@@ -41,7 +41,6 @@ class Collection extends ExtendSubscriberCollection
     }
 
     /**
-     * @param string $email
      * @return Collection
      */
     public function addEmailFilter(string $email): self

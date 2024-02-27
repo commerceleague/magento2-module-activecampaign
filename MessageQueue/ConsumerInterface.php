@@ -10,8 +10,5 @@ namespace CommerceLeague\ActiveCampaign\MessageQueue;
  */
 interface ConsumerInterface
 {
-    /**
-     * @param string $message
-     */
     public function consume(string $message): void;
 }

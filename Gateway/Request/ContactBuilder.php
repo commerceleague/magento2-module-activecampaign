@@ -17,8 +17,6 @@ class ContactBuilder
 {
 
     /**
-     * @param MagentoCustomerInterface $magentoCustomer
-     *
      * @return array
      */
     public function buildWithMagentoCustomer(MagentoCustomerInterface $magentoCustomer): array
@@ -32,8 +30,6 @@ class ContactBuilder
     }
 
     /**
-     * @param Subscriber $subscriber
-     *
      * @return array
      */
     public function buildWithSubscriber(Subscriber $subscriber): array
@@ -45,9 +41,6 @@ class ContactBuilder
     }
 
     /**
-     * @param ContactInterface $contact
-     * @param string           $firstname
-     * @param string           $lastname
      *
      * @return array
      */

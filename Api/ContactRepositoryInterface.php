@@ -16,7 +16,6 @@ use Magento\Newsletter\Model\Subscriber;
 interface ContactRepositoryInterface
 {
     /**
-     * @param Data\ContactInterface $contact
      * @return Data\ContactInterface
      * @throws CouldNotSaveException
      */
@@ -42,7 +41,6 @@ interface ContactRepositoryInterface
     public function getOrCreateByEmail($email): Data\ContactInterface;
 
     /**
-     * @param Data\ContactInterface $contact
      * @return bool
      * @throws CouldNotDeleteException
      */

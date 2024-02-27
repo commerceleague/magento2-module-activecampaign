@@ -17,34 +17,8 @@ use Magento\Framework\MessageQueue\PublisherInterface;
 class ExportOmittedOrders implements CronInterface
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var OrderCollectionFactory
-     */
-    private $orderCollectionFactory;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
-     * @param ConfigHelper           $configHelper
-     * @param OrderCollectionFactory $orderCollectionFactory
-     * @param PublisherInterface     $publisher
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        OrderCollectionFactory $orderCollectionFactory,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper           = $configHelper;
-        $this->orderCollectionFactory = $orderCollectionFactory;
-        $this->publisher              = $publisher;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly OrderCollectionFactory $orderCollectionFactory, private readonly PublisherInterface $publisher)
+    {
     }
 
     /**
@@ -61,7 +35,7 @@ class ExportOmittedOrders implements CronInterface
         foreach ($orderIds as $orderId) {
             $this->publisher->publish(
                 Topics::SALES_ORDER_EXPORT,
-                json_encode(['magento_order_id' => $orderId])
+                json_encode(['magento_order_id' => $orderId], JSON_THROW_ON_ERROR)
             );
         }
     }

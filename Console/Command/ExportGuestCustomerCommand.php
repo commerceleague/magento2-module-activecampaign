@@ -28,11 +28,6 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
     private const OPTION_ALL     = 'all';
 
     /**
-     * @var CustomerCollectionFactory
-     */
-    private $customerCollectionFactory;
-
-    /**
      * @param ConfigHelper              $configHelper
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param ProgressBarFactory        $progressBarFactory
@@ -40,11 +35,10 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
      */
     public function __construct(
         ConfigHelper $configHelper,
-        CustomerCollectionFactory $customerCollectionFactory,
+        private readonly CustomerCollectionFactory $customerCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
-        $this->customerCollectionFactory = $customerCollectionFactory;
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
@@ -153,8 +147,6 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
-     *
      * @return array
      */
     private function getGuestCustomers(InputInterface $input): array

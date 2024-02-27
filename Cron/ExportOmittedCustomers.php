@@ -17,34 +17,8 @@ use Magento\Framework\MessageQueue\PublisherInterface;
  */
 class ExportOmittedCustomers implements CronInterface
 {
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var CustomerCollectionFactory
-     */
-    private $customerCollectionFactory;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
-     * @param ConfigHelper $configHelper
-     * @param CustomerCollectionFactory $customerCollectionFactory
-     * @param PublisherInterface $publisher
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        CustomerCollectionFactory $customerCollectionFactory,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->customerCollectionFactory = $customerCollectionFactory;
-        $this->publisher = $publisher;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly CustomerCollectionFactory $customerCollectionFactory, private readonly PublisherInterface $publisher)
+    {
     }
 
     /**
@@ -61,7 +35,7 @@ class ExportOmittedCustomers implements CronInterface
         foreach ($customerIds as $customerId) {
             $this->publisher->publish(
                 Topics::CUSTOMER_CUSTOMER_EXPORT,
-                json_encode(['magento_customer_id' => $customerId])
+                json_encode(['magento_customer_id' => $customerId], JSON_THROW_ON_ERROR)
             );
         }
     }

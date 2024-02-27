@@ -14,30 +14,11 @@ use Magento\Quote\Model\Quote;
  */
 class AbandonedCartBuilder extends AbstractBuilder
 {
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var CustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
-     * @param ConfigHelper $configHelper
-     * @param CustomerRepositoryInterface $customerRepository
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        CustomerRepositoryInterface $customerRepository
-    ) {
-        $this->configHelper = $configHelper;
-        $this->customerRepository = $customerRepository;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly CustomerRepositoryInterface $customerRepository)
+    {
     }
 
     /**
-     * @param Quote $quote
      * @return array
      * @throws \Exception
      */

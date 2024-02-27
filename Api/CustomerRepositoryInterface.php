@@ -15,7 +15,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 interface CustomerRepositoryInterface
 {
     /**
-     * @param Data\CustomerInterface $customer
      * @return Data\CustomerInterface
      * @throws CouldNotSaveException
      */
@@ -41,7 +40,6 @@ interface CustomerRepositoryInterface
     public function getOrCreateByMagentoCustomerId($magentoCustomerId): Data\CustomerInterface;
 
     /**
-     * @param Data\CustomerInterface $customer
      * @return bool
      * @throws CouldNotDeleteException
      */

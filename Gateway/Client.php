@@ -25,17 +25,8 @@ use Http\Factory\Guzzle\StreamFactory as GuzzleStreamFactory;
 class Client
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @param ConfigHelper $configHelper
-     */
-    public function __construct(ConfigHelper $configHelper)
+    public function __construct(private readonly ConfigHelper $configHelper)
     {
-        $this->configHelper = $configHelper;
     }
 
     /**

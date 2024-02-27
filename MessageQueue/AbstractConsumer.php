@@ -20,37 +20,25 @@ abstract class AbstractConsumer
 {
 
     /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
      * AbstractConsumer constructor.
-     *
-     * @param Logger $logger
      */
-    public function __construct(Logger $logger)
+    public function __construct(private readonly Logger $logger)
     {
-        $this->logger = $logger;
     }
 
     /**
-     * @param UnprocessableEntityHttpException $unprocessableEntityHttpException
      * @param                                  $request
      */
     public function logUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $unprocessableEntityHttpException,
         $request
     ) {
-        $this->logger->error(__CLASS__);
+        $this->logger->error(self::class);
         $this->logger->error($unprocessableEntityHttpException->getMessage());
         $this->logger->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
         $this->logger->error(print_r($request, true));
     }
 
-    /**
-     * @param Exception $exception
-     */
     public function logException(Exception $exception)
     {
         $this->logger->error($exception);

@@ -18,8 +18,6 @@ class TagContactBuilder
 {
 
     /**
-     * @param ContactInterface $contact
-     * @param int              $tagId
      *
      * @return array
      */

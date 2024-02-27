@@ -14,7 +14,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 interface OrderRepositoryInterface
 {
     /**
-     * @param Data\OrderInterface $order
      * @return Data\OrderInterface
      * @throws CouldNotSaveException
      */
@@ -40,7 +39,6 @@ interface OrderRepositoryInterface
     public function getOrCreateByMagentoQuoteId($magentoQuoteId): Data\OrderInterface;
 
     /**
-     * @param Data\OrderInterface $order
      * @return bool
      * @throws CouldNotDeleteException
      */

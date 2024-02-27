@@ -23,21 +23,6 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
 {
 
     /**
-     * @var GuestCustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
-     * @var CustomerRequestBuilder
-     */
-    private $customerRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
      * @param Logger                           $logger
      * @param GuestCustomerRepositoryInterface $customerRepository
      * @param CustomerRequestBuilder           $customerRequestBuilder
@@ -45,14 +30,11 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
      */
     public function __construct(
         Logger $logger,
-        GuestCustomerRepositoryInterface $customerRepository,
-        CustomerRequestBuilder $customerRequestBuilder,
-        Client $client
+        private readonly GuestCustomerRepositoryInterface $customerRepository,
+        private readonly CustomerRequestBuilder $customerRequestBuilder,
+        private readonly Client $client
     ) {
         parent::__construct($logger);
-        $this->customerRepository     = $customerRepository;
-        $this->customerRequestBuilder = $customerRequestBuilder;
-        $this->client                 = $client;
     }
 
     /**
@@ -62,7 +44,7 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
 
         $customerData = $message['customer_data'];
 
@@ -87,9 +69,6 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
     }
 
     /**
-     * @param GuestCustomerInterface $customer
-     * @param array                  $request
-     *
      * @return array
      * @throws HttpException
      */

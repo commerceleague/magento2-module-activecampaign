@@ -37,7 +37,6 @@ class Collection extends ExtendCustomerCollection
     }
 
     /**
-     * @param string $email
      * @return Collection
      */
     public function addEmailFilter(string $email): self

@@ -15,7 +15,6 @@ interface GuestCustomerRepositoryInterface
 {
 
     /**
-     * @param Data\GuestCustomerInterface $customer
      *
      * @return Data\GuestCustomerInterface
      * @throws CouldNotSaveException
@@ -30,14 +29,11 @@ interface GuestCustomerRepositoryInterface
     public function getById($entityId): Data\GuestCustomerInterface;
 
     /**
-     * @param string $email
-     *
      * @return Data\GuestCustomerInterface
      */
     public function getByEmail(string $email): Data\GuestCustomerInterface;
 
     /**
-     * @param Data\GuestCustomerInterface $customer
      *
      * @return bool
      * @throws CouldNotDeleteException

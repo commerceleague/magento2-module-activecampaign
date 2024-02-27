@@ -24,28 +24,16 @@ abstract class AbstractWebhook extends Action implements HttpPostActionInterface
     private const PARAM_TOKEN = 'token';
 
     /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var RawResultFactory
-     */
-    private $rawResultFactory;
-
-    /**
      * @param Context $context
      * @param ConfigHelper $configHelper
      * @param RawResultFactory $rawResultFactory
      */
     public function __construct(
         Context $context,
-        ConfigHelper $configHelper,
-        RawResultFactory $rawResultFactory
+        private readonly ConfigHelper $configHelper,
+        private readonly RawResultFactory $rawResultFactory
     ) {
         parent::__construct($context);
-        $this->configHelper = $configHelper;
-        $this->rawResultFactory = $rawResultFactory;
     }
 
     /**

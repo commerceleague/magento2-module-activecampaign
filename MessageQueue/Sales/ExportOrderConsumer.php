@@ -28,26 +28,6 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
     /**
-     * @var MagentoOrderRepositoryInterface
-     */
-    private $magentoOrderRepository;
-
-    /**
-     * @var OrderRepositoryInterface
-     */
-    private $orderRepository;
-
-    /**
-     * @var OrderRequestBuilder
-     */
-    private $orderRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
      * @param MagentoOrderRepositoryInterface $magentoOrderRepository
      * @param Logger                          $logger
      * @param OrderRepositoryInterface        $orderRepository
@@ -55,17 +35,13 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
      * @param Client                          $client
      */
     public function __construct(
-        MagentoOrderRepositoryInterface $magentoOrderRepository,
+        private readonly MagentoOrderRepositoryInterface $magentoOrderRepository,
         Logger $logger,
-        OrderRepositoryInterface $orderRepository,
-        OrderRequestBuilder $orderRequestBuilder,
-        Client $client
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly OrderRequestBuilder $orderRequestBuilder,
+        private readonly Client $client
     ) {
         parent::__construct($logger);
-        $this->magentoOrderRepository = $magentoOrderRepository;
-        $this->orderRepository        = $orderRepository;
-        $this->orderRequestBuilder    = $orderRequestBuilder;
-        $this->client                 = $client;
     }
 
     /**
@@ -76,7 +52,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
 
         try {
             /** @var MagentoOrderInterface|MagentoOrder $magentoOrder */
@@ -105,8 +81,6 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
     }
 
     /**
-     * @param OrderInterface $order
-     * @param array          $request
      *
      * @return array
      */

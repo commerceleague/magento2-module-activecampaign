@@ -18,16 +18,10 @@ use Magento\Framework\Option\ArrayInterface;
 class Tags implements ArrayInterface
 {
 
-    private $options = [];
+    private array $options = [];
 
-    /**
-     * @var Client
-     */
-    private $client;
-
-    public function __construct(Client $client)
+    public function __construct(private readonly Client $client)
     {
-        $this->client = $client;
     }
 
     /**

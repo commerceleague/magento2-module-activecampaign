@@ -18,34 +18,8 @@ use Magento\Sales\Model\Order as MagentoOrder;
 class OrderBuilder extends AbstractBuilder
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var CustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
-     * @var GuestCustomerRepositoryInterface
-     */
-    private $guestCustomerRepository;
-
-    /**
-     * @param ConfigHelper                     $configHelper
-     * @param CustomerRepositoryInterface      $customerRepository
-     * @param GuestCustomerRepositoryInterface $guestCustomerRepository
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        CustomerRepositoryInterface $customerRepository,
-        GuestCustomerRepositoryInterface $guestCustomerRepository
-    ) {
-        $this->configHelper            = $configHelper;
-        $this->customerRepository      = $customerRepository;
-        $this->guestCustomerRepository = $guestCustomerRepository;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly CustomerRepositoryInterface $customerRepository, private readonly GuestCustomerRepositoryInterface $guestCustomerRepository)
+    {
     }
 
     /**

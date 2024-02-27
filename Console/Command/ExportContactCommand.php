@@ -30,16 +30,6 @@ class ExportContactCommand extends AbstractExportCommand
     private const OPTION_ALL = 'all';
 
     /**
-     * @var CustomerCollectionFactory
-     */
-    private $customerCollectionFactory;
-
-    /**
-     * @var SubscriberCollectionFactory
-     */
-    private $subscriberCollectionFactory;
-
-    /**
      * @param ConfigHelper $configHelper
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param SubscriberCollectionFactory $subscriberCollectionFactory
@@ -48,13 +38,11 @@ class ExportContactCommand extends AbstractExportCommand
      */
     public function __construct(
         ConfigHelper $configHelper,
-        CustomerCollectionFactory $customerCollectionFactory,
-        SubscriberCollectionFactory $subscriberCollectionFactory,
+        private readonly CustomerCollectionFactory $customerCollectionFactory,
+        private readonly SubscriberCollectionFactory $subscriberCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
-        $this->customerCollectionFactory = $customerCollectionFactory;
-        $this->subscriberCollectionFactory = $subscriberCollectionFactory;
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
@@ -136,7 +124,7 @@ class ExportContactCommand extends AbstractExportCommand
             foreach ($customerIds as $customerId) {
                 $this->publisher->publish(
                     Topics::CUSTOMER_CONTACT_EXPORT,
-                    json_encode(['magento_customer_id' => $customerId])
+                    json_encode(['magento_customer_id' => $customerId], JSON_THROW_ON_ERROR)
                 );
 
                 $progressBar->advance();
@@ -155,7 +143,7 @@ class ExportContactCommand extends AbstractExportCommand
             foreach ($subscriberEmails as $subscriberEmail) {
                 $this->publisher->publish(
                     Topics::NEWSLETTER_CONTACT_EXPORT,
-                    json_encode(['email' => $subscriberEmail])
+                    json_encode(['email' => $subscriberEmail], JSON_THROW_ON_ERROR)
                 );
 
                 $progressBar->advance();
@@ -173,7 +161,6 @@ class ExportContactCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
      * @return array
      */
     private function getCustomerIds(InputInterface $input): array
@@ -193,7 +180,6 @@ class ExportContactCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
      * @return array
      */
     private function getSubscriberEmails(InputInterface $input): array
