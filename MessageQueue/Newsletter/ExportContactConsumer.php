@@ -30,26 +30,6 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
     private $subscriberFactory;
 
     /**
-     * @var ContactRepositoryInterface
-     */
-    private $contactRepository;
-
-    /**
-     * @var ContactRequestBuilder
-     */
-    private $contactRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
-     * @var ManagerInterface
-     */
-    private $eventManager;
-
-    /**
      * @param SubscriberFactory          $subscriberFactory
      * @param Logger                     $logger
      * @param ContactRepositoryInterface $contactRepository
@@ -59,18 +39,14 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
      */
     public function __construct(
         SubscriberFactory $subscriberFactory,
-        ContactRepositoryInterface $contactRepository,
-        ContactRequestBuilder $contactRequestBuilder,
-        Client $client,
-        ManagerInterface $eventManager,
+        private readonly ContactRepositoryInterface $contactRepository,
+        private readonly ContactRequestBuilder $contactRequestBuilder,
+        private readonly Client $client,
+        private readonly ManagerInterface $eventManager,
         Logger $logger
     ) {
         parent::__construct($logger);
         $this->subscriberFactory     = $subscriberFactory;
-        $this->contactRepository     = $contactRepository;
-        $this->contactRequestBuilder = $contactRequestBuilder;
-        $this->client                = $client;
-        $this->eventManager          = $eventManager;
     }
 
     /**
@@ -80,7 +56,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
 
         /** @var Subscriber $subscriber */
         $subscriber = $this->subscriberFactory->create();

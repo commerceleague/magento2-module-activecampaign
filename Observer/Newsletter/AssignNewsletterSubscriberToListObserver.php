@@ -23,27 +23,10 @@ class AssignNewsletterSubscriberToListObserver implements ObserverInterface
 {
 
     /**
-     * @var Config
-     */
-    private $configHelper;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
      * AssignNewsletterSubscriberToListObserver constructor.
-     *
-     * @param Config             $configHelper
-     * @param PublisherInterface $publisher
      */
-    public function __construct(
-        Config $configHelper,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->publisher    = $publisher;
+    public function __construct(private readonly Config $configHelper, private readonly PublisherInterface $publisher)
+    {
     }
 
     /**
@@ -68,7 +51,7 @@ class AssignNewsletterSubscriberToListObserver implements ObserverInterface
                     [
                         'contact_id' => $contact->getId(),
                         'list_id'    => $listId
-                    ]
+                    ], JSON_THROW_ON_ERROR
                 )
             );
         }

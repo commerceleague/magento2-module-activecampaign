@@ -18,42 +18,8 @@ use Magento\Framework\MessageQueue\PublisherInterface;
  */
 class ExportOmittedContacts implements CronInterface
 {
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var CustomerCollectionFactory
-     */
-    private $customerCollectionFactory;
-
-    /**
-     * @var SubscriberCollectionFactory
-     */
-    private $subscriberCollectionFactory;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
-     * @param ConfigHelper $configHelper
-     * @param CustomerCollectionFactory $customerCollectionFactory
-     * @param SubscriberCollectionFactory $subscriberCollectionFactory
-     * @param PublisherInterface $publisher
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        CustomerCollectionFactory $customerCollectionFactory,
-        SubscriberCollectionFactory $subscriberCollectionFactory,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->customerCollectionFactory = $customerCollectionFactory;
-        $this->subscriberCollectionFactory = $subscriberCollectionFactory;
-        $this->publisher = $publisher;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly CustomerCollectionFactory $customerCollectionFactory, private readonly SubscriberCollectionFactory $subscriberCollectionFactory, private readonly PublisherInterface $publisher)
+    {
     }
 
     /**
@@ -71,7 +37,7 @@ class ExportOmittedContacts implements CronInterface
         foreach ($customerIds as $customerId) {
             $this->publisher->publish(
                 Topics::CUSTOMER_CONTACT_EXPORT,
-                json_encode(['magento_customer_id' => $customerId])
+                json_encode(['magento_customer_id' => $customerId], JSON_THROW_ON_ERROR)
             );
         }
 
@@ -80,7 +46,7 @@ class ExportOmittedContacts implements CronInterface
         foreach ($subscriberEmails as $subscriberEmail) {
             $this->publisher->publish(
                 Topics::NEWSLETTER_CONTACT_EXPORT,
-                json_encode(['email' => $subscriberEmail])
+                json_encode(['email' => $subscriberEmail], JSON_THROW_ON_ERROR)
             );
         }
     }

@@ -28,11 +28,6 @@ class ExportOrderCommand extends AbstractExportCommand
     private const OPTION_ALL = 'all';
 
     /**
-     * @var OrderCollectionFactory
-     */
-    private $orderCollectionFactory;
-
-    /**
      * @param ConfigHelper $configHelper
      * @param OrderCollectionFactory $orderCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
@@ -40,11 +35,10 @@ class ExportOrderCommand extends AbstractExportCommand
      */
     public function __construct(
         ConfigHelper $configHelper,
-        OrderCollectionFactory $orderCollectionFactory,
+        private readonly OrderCollectionFactory $orderCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
-        $this->orderCollectionFactory = $orderCollectionFactory;
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
@@ -123,7 +117,7 @@ class ExportOrderCommand extends AbstractExportCommand
         foreach ($orderIds as $orderId) {
             $this->publisher->publish(
                 Topics::SALES_ORDER_EXPORT,
-                json_encode(['magento_order_id' => $orderId])
+                json_encode(['magento_order_id' => $orderId], JSON_THROW_ON_ERROR)
             );
 
             $progressBar->advance();
@@ -139,7 +133,6 @@ class ExportOrderCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
      * @return array
      */
     public function getOrderIds(InputInterface $input): array

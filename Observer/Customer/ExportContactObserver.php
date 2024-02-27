@@ -18,26 +18,8 @@ use Magento\Framework\MessageQueue\PublisherInterface;
 class ExportContactObserver implements ObserverInterface
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
-     * @param ConfigHelper       $configHelper
-     * @param PublisherInterface $publisher
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->publisher    = $publisher;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly PublisherInterface $publisher)
+    {
     }
 
     /**
@@ -54,7 +36,7 @@ class ExportContactObserver implements ObserverInterface
 
         $this->publisher->publish(
             Topics::CUSTOMER_CONTACT_EXPORT,
-            json_encode(['magento_customer_id' => $magentoCustomer->getId()])
+            json_encode(['magento_customer_id' => $magentoCustomer->getId()], JSON_THROW_ON_ERROR)
         );
     }
 }

@@ -16,22 +16,11 @@ use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 class CustomerBuilder
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @param ConfigHelper $configHelper
-     */
-    public function __construct(ConfigHelper $configHelper)
+    public function __construct(private readonly ConfigHelper $configHelper)
     {
-        $this->configHelper = $configHelper;
     }
 
     /**
-     * @param MagentoCustomerInterface $magentoCustomer
-     *
      * @return array
      */
     public function build(MagentoCustomerInterface $magentoCustomer): array
@@ -45,8 +34,6 @@ class CustomerBuilder
     }
 
     /**
-     * @param GuestCustomerInterface $guestCustomer
-     *
      * @return array
      */
     public function buildWithGuest(GuestCustomerInterface $guestCustomer): array

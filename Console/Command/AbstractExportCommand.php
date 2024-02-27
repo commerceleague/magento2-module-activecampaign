@@ -49,9 +49,6 @@ abstract class AbstractExportCommand extends Command
     }
 
     /**
-     * @param OutputInterface $output
-     * @param string $message
-     * @param int $max
      * @return ProgressBar
      */
     protected function createProgressBar(OutputInterface $output, int $max, string $message): ProgressBar

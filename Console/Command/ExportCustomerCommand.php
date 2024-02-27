@@ -25,11 +25,6 @@ class ExportCustomerCommand extends AbstractExportCommand
     private const OPTION_ALL = 'all';
 
     /**
-     * @var CustomerCollectionFactory
-     */
-    private $customerCollectionFactory;
-
-    /**
      * @param ConfigHelper $configHelper
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
@@ -37,11 +32,10 @@ class ExportCustomerCommand extends AbstractExportCommand
      */
     public function __construct(
         ConfigHelper $configHelper,
-        CustomerCollectionFactory $customerCollectionFactory,
+        private readonly CustomerCollectionFactory $customerCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
-        $this->customerCollectionFactory = $customerCollectionFactory;
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
@@ -120,7 +114,7 @@ class ExportCustomerCommand extends AbstractExportCommand
         foreach ($customerIds as $customerId) {
             $this->publisher->publish(
                 Topics::CUSTOMER_CUSTOMER_EXPORT,
-                json_encode(['magento_customer_id' => $customerId])
+                json_encode(['magento_customer_id' => $customerId], JSON_THROW_ON_ERROR)
             );
 
             $progressBar->advance();
@@ -136,7 +130,6 @@ class ExportCustomerCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
      * @return array
      */
     private function getCustomerIds(InputInterface $input): array

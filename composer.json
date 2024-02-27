@@ -2,16 +2,21 @@
   "name": "commerceleague/magento2-module-activecampaign",
   "description": "N/A",
   "config": {
-    "sort-packages": true
+    "sort-packages": true,
+    "allow-plugins": {
+      "php-http/discovery": true,
+      "magento/composer-dependency-version-audit-plugin": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
   },
   "require": {
-    "php": "~7.1.3||~7.2.0",
-    "commerceleague/api-client-activecampaign": "0.3.*",
+    "php": "^8.2",
+    "commerceleague/api-client-activecampaign": "dev-version-2",
     "http-interop/http-factory-guzzle": "^1.0",
-    "magento/framework": "102.0.*",
-    "magento/framework-message-queue": "100.3.*",
-    "magento/module-customer": "102.0.*",
-    "php-http/guzzle6-adapter": "^2.0"
+    "magento/framework": "103.0.*",
+    "magento/framework-message-queue": "100.4.*",
+    "magento/module-customer": "103.0.*",
+    "php-http/guzzle7-adapter": "^1.0"
   },
   "type": "magento2-module",
   "license": "MIT",
@@ -30,7 +35,8 @@
     }
   ],
   "require-dev": {
-    "magento/magento-coding-standard": "^3.0",
-    "phpunit/phpunit": "~6.5.0"
+    "magento/magento-coding-standard": "^33",
+    "phpunit/phpunit": "^11.0.3",
+    "rector/rector": "^0.17.13"
   }
 }

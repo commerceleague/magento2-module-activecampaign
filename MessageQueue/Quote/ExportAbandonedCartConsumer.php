@@ -29,25 +29,7 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
      */
     private $quoteFactory;
 
-    /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @var OrderRepositoryInterface
-     */
-    private $orderRepository;
-
-    /**
-     * @var AbandonedCartBuilder
-     */
-    private $abandonedCartRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
+    private readonly \CommerceLeague\ActiveCampaign\Logger\Logger $logger;
 
     /**
      * @param QuoteFactory             $quoteFactory
@@ -59,16 +41,13 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
     public function __construct(
         QuoteFactory $quoteFactory,
         Logger $logger,
-        OrderRepositoryInterface $orderRepository,
-        AbandonedCartBuilder $abandonedCartRequestBuilder,
-        Client $client
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly AbandonedCartBuilder $abandonedCartRequestBuilder,
+        private readonly Client $client
     ) {
         parent::__construct($logger);
         $this->quoteFactory                = $quoteFactory;
         $this->logger                      = $logger;
-        $this->orderRepository             = $orderRepository;
-        $this->abandonedCartRequestBuilder = $abandonedCartRequestBuilder;
-        $this->client                      = $client;
     }
 
     /**
@@ -79,7 +58,7 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
 
         /** @var Quote $quote */
         $quote = $this->quoteFactory->create();

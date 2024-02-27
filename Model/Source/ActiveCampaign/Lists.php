@@ -17,7 +17,7 @@ use Magento\Framework\Option\ArrayInterface;
 class Lists implements ArrayInterface
 {
 
-    private $options = [];
+    private array $options = [];
 
     /**
      * @var CommonClient

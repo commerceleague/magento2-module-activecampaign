@@ -16,34 +16,8 @@ use Magento\Framework\MessageQueue\PublisherInterface;
  */
 class ExportOmittedAbandonedCarts implements CronInterface
 {
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var QuoteCollectionFactory
-     */
-    private $quoteCollectionFactory;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
-     * @param ConfigHelper $configHelper
-     * @param QuoteCollectionFactory $quoteCollectionFactory
-     * @param PublisherInterface $publisher
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        QuoteCollectionFactory $quoteCollectionFactory,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->quoteCollectionFactory = $quoteCollectionFactory;
-        $this->publisher = $publisher;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly QuoteCollectionFactory $quoteCollectionFactory, private readonly PublisherInterface $publisher)
+    {
     }
 
     /**
@@ -60,7 +34,7 @@ class ExportOmittedAbandonedCarts implements CronInterface
         foreach ($quoteIds as $quoteId) {
             $this->publisher->publish(
                 Topics::QUOTE_ABANDONED_CART_EXPORT,
-                json_encode(['quote_id' => $quoteId])
+                json_encode(['quote_id' => $quoteId], JSON_THROW_ON_ERROR)
             );
         }
     }

@@ -14,7 +14,7 @@ use Magento\Framework\View\Result\Page as ResultPage;
  */
 abstract class AbstractContact extends Action
 {
-    const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_contact';
+    final public const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_contact';
 
     /**
      * @param ResultPage|ResultPageModel $resultPage

@@ -41,11 +41,6 @@ class Config extends AbstractHelper
     private $accountConfirmation;
 
     /**
-     * @var AccountManagementInterface
-     */
-    private $accountManagement;
-
-    /**
      * Config constructor.
      *
      * @param Context                    $context
@@ -53,10 +48,9 @@ class Config extends AbstractHelper
      */
     public function __construct(
         Context $context,
-        AccountManagementInterface $accountManagement
+        private readonly AccountManagementInterface $accountManagement
     ) {
         parent::__construct($context);
-        $this->accountManagement = $accountManagement;
     }
 
     /**
@@ -179,13 +173,12 @@ class Config extends AbstractHelper
             return $tags;
         }
 
-        return explode(',', $tags);
+        return explode(',', (string) $tags);
     }
 
     /**
      * Is customer confirmation required
      *
-     * @param int $customerId
      *
      * @return bool
      * @throws LocalizedException

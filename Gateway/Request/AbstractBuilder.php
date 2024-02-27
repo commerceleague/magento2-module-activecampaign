@@ -11,7 +11,6 @@ namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 abstract class AbstractBuilder
 {
     /**
-     * @param float $amount
      * @return int
      */
     protected function convertToCent(float $amount): int
@@ -20,7 +19,6 @@ abstract class AbstractBuilder
     }
 
     /**
-     * @param string $date
      * @return string
      * @throws \Exception
      */

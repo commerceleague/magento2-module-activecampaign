@@ -14,7 +14,7 @@ use Magento\Framework\View\Result\Page as ResultPage;
  */
 abstract class AbstractOrder extends Action
 {
-    const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_order';
+    final public const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_order';
 
     /**
      * @param ResultPage|ResultPageModel $resultPage
