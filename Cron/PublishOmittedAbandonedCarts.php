@@ -14,9 +14,9 @@ use Exception;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
- * Class ExportOmittedAbandonedCarts
+ * Class PublishOmittedAbandonedCarts
  */
-class ExportOmittedAbandonedCarts implements CronInterface
+class PublishOmittedAbandonedCarts implements CronInterface
 {
 
     public function __construct(private readonly ConfigHelper           $configHelper,

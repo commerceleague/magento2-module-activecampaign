@@ -8,15 +8,16 @@ namespace CommerceLeague\ActiveCampaign\Test\Observer\Newsletter;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Observer\Newsletter\ExportContactObserver;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Newsletter\Model\Subscriber;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportContactObserverTest extends TestCase
+class ExportContactObserverTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -89,36 +90,6 @@ class ExportContactObserverTest extends TestCase
         $this->exportContactObserver->execute($this->observer);
     }
 
-    public function testExecuteWithSubscriberAsCustomer()
-    {
-        $this->configHelper->expects($this->once())
-            ->method('isEnabled')
-            ->willReturn(true);
-
-        $this->configHelper->expects($this->once())
-            ->method('isContactExportEnabled')
-            ->willReturn(true);
-
-        $this->observer->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($this->event);
-
-        $this->event->expects($this->once())
-            ->method('getData')
-            ->with('subscriber')
-            ->willReturn($this->subscriber);
-
-        $this->subscriber->expects($this->once())
-            ->method('getData')
-            ->with('customer_id')
-            ->willReturn(123);
-
-        $this->publisher->expects($this->never())
-            ->method('publish');
-
-        $this->exportContactObserver->execute($this->observer);
-    }
-
     public function testExecute()
     {
         $email = 'example@example.com';
@@ -141,13 +112,12 @@ class ExportContactObserverTest extends TestCase
             ->willReturn($this->subscriber);
 
         $this->subscriber->expects($this->once())
-            ->method('getData')
-            ->with('customer_id')
-            ->willReturn(null);
-
-        $this->subscriber->expects($this->once())
             ->method('getEmail')
             ->willReturn($email);
+
+        $this->subscriber->expects($this->once())
+            ->method('getStatus')
+            ->willReturn(Subscriber::STATUS_SUBSCRIBED);
 
         $this->publisher->expects($this->once())
             ->method('publish')

@@ -5,17 +5,18 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\ExportOmittedCustomers;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedCustomers;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportOmittedCustomersTest extends TestCase
+class ExportOmittedCustomersTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -37,7 +38,7 @@ class ExportOmittedCustomersTest extends TestCase
     protected $publisher;
 
     /**
-     * @var ExportOmittedCustomers
+     * @var PublishOmittedCustomers
      */
     protected $exportOmittedCustomers;
 
@@ -58,7 +59,7 @@ class ExportOmittedCustomersTest extends TestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedCustomers = new ExportOmittedCustomers(
+        $this->exportOmittedCustomers = new PublishOmittedCustomers(
             $this->configHelper,
             $this->customerCollectionFactory,
             $this->publisher

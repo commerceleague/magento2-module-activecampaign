@@ -6,11 +6,12 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Gateway;
 
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ClientTest extends TestCase
+class ClientTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -36,6 +37,10 @@ class ClientTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('getApiToken')
             ->willReturn('API_TOKEN');
+
+        $this->configHelper->expects($this->once())
+            ->method('isConnectionSet')
+            ->willReturn(true);
 
         $this->client->getAbandonedCartApi();
     }

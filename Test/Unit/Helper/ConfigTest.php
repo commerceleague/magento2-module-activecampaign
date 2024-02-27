@@ -5,13 +5,14 @@
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Helper;
 
 use CommerceLeague\ActiveCampaign\Helper\Config;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ConfigTest extends TestCase
+class ConfigTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ScopeConfigInterface
      */

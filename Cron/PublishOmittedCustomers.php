@@ -13,9 +13,9 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
- * Class ExportOmittedCustomers
+ * Class PublishOmittedCustomers
  */
-class ExportOmittedCustomers implements CronInterface
+class PublishOmittedCustomers implements CronInterface
 {
 
     public function __construct(private readonly ConfigHelper              $configHelper,

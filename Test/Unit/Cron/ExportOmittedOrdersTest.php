@@ -5,17 +5,18 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\ExportOmittedOrders;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedOrders;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportOmittedOrdersTest extends TestCase
+class ExportOmittedOrdersTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -37,7 +38,7 @@ class ExportOmittedOrdersTest extends TestCase
     protected $publisher;
 
     /**
-     * @var ExportOmittedOrders
+     * @var PublishOmittedOrders
      */
     protected $exportOmittedOrders;
 
@@ -58,7 +59,7 @@ class ExportOmittedOrdersTest extends TestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedOrders = new ExportOmittedOrders(
+        $this->exportOmittedOrders = new PublishOmittedOrders(
             $this->configHelper,
             $this->orderCollectionFactory,
             $this->publisher
@@ -70,9 +71,6 @@ class ExportOmittedOrdersTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
             ->willReturn(false);
-
-        $this->orderCollection->expects($this->never())
-            ->method('addExcludeGuestFilter');
 
         $this->exportOmittedOrders->run();
     }
@@ -86,9 +84,6 @@ class ExportOmittedOrdersTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isOrderExportEnabled')
             ->willReturn(false);
-
-        $this->orderCollection->expects($this->never())
-            ->method('addExcludeGuestFilter');
 
         $this->exportOmittedOrders->run();
     }
@@ -104,10 +99,6 @@ class ExportOmittedOrdersTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isOrderExportEnabled')
             ->willReturn(true);
-
-        $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
-            ->willReturnSelf();
 
         $this->orderCollection->expects($this->once())
             ->method('addOmittedFilter')

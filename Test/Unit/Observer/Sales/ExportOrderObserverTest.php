@@ -8,15 +8,16 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Observer\Sales;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Observer\Sales\ExportOrderObserver;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportOrderObserverTest extends TestCase
+class ExportOrderObserverTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -112,7 +113,7 @@ class ExportOrderObserverTest extends TestCase
             ->method('getCustomerIsGuest')
             ->willReturn(true);
 
-        $this->publisher->expects($this->never())
+        $this->publisher->expects($this->atLeastOnce())
             ->method('publish');
 
         $this->exportOrderObserver->execute($this->observer);

@@ -1,0 +1,141 @@
+<?php
+
+use CommerceLeague\ActiveCampaign\Block\Adminhtml\System\Config\Connection;
+
+/* @var $block Connection */
+?>
+<script>
+    require([
+        'jquery',
+        'Magento_Ui/js/modal/alert'
+    ], function ($, alert) {
+        'use strict';
+
+        const buttonSelector = '#activecampaign_connect';
+        const urlSelector = '#activecampaign_general_api_url';
+        const tokenSelector = '#activecampaign_general_api_token';
+        const connectionSelector = '#activecampaign_general_connection_id';
+
+        var credentialElements = [
+            urlSelector,
+            tokenSelector,
+            connectionSelector
+        ];
+        $(credentialElements.join(', ')).change(function () {
+            $(buttonSelector).text($.mage.__('Save configuration to test connection')).prop('disabled', true)
+
+        })
+
+        function getConfigFieldValue(selector) {
+            let value = $(selector).val();
+            return value === '' ? null : value;
+        }
+
+        function getConnectionEndpoint() {
+            let url = getConfigFieldValue(urlSelector);
+            if (null === url) {
+                return false;
+            }
+            var connectionId = getConfigFieldValue(connectionSelector);
+
+            if (null === connectionId) {
+                return false;
+            }
+            return url + '/api/3/connections/' + connectionId;
+        }
+
+        function showAlert(title, contentIntro, bullets = []) {
+            alert({
+                title: title,
+                content: function () {
+                    let contentElement = $('<div class="alert-modal-content"></div>');
+                    contentElement.append('<p>' + contentIntro + '</p>');
+                    if (bullets.length > 0) {
+                        contentElement.append('<ul style="padding-left: revert;"><li>' + bullets.join('</li><li>') + '</li></ul>');
+                    }
+                    return contentElement;
+                },
+
+                modalClass: 'alert',
+                actions: {
+                    always: function () {
+                    }
+                },
+
+                buttons: [{
+                    text: $.mage.__('Accept'),
+                    class: 'action primary accept',
+
+                    /**
+                     * Click handler.
+                     */
+                    click: function () {
+                        this.closeModal(true);
+                    }
+                }]
+            });
+        }
+
+        function connnect() {
+
+            let errors = [];
+            // validate params
+            if (getConfigFieldValue(urlSelector) === null) {
+                errors.push($.mage.__('url cannot be empty'));
+                $(urlSelector).addClass('error');
+            }
+
+            if (getConfigFieldValue(tokenSelector) === null) {
+                errors.push($.mage.__('token cannot be empty'));
+                $(urlSelector).addClass('error');
+            }
+
+            if (getConfigFieldValue(connectionSelector) === null) {
+                errors.push($.mage.__('connection cannot be empty'));
+                $(urlSelector).addClass('error');
+            }
+
+            if (errors.length > 0) {
+                var content = {
+                    'errors': errors
+                };
+                showAlert($.mage.__('Credentials error'), $.mage.__('The following errors occured'), errors);
+            }
+
+
+            $.ajax({
+                type: 'GET',
+                url: '<?php echo $block->getAjaxConnectionUrl() ?>',
+                dataType: 'json',
+            }).fail(function (data, textStatus, jqXHR) {
+                const status = data.status;
+                const responseText = data.responseJSON.message;
+                let message = null;
+
+                switch (status) {
+                    case 403:
+                        message = $.mage.__('Please check your API Token');
+                        break;
+                    case 404:
+                        message = $.mage.__('Please check your URL');
+                        if (responseText === 'Not Found') {
+                            message = $.mage.__('Your connectionId does not exist');
+                        }
+                        break;
+                }
+
+                showAlert($.mage.__('Connection Error'), 'A connection error occurred', [message]);
+
+            }).done(function (data, textStatus, jqXHR) {
+                $(buttonSelector).css('background-color', 'green').text($.mage.__('Connection successful!'));
+                showAlert($.mage.__('Connection success'), $.mage.__('The connection to ActiveCampaign has been established'));
+            });
+        }
+
+        $(buttonSelector).click(function () {
+            connnect();
+        });
+    });
+</script>
+
+<?php echo $block->getButtonHtml() ?>

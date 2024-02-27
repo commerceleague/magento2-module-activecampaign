@@ -60,7 +60,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
 
         /** @var Subscriber $subscriber */
         $subscriber = $this->subscriberFactory->create();
-        $subscriber = $subscriber->loadByEmail($message['email']);
+        $subscriber = $subscriber->load($message['email'], 'subscriber_email');
 
         if (!$subscriber->getId()) {
             $this->getLogger()->error(__('The Subscriber with the "%1" email doesn\'t exist', $message['email']));
@@ -88,5 +88,13 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             'commmerceleague_activecampaign_export_newsletter_subscriber_success',
             ['contact' => $contact]
         );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key)
+    {
+        return;
     }
 }

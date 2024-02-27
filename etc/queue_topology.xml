@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
-    <exchange name="magento-db" type="topic" connection="db">
+    <exchange name="magento" type="topic" connection="amqp">
         <binding id="activecampaign.customer.export.contact.binding" topic="activecampaign.customer.export.contact" destinationType="queue" destination="activecampaign_customer_export_contact"/>
         <binding id="activecampaign.customer.export.customer.binding" topic="activecampaign.customer.export.customer" destinationType="queue" destination="activecampaign_customer_export_customer"/>
         <binding id="activecampaign.customer.export.guest.customer.binding" topic="activecampaign.customer.export.guest.customer" destinationType="queue" destination="activecampaign_customer_export_guest_customer"/>
