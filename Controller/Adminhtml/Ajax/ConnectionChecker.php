@@ -43,7 +43,7 @@ class ConnectionChecker extends Action
         $result = $this->resultJsonFactory->create();
 
         if ($this->getRequest()->isAjax()) {
-            $message = sprintf(__('Connection established to connectionId %s'), $this->configHelper->getConnectionId());
+            $message = sprintf(__('Connection established to connectionId %s')->getText(), $this->configHelper->getConnectionId());
             try {
                 $this->client->getConnectionApi()->get((int)$this->configHelper->getConnectionId());
                 $response = $result->setData(['message' => $message]);
