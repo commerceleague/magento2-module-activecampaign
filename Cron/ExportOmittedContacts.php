@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Cron;
 
+use CommerceLeague\ActiveCampaign\Api\CronInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
@@ -18,8 +19,12 @@ use Magento\Framework\MessageQueue\PublisherInterface;
  */
 class ExportOmittedContacts implements CronInterface
 {
-    public function __construct(private readonly ConfigHelper $configHelper, private readonly CustomerCollectionFactory $customerCollectionFactory, private readonly SubscriberCollectionFactory $subscriberCollectionFactory, private readonly PublisherInterface $publisher)
-    {
+
+    public function __construct(private readonly ConfigHelper                $configHelper,
+                                private readonly CustomerCollectionFactory   $customerCollectionFactory,
+                                private readonly SubscriberCollectionFactory $subscriberCollectionFactory,
+                                private readonly PublisherInterface          $publisher
+    ) {
     }
 
     /**

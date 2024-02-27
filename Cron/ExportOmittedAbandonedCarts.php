@@ -5,10 +5,12 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Cron;
 
+use CommerceLeague\ActiveCampaign\Api\CronInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\Collection as QuoteCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
+use Exception;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
@@ -16,12 +18,15 @@ use Magento\Framework\MessageQueue\PublisherInterface;
  */
 class ExportOmittedAbandonedCarts implements CronInterface
 {
-    public function __construct(private readonly ConfigHelper $configHelper, private readonly QuoteCollectionFactory $quoteCollectionFactory, private readonly PublisherInterface $publisher)
-    {
+
+    public function __construct(private readonly ConfigHelper           $configHelper,
+                                private readonly QuoteCollectionFactory $quoteCollectionFactory,
+                                private readonly PublisherInterface     $publisher
+    ) {
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function run(): void
     {
@@ -41,7 +46,7 @@ class ExportOmittedAbandonedCarts implements CronInterface
 
     /**
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     private function getQuoteIds(): array
     {
