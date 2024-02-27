@@ -24,6 +24,8 @@ class ConnectionChecker extends Action
 
     private JsonFactory $resultJsonFactory;
 
+    private Client      $client;
+
     public function __construct(
         Context     $context,
         Client      $client,
