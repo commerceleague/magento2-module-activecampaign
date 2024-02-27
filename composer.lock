@@ -158,12 +158,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/commerceleague/api-client-activecampaign.git",
-                "reference": "34197dd718a2e332a52c2e06c2937c62707b0d22"
+                "reference": "018ade35354920eedd39c93fff61096da45f1fc0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/commerceleague/api-client-activecampaign/zipball/34197dd718a2e332a52c2e06c2937c62707b0d22",
-                "reference": "34197dd718a2e332a52c2e06c2937c62707b0d22",
+                "url": "https://api.github.com/repos/commerceleague/api-client-activecampaign/zipball/018ade35354920eedd39c93fff61096da45f1fc0",
+                "reference": "018ade35354920eedd39c93fff61096da45f1fc0",
                 "shasum": ""
             },
             "require": {
@@ -171,7 +171,7 @@
                 "php-http/discovery": "^1.19.2",
                 "psr/http-client": "^1.0.3",
                 "psr/http-factory": "^1.0.2",
-                "psr/http-message": "^2.0",
+                "psr/http-message": "^1.0 | ^2.0",
                 "psr/http-message-implementation": "^1.0"
             },
             "require-dev": {
@@ -202,7 +202,7 @@
                 "issues": "https://github.com/commerceleague/api-client-activecampaign/issues",
                 "source": "https://github.com/commerceleague/api-client-activecampaign/tree/version-2"
             },
-            "time": "2024-02-27T05:43:23+00:00"
+            "time": "2024-02-27T08:35:49+00:00"
         },
         {
             "name": "composer/ca-bundle",
