@@ -23,13 +23,7 @@ abstract class AbstractConsumer
     const RESPONSE_KEY_CUSTOMER = 'ecomCustomer';
     const RESPONSE_KEY_ORDER    = 'ecomOrder';
     const RESPONSE_KEY_CONTACT  = 'contact';
-
     const ERROR_CODE_DUPLICATE = 'duplicate';
-
-    /**
-     * @var Logger
-     */
-    private $logger;
 
     /**
      * AbstractConsumer constructor.
