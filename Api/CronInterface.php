@@ -2,7 +2,7 @@
 /**
  */
 
-namespace CommerceLeague\ActiveCampaign\Cron;
+namespace CommerceLeague\ActiveCampaign\Api;
 
 /**
  * Interface CronInterface
