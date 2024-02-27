@@ -1,6 +1,6 @@
 {
   "name": "commerceleague/magento2-module-activecampaign",
-  "description": "N/A",
+  "description": "magento2 active campaign connector",
   "config": {
     "sort-packages": true,
     "allow-plugins": {
