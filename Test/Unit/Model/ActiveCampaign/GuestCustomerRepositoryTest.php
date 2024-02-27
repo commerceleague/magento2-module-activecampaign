@@ -5,19 +5,20 @@
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
+use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\CustomerRepository;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomer;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomerFactory;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomerRepository;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer as CustomerResource;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Exception;
 use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class GuestCustomerRepositoryTest extends TestCase
+class GuestCustomerRepositoryTest extends AbstractTestCase
 {
 
     /**
@@ -43,7 +44,7 @@ class GuestCustomerRepositoryTest extends TestCase
     /**
      * @var GuestCustomerRepository
      */
-    protected $customerRepository;
+    protected $guestCustomerRepository;
 
     public function testSaveThrowsException()
     {
@@ -55,7 +56,7 @@ class GuestCustomerRepositoryTest extends TestCase
         $this->expectException(CouldNotSaveException::class);
         $this->expectExceptionMessage('an exception message');
 
-        $this->customerRepository->save($this->customer);
+        $this->guestCustomerRepository->save($this->customer);
     }
 
     public function testSave()
@@ -65,7 +66,7 @@ class GuestCustomerRepositoryTest extends TestCase
             ->with($this->customer)
             ->willReturnSelf();
 
-        $this->assertSame($this->customer, $this->customerRepository->save($this->customer));
+        $this->assertSame($this->customer, $this->guestCustomerRepository->save($this->customer));
     }
 
     public function testGetById()
@@ -77,7 +78,7 @@ class GuestCustomerRepositoryTest extends TestCase
             ->with($this->customer, $entityId)
             ->willReturn($this->customer);
 
-        $this->assertSame($this->customer, $this->customerRepository->getById($entityId));
+        $this->assertSame($this->customer, $this->guestCustomerRepository->getById($entityId));
     }
 
     public function testDeleteThrowsException()
@@ -90,7 +91,7 @@ class GuestCustomerRepositoryTest extends TestCase
         $this->expectException(CouldNotDeleteException::class);
         $this->expectExceptionMessage('an exception message');
 
-        $this->customerRepository->delete($this->customer);
+        $this->guestCustomerRepository->delete($this->customer);
     }
 
     public function testDelete()
@@ -100,7 +101,7 @@ class GuestCustomerRepositoryTest extends TestCase
             ->with($this->customer)
             ->willReturnSelf();
 
-        $this->assertTrue($this->customerRepository->delete($this->customer));
+        $this->assertTrue($this->guestCustomerRepository->delete($this->customer));
     }
 
     public function testDeleteByIdThrowsException()
@@ -122,7 +123,7 @@ class GuestCustomerRepositoryTest extends TestCase
         $this->expectException(NoSuchEntityException::class);
         $this->expectExceptionMessage('The Guest Customer with the "123" ID doesn\'t exist');
 
-        $this->customerRepository->deleteById($entityId);
+        $this->guestCustomerRepository->deleteById($entityId);
     }
 
     public function testDeleteById()
@@ -143,7 +144,7 @@ class GuestCustomerRepositoryTest extends TestCase
             ->with($this->customer)
             ->willReturnSelf();
 
-        $this->assertTrue($this->customerRepository->deleteById($entityId));
+        $this->assertTrue($this->guestCustomerRepository->deleteById($entityId));
     }
 
     public function testGetOrCreateWithUnknownGuest()
@@ -185,7 +186,7 @@ class GuestCustomerRepositoryTest extends TestCase
             ->with($this->customer)
             ->willReturn($this->customer);
 
-        $this->assertSame($this->customer, $this->customerRepository->getOrCreate($customerData));
+        $this->assertSame($this->customer, $this->guestCustomerRepository->getOrCreate($customerData));
     }
 
 
@@ -220,7 +221,7 @@ class GuestCustomerRepositoryTest extends TestCase
         $this->customerResource->expects($this->never())
             ->method('save');
 
-        $this->assertSame($this->customer, $this->customerRepository->getOrCreate($customerData));
+        $this->assertSame($this->customer, $this->guestCustomerRepository->getOrCreate($customerData));
     }
 
     protected function setUp(): void
@@ -242,9 +243,16 @@ class GuestCustomerRepositoryTest extends TestCase
             ->method('create')
             ->willReturn($this->customer);
 
-        $this->customerRepository = new GuestCustomerRepository(
-            $this->customerResource,
-            $this->customerFactory
+        $this->magentoCustomerRepository = $this->createMock(
+            \Magento\Customer\Model\ResourceModel\CustomerRepository::class
+        );
+
+        $this->customerRepository = $this->createMock(
+            CustomerRepository::class
+        );
+
+        $this->guestCustomerRepository = new GuestCustomerRepository(
+            $this->customerResource, $this->customerFactory, $this->magentoCustomerRepository, $this->customerRepository
         );
     }
 }

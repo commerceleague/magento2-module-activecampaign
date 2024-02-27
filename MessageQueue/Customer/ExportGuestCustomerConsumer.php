@@ -56,8 +56,16 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
             try {
                 $apiResponse = $this->performApiRequest($guestCustomer, $request);
             } catch (UnprocessableEntityHttpException $e) {
-                $this->logUnprocessableEntityHttpException($e, $request);
-                return;
+                try {
+                    $apiResponse = $this->handleUnprocessableEntityHttpException(
+                        $e,
+                        $request,
+                        self::RESPONSE_KEY_CUSTOMER
+                    );
+                } catch (UnprocessableEntityHttpException $e) {
+                    $this->logUnprocessableEntityHttpException($e, $request);
+                    return;
+                }
             } catch (HttpException $e) {
                 $this->logException($e);
                 return;
@@ -79,5 +87,22 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
         } else {
             return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key)
+    {
+        $response = $this->client->getCustomerApi()->listPerPage(
+            1,
+            0,
+            [
+                'filters' => [
+                    'email' => $request['email']
+                ]
+            ]
+        );
+        return [$key => $response->getItems()[0]];
     }
 }

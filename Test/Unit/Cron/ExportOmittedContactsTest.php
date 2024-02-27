@@ -5,19 +5,20 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\ExportOmittedContacts;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedContacts;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportOmittedContactsTest extends TestCase
+class ExportOmittedContactsTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -49,7 +50,7 @@ class ExportOmittedContactsTest extends TestCase
     protected $publisher;
 
     /**
-     * @var ExportOmittedContacts
+     * @var PublishOmittedContacts
      */
     protected $exportOmittedContacts;
 
@@ -81,7 +82,7 @@ class ExportOmittedContactsTest extends TestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedContacts = new ExportOmittedContacts(
+        $this->exportOmittedContacts = new PublishOmittedContacts(
             $this->configHelper,
             $this->customerCollectionFactory,
             $this->subscriberCollectionFactory,

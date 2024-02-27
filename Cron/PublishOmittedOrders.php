@@ -13,9 +13,9 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
- * Class ExportOmittedOrders
+ * Class PublishOmittedOrders
  */
-class ExportOmittedOrders implements CronInterface
+class PublishOmittedOrders implements CronInterface
 {
 
     public function __construct(private readonly ConfigHelper           $configHelper,
@@ -55,5 +55,20 @@ class ExportOmittedOrders implements CronInterface
                 json_encode(['magento_order_id' => $orderId], JSON_THROW_ON_ERROR)
             );
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getOrderIds(): array
+    {
+        /** @var OrderCollection $orderCollection */
+        $orderCollection = $this->orderCollectionFactory->create();
+//        $orderCollection->addExcludeGuestFilter();
+        $orderCollection->addExportFilterOrderStatus();
+        $orderCollection->addExportFilterStartDate();
+        $orderCollection->addOmittedFilter();
+
+        return $orderCollection->getAllIds();
     }
 }

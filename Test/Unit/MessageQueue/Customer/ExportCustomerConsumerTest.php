@@ -11,18 +11,18 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportCustomerConsumer;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
-use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
 use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Phrase;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ExportCustomerConsumerTest extends TestCase
+class ExportCustomerConsumerTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|MagentoCustomerRepositoryInterface
      */
@@ -102,7 +102,7 @@ class ExportCustomerConsumerTest extends TestCase
 
         $this->logger->expects($this->once())
             ->method('error')
-            ->with($exceptionMessage);
+            ->with($exception);
 
         $this->customerRepository->expects($this->never())
             ->method('getOrCreateByMagentoCustomerId');
@@ -155,6 +155,8 @@ class ExportCustomerConsumerTest extends TestCase
         $magentoCustomerId = 123;
         $request = ['request'];
         $responseErrors = ['first error', 'second error'];
+        $apiResponseKey = 'ecomCustomer';
+        $apiMethod = 'create';
 
         $this->magentoCustomerRepository->expects($this->once())
             ->method('getById')
@@ -174,24 +176,7 @@ class ExportCustomerConsumerTest extends TestCase
             ->method('getCustomerApi')
             ->willReturn($this->customerApi);
 
-        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
-        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
-
-        $this->customerApi->expects($this->once())
-            ->method('create')
-            ->with(['ecomCustomer' => $request])
-            ->willThrowException($unprocessableEntityHttpException);
-
-        $this->logger->expects($this->exactly(2))
-            ->method('error');
-
-        $unprocessableEntityHttpException->expects($this->once())
-            ->method('getResponseErrors')
-            ->willReturn($responseErrors);
-
-        $this->logger->expects($this->at(1))
-            ->method('error')
-            ->with(print_r($responseErrors, true));
+        $this->unprocessableEntityHttpException($this->customerApi, $this->logger, $request, $responseErrors, $apiResponseKey, $apiMethod);
 
         $this->customer->expects($this->never())
             ->method('setActiveCampaignId');

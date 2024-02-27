@@ -11,17 +11,19 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Newsletter\ExportContactConsumer;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
+use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Phrase;
 use Magento\Newsletter\Model\Subscriber;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Magento\Newsletter\Model\SubscriberFactory;
+use PHPUnit\Framework\MockObject\MockObject;
 
-class ExportContactConsumerTest extends TestCase
+class ExportContactConsumerTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|SubscriberFactory
      */
@@ -67,6 +69,11 @@ class ExportContactConsumerTest extends TestCase
      */
     protected $exportContactConsumer;
 
+    /**
+     * @var ManagerInterface|MockObject
+     */
+    protected $eventManager;
+
     protected function setUp()
     {
         $this->subscriberFactory = $this->getMockBuilder(SubscriberFactory::class)
@@ -80,19 +87,17 @@ class ExportContactConsumerTest extends TestCase
             ->method('create')
             ->willReturn($this->subscriber);
 
-        $this->logger = $this->createMock(Logger::class);
-        $this->contactRepository = $this->createMock(ContactRepositoryInterface::class);
+        $this->logger                = $this->createMock(Logger::class);
+        $this->contactRepository     = $this->createMock(ContactRepositoryInterface::class);
         $this->contactRequestBuilder = $this->createMock(ContactRequestBuilder::class);
-        $this->client = $this->createMock(Client::class);
-        $this->contact = $this->createMock(ContactInterface::class);
-        $this->contactApi = $this->createMock(ContactApiResourceInterface::class);
+        $this->client                = $this->createMock(Client::class);
+        $this->contact               = $this->createMock(ContactInterface::class);
+        $this->contactApi            = $this->createMock(ContactApiResourceInterface::class);
+        $this->eventManager          = $this->createMock(ManagerInterface::class);
 
         $this->exportContactConsumer = new ExportContactConsumer(
-            $this->subscriberFactory,
-            $this->logger,
-            $this->contactRepository,
-            $this->contactRequestBuilder,
-            $this->client
+            $this->subscriberFactory, $this->contactRepository, $this->contactRequestBuilder, $this->client,
+            $this->eventManager, $this->logger
         );
     }
 
@@ -199,24 +204,10 @@ class ExportContactConsumerTest extends TestCase
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 
-        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
-        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
-
-        $this->contactApi->expects($this->once())
-            ->method('upsert')
-            ->with(['contact' => $request])
-            ->willThrowException($unprocessableEntityHttpException);
-
-        $this->logger->expects($this->exactly(2))
-            ->method('error');
-
-        $unprocessableEntityHttpException->expects($this->once())
-            ->method('getResponseErrors')
-            ->willReturn($responseErrors);
-
-        $this->logger->expects($this->at(1))
-            ->method('error')
-            ->with(print_r($responseErrors, true));
+        $apiResponseKey = 'contact';
+        $apiMethod = 'upsert';
+        $this->unprocessableEntityHttpException(
+            $this->contactApi, $this->logger, $request, $responseErrors, $apiResponseKey, $apiMethod);
 
         $this->contact->expects($this->never())
             ->method('setActiveCampaignId');

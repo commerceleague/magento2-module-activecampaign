@@ -33,7 +33,7 @@ class ExportContactObserver implements ObserverInterface
         /** @var Subscriber $subscriber */
         $subscriber = $observer->getEvent()->getData('subscriber');
 
-        if ($subscriber->getData('customer_id')) {
+        if ($subscriber->getStatus() != Subscriber::STATUS_SUBSCRIBED) {
             return;
         }
 

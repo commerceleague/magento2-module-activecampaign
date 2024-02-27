@@ -17,7 +17,7 @@ use Magento\Framework\MessageQueue\PublisherInterface;
 /**
  * Class ExportOmittedContacts
  */
-class ExportOmittedContacts implements CronInterface
+class PublishOmittedContacts implements CronInterface
 {
 
     public function __construct(private readonly ConfigHelper                $configHelper,
