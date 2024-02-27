@@ -1,0 +1,19 @@
+includes:
+	- phpstan-baseline.neon
+
+parameters:
+    level: 6
+    paths:
+        - Api
+        - Block
+        - Console
+        - Controller
+        - Cron
+        - Gateway
+        - Helper
+        - Logger
+        - MessageQueue
+        - Model
+        - Observer
+        - Setup
+    reportUnmatchedIgnoredErrors: false
