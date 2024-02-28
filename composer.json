@@ -39,5 +39,5 @@
     "phpstan/phpstan": "^1.10",
     "phpunit/phpunit": "^11.0.3",
     "rector/rector": "^0.17.13"
-  },
+  }
 }
