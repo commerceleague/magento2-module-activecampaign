@@ -95,7 +95,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key)
+    function processDuplicateEntity(array $request, string $key): void
     {
         return;
     }

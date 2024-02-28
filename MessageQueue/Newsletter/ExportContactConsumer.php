@@ -62,7 +62,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
         $subscriber = $this->subscriberFactory->create();
         $subscriber = $subscriber->load($message['email'], 'subscriber_email');
 
-        if (!$subscriber->getId()) {
+        if ($subscriber->getId() === 0) {
             $this->getLogger()->error(__('The Subscriber with the "%1" email doesn\'t exist', $message['email']));
             return;
         }
@@ -93,7 +93,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key)
+    function processDuplicateEntity(array $request, string $key): void
     {
         return;
     }

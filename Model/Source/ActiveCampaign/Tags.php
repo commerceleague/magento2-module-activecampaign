@@ -45,11 +45,7 @@ class Tags implements ArrayInterface
                         'label' => $list['tag']
                     ];
                 }
-            } catch (UnauthorizedHttpException $exception) {
-                // fail silently for the moment
-            } catch (NotFoundHttpException $exception) {
-                // fail silently for the moment
-            } catch (InvalidArgumentException $exception) {
+            } catch (UnauthorizedHttpException|NotFoundHttpException|InvalidArgumentException) {
                 // fail silently for the moment
             }
 

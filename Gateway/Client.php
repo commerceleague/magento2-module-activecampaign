@@ -100,7 +100,7 @@ class Client
         $url   = $this->configHelper->getApiUrl();
         $token = $this->configHelper->getApiToken();
 
-        if ($this->configHelper->isConnectionSet() === false) {
+        if (!$this->configHelper->isConnectionSet()) {
             throw new InvalidArgumentException(
                 __('Connection Credentials are not set')
             );

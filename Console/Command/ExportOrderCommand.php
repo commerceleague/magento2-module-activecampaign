@@ -44,8 +44,6 @@ class ExportOrderCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
-     *
      * @return array
      */
     public function getOrderIds(InputInterface $input): array

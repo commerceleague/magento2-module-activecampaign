@@ -24,7 +24,7 @@ class ExportContactObserver implements ObserverInterface
     /**
      * @inheritDoc
      */
-    public function execute(Observer $observer)
+    public function execute(Observer $observer): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isContactExportEnabled()) {
             return;

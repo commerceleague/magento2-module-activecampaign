@@ -65,7 +65,7 @@ class AssignContactToListConsumer extends AbstractConsumer implements ConsumerIn
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key)
+    function processDuplicateEntity(array $request, string $key): void
     {
         return;
     }

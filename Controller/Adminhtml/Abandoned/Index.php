@@ -17,19 +17,13 @@ use Magento\Framework\View\Result\PageFactory as ResultPageFactory;
 class Index extends AbstractAbandoned implements HttpGetActionInterface
 {
     /**
-     * @var ResultPageFactory
-     */
-    protected $resultPageFactory;
-
-    /**
      * @param Action\Context $context
      * @param ResultPageFactory $resultPageFactory
      */
     public function __construct(
         Action\Context $context,
-        ResultPageFactory $resultPageFactory
+        protected ResultPageFactory $resultPageFactory
     ) {
-        $this->resultPageFactory = $resultPageFactory;
         parent::__construct($context);
     }
 

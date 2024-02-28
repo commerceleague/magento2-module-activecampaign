@@ -8,11 +8,6 @@ class Status
 {
 
     /**
-     * @var AllStatuses
-     */
-    protected $allStatuses;
-
-    /**
      * @var InvoiceRepositoryInterface
      */
     protected $invoiceRepository;
@@ -24,13 +19,9 @@ class Status
 
     /**
      * Status constructor.
-     *
-     * @param AllStatuses $allStatuses
      */
-    public function __construct(
-        AllStatuses $allStatuses
-    ) {
-        $this->allStatuses          = $allStatuses;
+    public function __construct(protected \CommerceLeague\ActiveCampaign\Model\System\Config\Source\Order\AllStatuses $allStatuses)
+    {
     }
 
     public function toOptionArray($entity)
@@ -44,7 +35,7 @@ class Status
     }
 
     // Function to just put all status "codes" into an array.
-    public function toArray($entity)
+    public function toArray($entity): array
     {
         $statuses    = $this->toOptionArray($entity);
         $statusArray = [];

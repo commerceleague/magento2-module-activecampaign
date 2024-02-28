@@ -8,7 +8,7 @@ namespace CommerceLeague\ActiveCampaign\Controller\Adminhtml\Customer;
 use CommerceLeague\ActiveCampaign\Controller\Adminhtml\AbstractCustomer;
 use Magento\Backend\App\Action;
 use Magento\Framework\App\Action\HttpGetActionInterface;
-use Magento\Framework\View\Result\Page as ResultPage;
+use \Magento\Backend\Model\View\Result\Page as ResultPage;
 use Magento\Framework\View\Result\PageFactory as ResultPageFactory;
 
 /**
@@ -17,19 +17,13 @@ use Magento\Framework\View\Result\PageFactory as ResultPageFactory;
 class Index extends AbstractCustomer implements HttpGetActionInterface
 {
     /**
-     * @var ResultPageFactory
-     */
-    protected $resultPageFactory;
-
-    /**
      * @param Action\Context $context
      * @param ResultPageFactory $resultPageFactory
      */
     public function __construct(
         Action\Context $context,
-        ResultPageFactory $resultPageFactory
+        protected ResultPageFactory $resultPageFactory
     ) {
-        $this->resultPageFactory = $resultPageFactory;
         parent::__construct($context);
     }
 
@@ -41,7 +35,7 @@ class Index extends AbstractCustomer implements HttpGetActionInterface
         /** @var ResultPage $resultPage */
         $resultPage = $this->resultPageFactory->create();
 
-        $this->initPage($resultPage)->getConfig()->getTitle()->prepend(__('ActiveCampaign Customers'));
+        $this->initPage($resultPage)->getConfig()->getTitle()->prepend((string)__('ActiveCampaign Customers'));
 
         return $resultPage;
     }

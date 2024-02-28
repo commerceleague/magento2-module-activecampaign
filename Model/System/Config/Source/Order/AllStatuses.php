@@ -21,12 +21,12 @@ class AllStatuses extends Status
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $statuses    = $this->toOptionArray();
         $statusArray = [];
         foreach ($statuses as $status) {
-            array_push($statusArray, $status['value']);
+            $statusArray[] = $status['value'];
         }
         return $statusArray;
     }

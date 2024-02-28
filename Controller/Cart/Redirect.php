@@ -29,7 +29,7 @@ class Redirect extends Action implements HttpGetActionInterface
     /**
      * @inheritDoc
      */
-    public function execute()
+    public function execute(): void
     {
         $url = $this->_url->getUrl('checkout/cart');
 

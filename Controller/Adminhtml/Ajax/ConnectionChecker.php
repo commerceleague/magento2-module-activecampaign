@@ -18,26 +18,20 @@ use Magento\Framework\Controller\Result\JsonFactory;
 class ConnectionChecker extends Action
 {
 
-    const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_config_connectionChecker';
-
-    private Config      $configHelper;
-
-    private JsonFactory $resultJsonFactory;
-
-    private Client      $client;
+    final public const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_config_connectionChecker';
 
     public function __construct(
         Context     $context,
-        Client      $client,
-        Config      $configHelper,
-        JsonFactory $resultJsonFactory
+        private readonly Client      $client,
+        private readonly Config      $configHelper,
+        private readonly JsonFactory $resultJsonFactory
     ) {
         parent::__construct($context);
-        $this->client            = $client;
-        $this->configHelper      = $configHelper;
-        $this->resultJsonFactory = $resultJsonFactory;
     }
 
+    /**
+     * @return \Magento\Framework\App\ResponseInterface|Json|\Magento\Framework\Controller\ResultInterface|void
+     */
     public function execute()
     {
         $result = $this->resultJsonFactory->create();
@@ -50,8 +44,6 @@ class ConnectionChecker extends Action
             } catch (UnauthorizedHttpException $exception) {
                 $response = $this->handleException($result, 403, $exception->getMessage());
             } catch (ClientErrorHttpException $exception) {
-                $response = $this->handleException($result, 404, $exception->getMessage());
-            } catch (NotFoundHttpException $exception) {
                 $response = $this->handleException($result, 404, $exception->getMessage());
             }
             return $response;

@@ -194,10 +194,7 @@ class Config extends AbstractHelper
             AccountManagementInterface::ACCOUNT_CONFIRMATION_NOT_REQUIRED,
             AccountManagementInterface::ACCOUNT_CONFIRMED
         ];
-        if (in_array($status, $noConfirmationRequired)) {
-            return false;
-        }
-        return true;
+        return !in_array($status, $noConfirmationRequired);
     }
 
     /**
@@ -209,7 +206,7 @@ class Config extends AbstractHelper
     {
         $orderStatuses = $this->scopeConfig->getValue(self::XML_PATH_EXPORT_ORDER_STATUSES);
         if (null !== $orderStatuses) {
-            return explode(',', $orderStatuses);
+            return explode(',', (string) $orderStatuses);
         }
         return null;
     }
@@ -228,7 +225,7 @@ class Config extends AbstractHelper
     {
         $list = $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST);
         if ($list) {
-            return explode(',', $list);
+            return explode(',', (string) $list);
         }
         return [];
     }
@@ -237,10 +234,6 @@ class Config extends AbstractHelper
     {
         $token  = $this->getApiToken();
         $apiUrl = $this->getApiUrl();
-
-        if ($token !== null && $apiUrl !== null) {
-            return true;
-        }
-        return false;
+        return $token !== null && $apiUrl !== null;
     }
 }
