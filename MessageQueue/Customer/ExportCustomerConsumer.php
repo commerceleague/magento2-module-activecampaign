@@ -89,7 +89,7 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
      */
     public function logUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $unprocessableEntityHttpException, array $request
-    ): void {
+    ): mixed {
 
         $activeCampaignEcommerceId = null;
         $errors                    = $unprocessableEntityHttpException->getResponseErrors();

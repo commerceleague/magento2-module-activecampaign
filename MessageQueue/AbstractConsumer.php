@@ -51,7 +51,7 @@ abstract class AbstractConsumer
     public function logUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $unprocessableEntityHttpException,
         array                            $request
-    ): void {
+    ): mixed {
         $this->getLogger()->error(static::class);
         $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
         $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
