@@ -50,11 +50,7 @@ class Lists implements ArrayInterface
                         'label' => $list['name']
                     ];
                 }
-            } catch (UnauthorizedHttpException $exception) {
-                // fail silently for the moment
-            } catch (NotFoundHttpException $exception) {
-                // fail silently for the moment
-            } catch (InvalidArgumentException $exception) {
+            } catch (UnauthorizedHttpException|NotFoundHttpException|InvalidArgumentException) {
                 // fail silently for the moment
             }
 

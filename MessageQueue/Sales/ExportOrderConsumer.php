@@ -87,7 +87,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key)
+    function processDuplicateEntity(array $request, string $key): array
     {
         $response = $this->client->getOrderApi()->listPerPage(
             1,
@@ -102,8 +102,6 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
     }
 
     /**
-     * @param OrderInterface $order
-     * @param array          $request
      *
      * @return array
      */

@@ -18,19 +18,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 abstract class AbstractExportCommand extends Command
 {
     /**
-     * @var ConfigHelper
-     */
-    protected $configHelper;
-
-    /**
      * @var ProgressBarFactory
      */
     private $progressBarFactory;
-
-    /**
-     * @var PublisherInterface
-     */
-    protected $publisher;
 
     /**
      * @param ConfigHelper $configHelper
@@ -38,13 +28,11 @@ abstract class AbstractExportCommand extends Command
      * @param PublisherInterface $publisher
      */
     public function __construct(
-        ConfigHelper $configHelper,
+        protected ConfigHelper $configHelper,
         ProgressBarFactory $progressBarFactory,
-        PublisherInterface $publisher
+        protected \Magento\Framework\MessageQueue\PublisherInterface $publisher
     ) {
-        $this->configHelper = $configHelper;
         $this->progressBarFactory = $progressBarFactory;
-        $this->publisher = $publisher;
         parent::__construct();
     }
 

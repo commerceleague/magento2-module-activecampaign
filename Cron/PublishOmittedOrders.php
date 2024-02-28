@@ -24,6 +24,7 @@ class PublishOmittedOrders implements CronInterface
     ) {
     }
 
+
     /**
      * @return array
      */
@@ -32,7 +33,8 @@ class PublishOmittedOrders implements CronInterface
         /** @var OrderCollection $orderCollection */
         $orderCollection = $this->orderCollectionFactory->create();
 //        $orderCollection->addExcludeGuestFilter();
-        $orderCollection->addStatusFilter();
+        $orderCollection->addExportFilterOrderStatus();
+        $orderCollection->addExportFilterStartDate();
         $orderCollection->addOmittedFilter();
 
         return $orderCollection->getAllIds();
@@ -55,20 +57,5 @@ class PublishOmittedOrders implements CronInterface
                 json_encode(['magento_order_id' => $orderId], JSON_THROW_ON_ERROR)
             );
         }
-    }
-
-    /**
-     * @return array
-     */
-    public function getOrderIds(): array
-    {
-        /** @var OrderCollection $orderCollection */
-        $orderCollection = $this->orderCollectionFactory->create();
-//        $orderCollection->addExcludeGuestFilter();
-        $orderCollection->addExportFilterOrderStatus();
-        $orderCollection->addExportFilterStartDate();
-        $orderCollection->addOmittedFilter();
-
-        return $orderCollection->getAllIds();
     }
 }

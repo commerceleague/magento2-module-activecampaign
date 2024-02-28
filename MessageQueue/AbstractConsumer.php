@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\MessageQueue;
 
 use CommerceLeague\ActiveCampaign\Logger\Logger;
-use CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportGuestCustomerConsumer;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
 
@@ -20,34 +19,16 @@ use Exception;
 abstract class AbstractConsumer
 {
 
-    const RESPONSE_KEY_CUSTOMER = 'ecomCustomer';
-    const RESPONSE_KEY_ORDER    = 'ecomOrder';
-    const RESPONSE_KEY_CONTACT  = 'contact';
-    const ERROR_CODE_DUPLICATE = 'duplicate';
+    final public const RESPONSE_KEY_CUSTOMER = 'ecomCustomer';
+    final public const RESPONSE_KEY_ORDER    = 'ecomOrder';
+    final public const RESPONSE_KEY_CONTACT  = 'contact';
+    final public const ERROR_CODE_DUPLICATE  = 'duplicate';
 
     /**
      * AbstractConsumer constructor.
      */
     public function __construct(private readonly Logger $logger)
     {
-    }
-
-    /**
-     * @param                                  $request
-     */
-    public function logUnprocessableEntityHttpException(
-        UnprocessableEntityHttpException $unprocessableEntityHttpException,
-        $request
-    ) {
-        $this->getLogger()->error(get_class($this));
-        $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
-        $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
-        $this->getLogger()->error(print_r($request, true));
-    }
-
-    public function logException(Exception $exception)
-    {
-        $this->getLogger()->error($exception);
     }
 
     /**
@@ -58,10 +39,28 @@ abstract class AbstractConsumer
         return $this->logger;
     }
 
+    public function logException(Exception $exception): void
+    {
+        $this->getLogger()->error($exception);
+    }
+
+    /**
+     * @param array<mixed>                     $request
+     * @return void
+     */
+    public function logUnprocessableEntityHttpException(
+        UnprocessableEntityHttpException $unprocessableEntityHttpException,
+        array                            $request
+    ): void {
+        $this->getLogger()->error(static::class);
+        $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
+        $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
+        $this->getLogger()->error(print_r($request, true));
+    }
+
     /**
      *
-     * @param array  $request
-     * @param string $key
+     * @param array<mixed> $request
      *
      * @return mixed
      */
@@ -69,25 +68,21 @@ abstract class AbstractConsumer
 
     /**
      *
-     * @param UnprocessableEntityHttpException $e
-     * @param array                            $request
-     * @param string                           $key
+     * @param array<mixed>                     $request
      *
      * @return array
      */
     protected function handleUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $e,
-        array $request,
-        string $key
+        array                            $request,
+        string                           $key
     ) {
         $errors    = $e->getResponseErrors();
         $errors    = array_shift($errors);
         $errorCode = $errors['code'];
 
-        switch (true) {
-            case ($errorCode == self::ERROR_CODE_DUPLICATE):
-                return $this->processDuplicateEntity($request, $key);
-                break;
+        if ($errorCode == self::ERROR_CODE_DUPLICATE) {
+            return $this->processDuplicateEntity($request, $key);
         }
     }
 }

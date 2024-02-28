@@ -88,29 +88,27 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
      * @return mixed|void|null
      */
     public function logUnprocessableEntityHttpException(
-        UnprocessableEntityHttpException $unprocessableEntityHttpException, $request
-    ) {
+        UnprocessableEntityHttpException $unprocessableEntityHttpException, array $request
+    ): void {
 
         $activeCampaignEcommerceId = null;
         $errors                    = $unprocessableEntityHttpException->getResponseErrors();
-        if (count($errors) > 0) {
+        if ($errors !== []) {
             foreach ($errors as $error) {
-                if (isset($error['code'])) {
-                    if ($error['code'] == 'duplicate') {
-                        $filters = [
-                            'filters' => [
-                                'email'        => $request['email'],
-                                'connectionid' => $request['connectionid']
-                            ]
-                        ];
-                        $this->getLogger()->info(print_r($filters, true));
-                        $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
-                        $items    = $response->getItems();
-                        $customer = $items[0];
-                        $this->getLogger()->info(print_r($customer, true));
-                        if (strtolower($customer['email']) == strtolower($request['email'])) {
-                            $activeCampaignEcommerceId = $customer['id'];
-                        }
+                if (isset($error['code']) && $error['code'] == 'duplicate') {
+                    $filters = [
+                        'filters' => [
+                            'email'        => $request['email'],
+                            'connectionid' => $request['connectionid']
+                        ]
+                    ];
+                    $this->getLogger()->info(print_r($filters, true));
+                    $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
+                    $items    = $response->getItems();
+                    $customer = $items[0];
+                    $this->getLogger()->info(print_r($customer, true));
+                    if (strtolower((string) $customer['email']) === strtolower((string) $request['email'])) {
+                        $activeCampaignEcommerceId = $customer['id'];
                     }
                 }
             }
@@ -124,9 +122,6 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     }
 
     /**
-     * @param CustomerInterface $customer
-     * @param array             $request
-     *
      * @return array
      * @throws HttpException
      */
@@ -142,7 +137,7 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key)
+    function processDuplicateEntity(array $request, string $key): void
     {
         return;
     }

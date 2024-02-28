@@ -92,7 +92,7 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key)
+    function processDuplicateEntity(array $request, string $key): array
     {
         $response = $this->client->getCustomerApi()->listPerPage(
             1,

@@ -26,11 +26,6 @@ class Collection extends ExtendCollection
 {
 
     /**
-     * @var Config
-     */
-    private $configHelper;
-
-    /**
      * @param EntityFactory          $entityFactory
      * @param LoggerInterface        $logger
      * @param FetchStrategyInterface $fetchStrategy
@@ -47,12 +42,11 @@ class Collection extends ExtendCollection
         ManagerInterface $eventManager,
         Snapshot $entitySnapshot,
         Helper $coreResourceHelper,
-        Config $configHelper,
+        private readonly Config $configHelper,
         AdapterInterface $connection = null,
         AbstractDb $resource = null
 
     ) {
-        $this->configHelper = $configHelper;
         parent::__construct(
             $entityFactory,
             $logger,

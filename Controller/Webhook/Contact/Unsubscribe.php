@@ -45,7 +45,7 @@ class Unsubscribe extends AbstractWebhook
     /**
      * @inheritDoc
      */
-    public function execute()
+    public function execute(): void
     {
         $params = $this->getRequest()->getParams();
 
@@ -60,7 +60,7 @@ class Unsubscribe extends AbstractWebhook
         $subscriber = $this->subscriberFactory->create();
         $subscriber->loadByEmail($email);
 
-        if (!$subscriber->getId()) {
+        if ($subscriber->getId() === 0) {
             $this->logger->error(__('Unable to find subscriber with email "%s"', $email));
             return;
         }

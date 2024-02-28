@@ -68,14 +68,12 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key)
+    function processDuplicateEntity(array $request, string $key): void
     {
         return;
     }
 
     /**
-     * @param ContactInterface $contact
-     * @param array            $tagIds
      *
      * @return array
      */
@@ -83,7 +81,7 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
     {
         $requestBuilder = $this->requestBuilder;
         return array_map(
-            fn($tagId) => $requestBuilder->buildWithContact($contact, (int)$tagId),
+            fn($tagId): array => $requestBuilder->buildWithContact($contact, (int)$tagId),
             $tagIds
         );
     }

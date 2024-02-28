@@ -19,7 +19,7 @@ class AbandonedCartBuilder extends AbstractBuilder
     }
 
     /**
-     * @return array
+     * @return array<string,mixed>
      * @throws \Exception
      */
     public function build(Quote $quote): array

@@ -16,11 +16,6 @@ class Collection extends ExtendCustomerCollection
 {
 
     /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
      * Collection constructor.
      *
      * @param \Magento\Framework\Data\Collection\EntityFactory                  $entityFactory
@@ -51,7 +46,7 @@ class Collection extends ExtendCustomerCollection
         \Magento\Framework\Validator\UniversalFactory $universalFactory,
         \Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot $entitySnapshot,
         \Magento\Framework\DataObject\Copy\Config $fieldsetConfig,
-        ConfigHelper $configHelper,
+        private readonly ConfigHelper $configHelper,
         \Magento\Framework\DB\Adapter\AdapterInterface $connection = null,
         $modelName = ExtendCustomerCollection::CUSTOMER_MODEL_NAME
     ) {
@@ -70,7 +65,6 @@ class Collection extends ExtendCustomerCollection
             $connection,
             $modelName
         );
-        $this->configHelper = $configHelper;
     }
 
     /**

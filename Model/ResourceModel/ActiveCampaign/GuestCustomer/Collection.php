@@ -24,20 +24,14 @@ use Psr\Log\LoggerInterface;
 class Collection extends AbstractCollection
 {
 
-    /**
-     * @var Config
-     */
-    private $configHelper;
-
     public function __construct(
         EntityFactoryInterface $entityFactory, LoggerInterface $logger,
         FetchStrategyInterface $fetchStrategy,
         ManagerInterface $eventManager,
-        Config $configHelper,
+        private readonly Config $configHelper,
         AdapterInterface $connection = null,
         AbstractDb $resource = null
     ) {
-        $this->configHelper = $configHelper;
         parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
     }
 

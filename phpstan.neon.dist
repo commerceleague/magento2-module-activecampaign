@@ -17,3 +17,9 @@ parameters:
         - Observer
         - Setup
     reportUnmatchedIgnoredErrors: false
+
+    ignoreErrors:
+        - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:isPost\(\)#'
+        - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:getPost\(\)#'
+        - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:getPostValue\(\)#'
+        - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:isAjax\(\)#'
