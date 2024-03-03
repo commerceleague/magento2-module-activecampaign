@@ -35,7 +35,7 @@ class Index extends AbstractAbandoned implements HttpGetActionInterface
         /** @var ResultPage $resultPage */
         $resultPage = $this->resultPageFactory->create();
 
-        $this->initPage($resultPage)->getConfig()->getTitle()->prepend(__('ActiveCampaign Abandoned Carts'));
+        $this->initPage($resultPage)->getConfig()->getTitle()->prepend((string)__('ActiveCampaign Abandoned Carts'));
 
         return $resultPage;
     }

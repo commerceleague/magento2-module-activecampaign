@@ -6,7 +6,8 @@
     "allow-plugins": {
       "php-http/discovery": true,
       "magento/composer-dependency-version-audit-plugin": true,
-      "dealerdirect/phpcodesniffer-composer-installer": true
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "phpstan/extension-installer": true
     }
   },
   "require": {
@@ -35,7 +36,9 @@
     }
   ],
   "require-dev": {
+    "bitexpert/phpstan-magento": "^0.11.0",
     "magento/magento-coding-standard": "^33",
+    "phpstan/extension-installer": "^1.3",
     "phpstan/phpstan": "^1.10",
     "phpunit/phpunit": "^11.0.3",
     "rector/rector": "^0.17.13"

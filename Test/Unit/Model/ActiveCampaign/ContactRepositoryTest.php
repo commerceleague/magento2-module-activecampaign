@@ -5,11 +5,11 @@
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
-use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Contact;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\ContactFactory;
-use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\ContactRepository;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact as ContactResource;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use CommerceLeague\ActiveCampaign\vendor\Model\ActiveCampaign\Contact;
+use CommerceLeague\ActiveCampaign\vendor\Model\ActiveCampaign\ContactRepository;
+use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\ActiveCampaign\Contact as ContactResource;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;

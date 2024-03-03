@@ -1,8 +1,9 @@
 <?php
-/**
- */
+declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Api\Data;
+
+use Magento\Tests\NamingConvention\true\string;
 
 /**
  * Interface GuestCustomerInterface
@@ -21,84 +22,84 @@ interface GuestCustomerInterface
     /**
      * @return int|null
      */
-    public function getId();
+    public function getId(): ?int;
 
     /**
-     * @param int $id
+     * @param int|mixed $value
      *
      * @return GuestCustomerInterface
      */
-    public function setId($id);
+    public function setId(mixed $value): GuestCustomerInterface;
 
     /**
      * @return int|null
      */
-    public function getActiveCampaignId();
+    public function getActiveCampaignId(): ?int;
 
     /**
      * @param int $activeCampaignId
      *
      * @return GuestCustomerInterface
      */
-    public function setActiveCampaignId($activeCampaignId): self;
+    public function setActiveCampaignId(int $activeCampaignId): GuestCustomerInterface;
 
     /**
      * @return string|null
      */
-    public function getEmail();
+    public function getEmail(): ?string;
 
     /**
-     * @param string $id
+     * @param string $email
      *
      * @return GuestCustomerInterface
      */
-    public function setEmail($email);
+    public function setEmail(string $email): GuestCustomerInterface;
 
     /**
      * @return string|null
      */
-    public function getFirstname();
+    public function getFirstname(): ?string;
 
     /**
-     * @param string $id
+     * @param string $firstname
      *
      * @return GuestCustomerInterface
      */
-    public function setFirstname($firstname);
+    public function setFirstname(string $firstname): GuestCustomerInterface;
 
     /**
      * @return string|null
      */
-    public function getLastname();
+    public function getLastname(): ?string;
 
     /**
-     * @param string $id
+     * @param string $lastname
      *
      * @return GuestCustomerInterface
      */
-    public function setLastname($lastname);
+    public function setLastname(string $lastname): GuestCustomerInterface;
 
     /**
      * @return string|null
      */
-    public function getCreatedAt();
+    public function getCreatedAt(): ?string;
 
     /**
      * @param string $createdAt
      *
      * @return GuestCustomerInterface
      */
-    public function setCreatedAt($createdAt): self;
+    public function setCreatedAt(string $createdAt): GuestCustomerInterface;
 
     /**
      * @return string|null
      */
-    public function getUpdatedAt();
+    public function getUpdatedAt(): ?string;
 
     /**
      * @param string $updatedAt
      *
      * @return GuestCustomerInterface
      */
-    public function setUpdatedAt($updatedAt): self;
+    public function setUpdatedAt(string $updatedAt): GuestCustomerInterface;
 }

@@ -13,10 +13,11 @@ parameters:
         - Helper
         - Logger
         - MessageQueue
-        - Model
         - Observer
         - Setup
     reportUnmatchedIgnoredErrors: false
+    bootstrapFiles:
+        - vendor/bitexpert/phpstan-magento/autoload.php
 
     ignoreErrors:
         - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:isPost\(\)#'

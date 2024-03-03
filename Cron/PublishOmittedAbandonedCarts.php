@@ -8,8 +8,8 @@ namespace CommerceLeague\ActiveCampaign\Cron;
 use CommerceLeague\ActiveCampaign\Api\CronInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\Collection as QuoteCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
+use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\Quote\Collection as QuoteCollection;
 use Exception;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
