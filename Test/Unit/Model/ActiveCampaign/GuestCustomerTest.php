@@ -5,9 +5,9 @@
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
-use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomer;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer as CustomerResource;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use CommerceLeague\ActiveCampaign\vendor\Model\ActiveCampaign\GuestCustomer;
+use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\ActiveCampaign\GuestCustomer as CustomerResource;
 use Magento\Framework\Model\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\MockObject\MockObject;

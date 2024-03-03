@@ -32,7 +32,7 @@ class Index extends AbstractOrder implements HttpGetActionInterface
         /** @var ResultPage $resultPage */
         $resultPage = $this->resultPageFactory->create();
 
-        $this->initPage($resultPage)->getConfig()->getTitle()->prepend(__('ActiveCampaign Orders'));
+        $this->initPage($resultPage)->getConfig()->getTitle()->prepend((string)__('ActiveCampaign Orders'));
 
         return $resultPage;
     }

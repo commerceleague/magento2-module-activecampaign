@@ -70,7 +70,6 @@ abstract class AbstractConsumer
      *
      * @param array<mixed>                     $request
      *
-     * @return array
      */
     protected function handleUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $e,

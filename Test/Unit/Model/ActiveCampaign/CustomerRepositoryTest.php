@@ -5,11 +5,11 @@
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
-use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Customer;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\CustomerFactory;
-use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\CustomerRepository;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer as CustomerResource;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use CommerceLeague\ActiveCampaign\vendor\Model\ActiveCampaign\Customer;
+use CommerceLeague\ActiveCampaign\vendor\Model\ActiveCampaign\CustomerRepository;
+use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\ActiveCampaign\Customer as CustomerResource;
 use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;

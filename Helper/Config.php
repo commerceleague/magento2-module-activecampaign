@@ -39,10 +39,6 @@ class Config extends AbstractHelper
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_LIST = 'activecampaign/newsletter_export/newsletter_subscribers_list';
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_TAGS = 'activecampaign/newsletter_export/newsletter_subscribers_tags';
 
-    /**
-     * @var AccountConfirmation
-     */
-    private $accountConfirmation;
 
     /**
      * Config constructor.

@@ -36,7 +36,7 @@ class Index extends AbstractContact implements HttpGetActionInterface
         /** @var ResultPage $resultPage */
         $resultPage = $this->resultPageFactory->create();
 
-        $this->initPage($resultPage)->getConfig()->getTitle()->prepend(__('ActiveCampaign Contacts'));
+        $this->initPage($resultPage)->getConfig()->getTitle()->prepend((string)__('ActiveCampaign Contacts'));
 
         return $resultPage;
     }

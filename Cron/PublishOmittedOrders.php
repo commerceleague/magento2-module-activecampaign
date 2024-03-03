@@ -8,8 +8,8 @@ namespace CommerceLeague\ActiveCampaign\Cron;
 use CommerceLeague\ActiveCampaign\Api\CronInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**

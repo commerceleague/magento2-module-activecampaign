@@ -16,8 +16,8 @@ use CommerceLeague\ActiveCampaignApi\Api\TagsApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\ClientBuilder;
 use CommerceLeague\ActiveCampaignApi\CommonClientInterface;
 use Http\Adapter\Guzzle7\Client as GuzzleClient;
-use Http\Factory\Guzzle\RequestFactory as GuzzleRequestFactory;
-use Http\Factory\Guzzle\StreamFactory as GuzzleStreamFactory;
+use Http\Factory\Guzzle\RequestFactory;
+use Http\Factory\Guzzle\StreamFactory;
 use Magento\Framework\Exception\InvalidArgumentException;
 
 /**
@@ -49,7 +49,7 @@ class Client
 
     /**
      * @return ContactApiResourceInterface
-     * @throws MissingCredentialsException
+     * @throws InvalidArgumentException
      */
     public function getContactApi(): ContactApiResourceInterface
     {
@@ -108,8 +108,8 @@ class Client
 
         $clientBuilder = new ClientBuilder();
         $clientBuilder->setHttpClient(new GuzzleClient());
-        $clientBuilder->setRequestFactory(new GuzzleRequestFactory());
-        $clientBuilder->setStreamFactory(new GuzzleStreamFactory());
+        $clientBuilder->setRequestFactory(new RequestFactory());
+        $clientBuilder->setStreamFactory(new StreamFactory());
 
         return $clientBuilder->buildCommonClient($url, $token);
     }

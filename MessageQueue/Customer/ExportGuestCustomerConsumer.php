@@ -48,7 +48,6 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
 
         $customerData = $message['customer_data'];
 
-        /** @var GuestCustomerInterface $guestCustomer */
         $guestCustomer = $this->customerRepository->getOrCreate($customerData);
         $request       = $this->customerRequestBuilder->buildWithGuest($guestCustomer);
 

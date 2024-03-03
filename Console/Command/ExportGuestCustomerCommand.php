@@ -9,7 +9,7 @@ use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\GuestCustomer\CollectionFactory as CustomerCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\GuestCustomer\Collection as CustomerCollection;
+use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\GuestCustomer\Collection as CustomerCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Sales\Api\Data\OrderInterface;

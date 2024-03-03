@@ -9,7 +9,9 @@ use CommerceLeague\ActiveCampaign\Controller\AbstractWebhook;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\RawFactory as RawResultFactory;
+use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Newsletter\Model\Subscriber;
@@ -42,9 +44,7 @@ class Unsubscribe extends AbstractWebhook
         $this->subscriberFactory = $subscriberFactory;
     }
 
-    /**
-     * @inheritDoc
-     */
+
     public function execute(): void
     {
         $params = $this->getRequest()->getParams();
