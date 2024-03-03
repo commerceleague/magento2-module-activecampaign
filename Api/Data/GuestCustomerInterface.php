@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Api\Data;
 
-use Magento\Tests\NamingConvention\true\string;
-
 /**
  * Interface GuestCustomerInterface
  */
@@ -37,8 +35,6 @@ interface GuestCustomerInterface
     public function getActiveCampaignId(): ?int;
 
     /**
-     * @param int $activeCampaignId
-     *
      * @return GuestCustomerInterface
      */
     public function setActiveCampaignId(int $activeCampaignId): GuestCustomerInterface;
@@ -49,8 +45,6 @@ interface GuestCustomerInterface
     public function getEmail(): ?string;
 
     /**
-     * @param string $email
-     *
      * @return GuestCustomerInterface
      */
     public function setEmail(string $email): GuestCustomerInterface;
@@ -61,8 +55,6 @@ interface GuestCustomerInterface
     public function getFirstname(): ?string;
 
     /**
-     * @param string $firstname
-     *
      * @return GuestCustomerInterface
      */
     public function setFirstname(string $firstname): GuestCustomerInterface;
@@ -73,8 +65,6 @@ interface GuestCustomerInterface
     public function getLastname(): ?string;
 
     /**
-     * @param string $lastname
-     *
      * @return GuestCustomerInterface
      */
     public function setLastname(string $lastname): GuestCustomerInterface;
@@ -85,8 +75,6 @@ interface GuestCustomerInterface
     public function getCreatedAt(): ?string;
 
     /**
-     * @param string $createdAt
-     *
      * @return GuestCustomerInterface
      */
     public function setCreatedAt(string $createdAt): GuestCustomerInterface;
@@ -97,8 +85,6 @@ interface GuestCustomerInterface
     public function getUpdatedAt(): ?string;
 
     /**
-     * @param string $updatedAt
-     *
      * @return GuestCustomerInterface
      */
     public function setUpdatedAt(string $updatedAt): GuestCustomerInterface;
