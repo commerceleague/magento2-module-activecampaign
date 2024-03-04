@@ -34,7 +34,6 @@ interface ContactInterface
 
     /**
      * @param string $email
-     * @return ContactInterface
      */
     public function setEmail($email): self;
 
@@ -45,7 +44,6 @@ interface ContactInterface
 
     /**
      * @param int $activeCampaignId
-     * @return ContactInterface
      */
     public function setActiveCampaignId($activeCampaignId): self;
 
@@ -56,7 +54,6 @@ interface ContactInterface
 
     /**
      * @param string $createdAt
-     * @return ContactInterface
      */
     public function setCreatedAt($createdAt): self;
 
@@ -67,7 +64,6 @@ interface ContactInterface
 
     /**
      * @param string $updatedAt
-     * @return ContactInterface
      */
     public function setUpdatedAt($updatedAt): self;
 }

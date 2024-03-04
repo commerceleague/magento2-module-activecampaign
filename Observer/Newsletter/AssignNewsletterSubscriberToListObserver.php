@@ -29,11 +29,6 @@ class AssignNewsletterSubscriberToListObserver implements ObserverInterface
     {
     }
 
-    /**
-     * @param Observer $observer
-     *
-     * @return void
-     */
     public function execute(Observer $observer): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isContactExportEnabled()) {

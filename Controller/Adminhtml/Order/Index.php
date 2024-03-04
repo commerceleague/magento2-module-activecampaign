@@ -13,10 +13,6 @@ use Magento\Framework\View\Result\PageFactory as ResultPageFactory;
 
 class Index extends AbstractOrder implements HttpGetActionInterface
 {
-    /**
-     * @param Action\Context $context
-     * @param ResultPageFactory $resultPageFactory
-     */
     public function __construct(
         Action\Context $context,
         protected ResultPageFactory $resultPageFactory

@@ -31,7 +31,6 @@ class Client
     }
 
     /**
-     * @return AbandonedCartApiResourceInterface
      * @throws InvalidArgumentException
      */
     public function getAbandonedCartApi(): AbandonedCartApiResourceInterface
@@ -39,16 +38,12 @@ class Client
         return $this->getCommonClient()->getAbandonedCartApi();
     }
 
-    /**
-     * @return ConnectionApiResourceInterface
-     */
     public function getConnectionApi(): ConnectionApiResourceInterface
     {
         return $this->getCommonClient()->getConnectionApi();
     }
 
     /**
-     * @return ContactApiResourceInterface
      * @throws InvalidArgumentException
      */
     public function getContactApi(): ContactApiResourceInterface
@@ -56,16 +51,12 @@ class Client
         return $this->getCommonClient()->getContactApi();
     }
 
-    /**
-     * @return CustomerApiResourceInterface
-     */
     public function getCustomerApi(): CustomerApiResourceInterface
     {
         return $this->getCommonClient()->getCustomerApi();
     }
 
     /**
-     * @return OrderApiResourceInterface
      * @throws InvalidArgumentException
      */
     public function getOrderApi(): OrderApiResourceInterface
@@ -74,7 +65,6 @@ class Client
     }
 
     /**
-     * @return TagsApiResourceInterface
      * @throws InvalidArgumentException
      */
     public function getTagsApi(): TagsApiResourceInterface
@@ -83,7 +73,6 @@ class Client
     }
 
     /**
-     * @return ListsApiResourceInterface
      * @throws InvalidArgumentException
      */
     public function getListsApi(): ListsApiResourceInterface
@@ -92,7 +81,6 @@ class Client
     }
 
     /**
-     * @return CommonClientInterface
      * @throws InvalidArgumentException
      */
     private function getCommonClient(): CommonClientInterface

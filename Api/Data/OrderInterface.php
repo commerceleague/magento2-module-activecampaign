@@ -34,7 +34,6 @@ interface OrderInterface
 
     /**
      * @param int $magentoQuoteId
-     * @return OrderInterface
      */
     public function setMagentoQuoteId($magentoQuoteId): self;
 
@@ -45,7 +44,6 @@ interface OrderInterface
 
     /**
      * @param int $activeCampaignId
-     * @return OrderInterface
      */
     public function setActiveCampaignId($activeCampaignId): self;
 
@@ -56,7 +54,6 @@ interface OrderInterface
 
     /**
      * @param string $createdAt
-     * @return OrderInterface
      */
     public function setCreatedAt($createdAt): self;
 
@@ -67,7 +64,6 @@ interface OrderInterface
 
     /**
      * @param string $updatedAt
-     * @return OrderInterface
      */
     public function setUpdatedAt($updatedAt): self;
 }

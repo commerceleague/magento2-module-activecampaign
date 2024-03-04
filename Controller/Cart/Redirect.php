@@ -18,10 +18,6 @@ use Magento\Framework\Controller\ResultInterface;
 class Redirect extends Action implements HttpGetActionInterface
 {
 
-    /**
-     * @param Context         $context
-     * @param CustomerSession $customerSession
-     */
     public function __construct(
         Context                          $context,
         private readonly CustomerSession $customerSession

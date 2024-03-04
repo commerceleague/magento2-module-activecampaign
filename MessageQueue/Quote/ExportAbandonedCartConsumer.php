@@ -33,10 +33,6 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
 
     /**
      * @param QuoteFactory             $quoteFactory
-     * @param Logger                   $logger
-     * @param OrderRepositoryInterface $orderRepository
-     * @param AbandonedCartBuilder     $abandonedCartRequestBuilder
-     * @param Client                   $client
      */
     public function __construct(
         QuoteFactory $quoteFactory,
@@ -51,7 +47,6 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
     }
 
     /**
-     * @param string $message
      *
      * @throws CouldNotSaveException
      * @throws Exception
@@ -91,6 +86,5 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
      */
     function processDuplicateEntity(array $request, string $key): void
     {
-        return;
     }
 }

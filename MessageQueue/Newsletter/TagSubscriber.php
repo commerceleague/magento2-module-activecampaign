@@ -27,10 +27,6 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
 
     /**
      * AssignContactToListConsumer constructor.
-     *
-     * @param TagContactBuilder $requestBuilder
-     * @param Client                     $client
-     * @param ContactRepositoryInterface $contactRepository
      */
     public function __construct(
         private TagContactBuilder $requestBuilder,
@@ -41,9 +37,6 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
         parent::__construct($logger);
     }
 
-    /**
-     * @param string $message
-     */
     public function consume(string $message): void
     {
         $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
@@ -70,13 +63,8 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
      */
     function processDuplicateEntity(array $request, string $key): void
     {
-        return;
     }
 
-    /**
-     *
-     * @return array
-     */
     private function buildRequests(ContactInterface $contact, array $tagIds): array
     {
         $requestBuilder = $this->requestBuilder;

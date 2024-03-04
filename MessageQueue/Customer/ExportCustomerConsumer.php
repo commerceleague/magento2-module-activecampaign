@@ -25,13 +25,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
-    /**
-     * @param MagentoCustomerRepositoryInterface $magentoCustomerRepository
-     * @param Logger                             $logger
-     * @param CustomerRepositoryInterface        $customerRepository
-     * @param CustomerRequestBuilder             $customerRequestBuilder
-     * @param Client                             $client
-     */
     public function __construct(
         private readonly MagentoCustomerRepositoryInterface $magentoCustomerRepository,
         Logger $logger,
@@ -43,8 +36,6 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     }
 
     /**
-     * @param string $message
-     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
@@ -82,9 +73,7 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     /**
      * override the default logging to update the entry in database
      *
-     * @param UnprocessableEntityHttpException $unprocessableEntityHttpException
      * @param                                  $request
-     *
      * @return mixed|void|null
      */
     public function logUnprocessableEntityHttpException(
@@ -93,23 +82,21 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
 
         $activeCampaignEcommerceId = null;
         $errors                    = $unprocessableEntityHttpException->getResponseErrors();
-        if ($errors !== []) {
-            foreach ($errors as $error) {
-                if (isset($error['code']) && $error['code'] == 'duplicate') {
-                    $filters = [
-                        'filters' => [
-                            'email'        => $request['email'],
-                            'connectionid' => $request['connectionid']
-                        ]
-                    ];
-                    $this->getLogger()->info(print_r($filters, true));
-                    $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
-                    $items    = $response->getItems();
-                    $customer = $items[0];
-                    $this->getLogger()->info(print_r($customer, true));
-                    if (strtolower((string) $customer['email']) === strtolower((string) $request['email'])) {
-                        $activeCampaignEcommerceId = $customer['id'];
-                    }
+        foreach ($errors as $error) {
+            if (isset($error['code']) && $error['code'] == 'duplicate') {
+                $filters = [
+                    'filters' => [
+                        'email'        => $request['email'],
+                        'connectionid' => $request['connectionid']
+                    ]
+                ];
+                $this->getLogger()->info(print_r($filters, true));
+                $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
+                $items    = $response->getItems();
+                $customer = $items[0];
+                $this->getLogger()->info(print_r($customer, true));
+                if (strtolower((string) $customer['email']) === strtolower((string) $request['email'])) {
+                    $activeCampaignEcommerceId = $customer['id'];
                 }
             }
         }
@@ -122,7 +109,6 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     }
 
     /**
-     * @return array
      * @throws HttpException
      */
     private function performApiRequest(CustomerInterface $customer, array $request): array
@@ -139,6 +125,5 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
      */
     function processDuplicateEntity(array $request, string $key): void
     {
-        return;
     }
 }

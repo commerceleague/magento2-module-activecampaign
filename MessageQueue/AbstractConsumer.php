@@ -31,9 +31,6 @@ abstract class AbstractConsumer
     {
     }
 
-    /**
-     * @return Logger
-     */
     public function getLogger(): Logger
     {
         return $this->logger;

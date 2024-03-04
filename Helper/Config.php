@@ -42,9 +42,6 @@ class Config extends AbstractHelper
 
     /**
      * Config constructor.
-     *
-     * @param Context                    $context
-     * @param AccountManagementInterface $accountManagement
      */
     public function __construct(
         Context $context,
@@ -53,81 +50,51 @@ class Config extends AbstractHelper
         parent::__construct($context);
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_GENERAL_ENABLED);
     }
 
-    /**
-     * @return string|null
-     */
     public function getApiUrl(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_GENERAL_API_URL);
     }
 
-    /**
-     * @return string|null
-     */
     public function getApiToken(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_GENERAL_API_TOKEN);
     }
 
-    /**
-     * @return string|null
-     */
     public function getConnectionId(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_GENERAL_CONNECTION_ID);
     }
 
-    /**
-     * @return bool
-     */
     public function isContactExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_CONTACT_ENABLED);
     }
 
-    /**
-     * @return bool
-     */
     public function isCustomerExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_CUSTOMER_ENABLED);
     }
 
-    /**
-     * @return bool
-     */
     public function isOrderExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_ORDER_ENABLED);
     }
 
-    /**
-     * @return bool
-     */
     public function isAbandonedCartExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_ABANDONED_CART_ENABLED);
     }
 
-    /**
-     * @return bool
-     */
     public function isWebhookEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_WEBHOOK_ENABLED);
     }
 
-    /**
-     * @return string|null
-     */
     public function getWebhookToken(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_WEBHOOK_TOKEN);
@@ -135,8 +102,6 @@ class Config extends AbstractHelper
 
     /**
      * Get the list id for registered customers, if set
-     *
-     * @return int|null
      */
     public function getCustomerListId(): ?int
     {
@@ -149,8 +114,6 @@ class Config extends AbstractHelper
 
     /**
      * Get the list id for newsletter subscribers
-     *
-     * @return int|null
      */
     public function getNewsletterSubscriberList(): ?int
     {
@@ -163,8 +126,6 @@ class Config extends AbstractHelper
 
     /**
      * Get the tags selected to be added to the Newsletter subscriber
-     *
-     * @return array|null
      */
     public function getNewsletterSubscriberTags(): ?array
     {
@@ -180,7 +141,6 @@ class Config extends AbstractHelper
      * Is customer confirmation required
      *
      *
-     * @return bool
      * @throws LocalizedException
      */
     public function isConfirmationRequired(int $customerId): bool
@@ -195,8 +155,6 @@ class Config extends AbstractHelper
 
     /**
      * Get the set order status filters
-     *
-     * @return array|null
      */
     public function getOrderExportStatuses(): ?array
     {
@@ -209,8 +167,6 @@ class Config extends AbstractHelper
 
     /**
      * Get the set order export start date filter
-     *
-     * @return string|null
      */
     public function getOrderExportStartDate(): ?string
     {

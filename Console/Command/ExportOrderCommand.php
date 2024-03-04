@@ -29,10 +29,7 @@ class ExportOrderCommand extends AbstractExportCommand
     private const OPTION_ALL     = 'all';
 
     /**
-     * @param ConfigHelper           $configHelper
-     * @param OrderCollectionFactory $orderCollectionFactory
      * @param ProgressBarFactory     $progressBarFactory
-     * @param PublisherInterface     $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
@@ -43,9 +40,6 @@ class ExportOrderCommand extends AbstractExportCommand
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
-    /**
-     * @return array
-     */
     public function getOrderIds(InputInterface $input): array
     {
         /** @var OrderCollection $orderCollection */

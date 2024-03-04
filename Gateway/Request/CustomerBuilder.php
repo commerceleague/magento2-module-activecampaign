@@ -20,9 +20,6 @@ class CustomerBuilder
     {
     }
 
-    /**
-     * @return array
-     */
     public function build(MagentoCustomerInterface $magentoCustomer): array
     {
         return [
@@ -33,9 +30,6 @@ class CustomerBuilder
         ];
     }
 
-    /**
-     * @return array
-     */
     public function buildWithGuest(GuestCustomerInterface $guestCustomer): array
     {
         return [

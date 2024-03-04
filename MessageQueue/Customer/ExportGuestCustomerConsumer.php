@@ -22,12 +22,6 @@ use Magento\Framework\Exception\CouldNotSaveException;
 class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
-    /**
-     * @param Logger                           $logger
-     * @param GuestCustomerRepositoryInterface $customerRepository
-     * @param CustomerRequestBuilder           $customerRequestBuilder
-     * @param Client                           $client
-     */
     public function __construct(
         Logger $logger,
         private readonly GuestCustomerRepositoryInterface $customerRepository,
@@ -38,8 +32,6 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
     }
 
     /**
-     * @param string $message
-     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
@@ -76,7 +68,6 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
     }
 
     /**
-     * @return array
      * @throws HttpException
      */
     private function performApiRequest(GuestCustomerInterface $customer, array $request): array
