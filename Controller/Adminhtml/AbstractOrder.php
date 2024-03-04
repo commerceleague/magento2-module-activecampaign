@@ -15,9 +15,6 @@ abstract class AbstractOrder extends Action
 {
     final public const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_order';
 
-    /**
-     * @return ResultPage
-     */
     protected function initPage(ResultPage $resultPage): ResultPage
     {
         $resultPage->setActiveMenu('CommerceLeague_ActiveCampaign::activecampaign_order')

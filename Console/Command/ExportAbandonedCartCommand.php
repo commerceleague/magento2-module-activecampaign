@@ -28,10 +28,7 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     private const OPTION_ALL = 'all';
 
     /**
-     * @param ConfigHelper $configHelper
-     * @param QuoteCollectionFactory $quoteCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
-     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
@@ -96,8 +93,6 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
      * @return int|void|null
      * @throws \Exception
      */
@@ -136,7 +131,6 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     }
 
     /**
-     * @return array
      * @throws \Exception
      */
     private function getQuoteIds(InputInterface $input): array

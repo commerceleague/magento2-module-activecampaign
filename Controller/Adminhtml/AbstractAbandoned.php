@@ -17,9 +17,6 @@ abstract class AbstractAbandoned extends Action
 
     public const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_abandoned';
 
-    /**
-     * @return ResultPage
-     */
     protected function initPage(ResultPage $resultPage): ResultPage
     {
         $resultPage->setActiveMenu('CommerceLeague_ActiveCampaign::activecampaign_abandoned')

@@ -30,11 +30,7 @@ class ExportContactCommand extends AbstractExportCommand
     private const OPTION_ALL = 'all';
 
     /**
-     * @param ConfigHelper $configHelper
-     * @param CustomerCollectionFactory $customerCollectionFactory
-     * @param SubscriberCollectionFactory $subscriberCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
-     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
@@ -160,9 +156,6 @@ class ExportContactCommand extends AbstractExportCommand
         return Cli::RETURN_SUCCESS;
     }
 
-    /**
-     * @return array
-     */
     private function getCustomerIds(InputInterface $input): array
     {
         /** @var CustomerCollection $customerCollection */
@@ -179,9 +172,6 @@ class ExportContactCommand extends AbstractExportCommand
         return $customerCollection->getAllIds();
     }
 
-    /**
-     * @return array
-     */
     private function getSubscriberEmails(InputInterface $input): array
     {
         /** @var SubscriberCollection $subscriberCollection */

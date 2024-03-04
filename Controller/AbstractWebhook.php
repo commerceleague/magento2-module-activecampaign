@@ -23,11 +23,6 @@ abstract class AbstractWebhook extends Action implements HttpPostActionInterface
 {
     private const PARAM_TOKEN = 'token';
 
-    /**
-     * @param Context $context
-     * @param ConfigHelper $configHelper
-     * @param RawResultFactory $rawResultFactory
-     */
     public function __construct(
         Context $context,
         private readonly ConfigHelper $configHelper,

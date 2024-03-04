@@ -15,9 +15,6 @@ abstract class AbstractCustomer extends Action
 {
     final public const ADMIN_RESOURCE = 'CommerceLeague_ActiveCampaign::activecampaign_customer';
 
-    /**
-     * @return ResultPage
-     */
     protected function initPage(ResultPage $resultPage): ResultPage
     {
         $resultPage->setActiveMenu('CommerceLeague_ActiveCampaign::activecampaign_customer')

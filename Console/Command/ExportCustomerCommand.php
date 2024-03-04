@@ -25,10 +25,7 @@ class ExportCustomerCommand extends AbstractExportCommand
     private const OPTION_ALL = 'all';
 
     /**
-     * @param ConfigHelper $configHelper
-     * @param CustomerCollectionFactory $customerCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
-     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
@@ -129,9 +126,6 @@ class ExportCustomerCommand extends AbstractExportCommand
         return Cli::RETURN_SUCCESS;
     }
 
-    /**
-     * @return array
-     */
     private function getCustomerIds(InputInterface $input): array
     {
         /** @var CustomerCollection $customerCollection */

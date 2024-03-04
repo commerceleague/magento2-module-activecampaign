@@ -43,9 +43,6 @@ class PublishOmittedCustomers implements CronInterface
         }
     }
 
-    /**
-     * @return array
-     */
     private function getCustomerIds(): array
     {
         /** @var CustomerCollection $customerCollection */

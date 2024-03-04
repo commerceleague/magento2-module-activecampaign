@@ -23,9 +23,7 @@ abstract class AbstractExportCommand extends Command
     private $progressBarFactory;
 
     /**
-     * @param ConfigHelper $configHelper
      * @param ProgressBarFactory $progressBarFactory
-     * @param PublisherInterface $publisher
      */
     public function __construct(
         protected ConfigHelper $configHelper,
@@ -36,9 +34,6 @@ abstract class AbstractExportCommand extends Command
         parent::__construct();
     }
 
-    /**
-     * @return ProgressBar
-     */
     protected function createProgressBar(OutputInterface $output, int $max, string $message): ProgressBar
     {
         /** @var ProgressBar $progressBar */

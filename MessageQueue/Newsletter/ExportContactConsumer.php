@@ -31,11 +31,6 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
 
     /**
      * @param SubscriberFactory          $subscriberFactory
-     * @param Logger                     $logger
-     * @param ContactRepositoryInterface $contactRepository
-     * @param ContactRequestBuilder      $contactRequestBuilder
-     * @param Client                     $client
-     * @param ManagerInterface           $eventManager
      */
     public function __construct(
         SubscriberFactory $subscriberFactory,
@@ -50,8 +45,6 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
     }
 
     /**
-     * @param string $message
-     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
@@ -95,6 +88,5 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
      */
     function processDuplicateEntity(array $request, string $key): void
     {
-        return;
     }
 }

@@ -33,7 +33,6 @@ interface CustomerInterface
 
     /**
      * @param int $magentoCustomerId
-     * @return CustomerInterface
      */
     public function setMagentoCustomerId($magentoCustomerId): self;
 
@@ -44,7 +43,6 @@ interface CustomerInterface
 
     /**
      * @param int $activeCampaignId
-     * @return CustomerInterface
      */
     public function setActiveCampaignId($activeCampaignId): self;
 
@@ -55,7 +53,6 @@ interface CustomerInterface
 
     /**
      * @param string $createdAt
-     * @return CustomerInterface
      */
     public function setCreatedAt($createdAt): self;
 
@@ -66,7 +63,6 @@ interface CustomerInterface
 
     /**
      * @param string $updatedAt
-     * @return CustomerInterface
      */
     public function setUpdatedAt($updatedAt): self;
 }

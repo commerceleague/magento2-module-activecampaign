@@ -9,8 +9,5 @@ namespace CommerceLeague\ActiveCampaign\Api;
  */
 interface CronInterface
 {
-    /**
-     * @return void
-     */
     public function run(): void;
 }

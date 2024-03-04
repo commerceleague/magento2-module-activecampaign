@@ -26,13 +26,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 class ExportContactConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
-    /**
-     * @param MagentoCustomerRepositoryInterface $magentoCustomerRepository
-     * @param Logger                             $logger
-     * @param ContactRequestBuilder              $contactRequestBuilder
-     * @param ContactRepositoryInterface         $contactRepository
-     * @param Client                             $client
-     */
     public function __construct(
         private readonly MagentoCustomerRepositoryInterface $magentoCustomerRepository,
         Logger $logger,
@@ -46,8 +39,6 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
     }
 
     /**
-     * @param string $message
-     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
@@ -97,6 +88,5 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
      */
     function processDuplicateEntity(array $request, string $key): void
     {
-        return;
     }
 }

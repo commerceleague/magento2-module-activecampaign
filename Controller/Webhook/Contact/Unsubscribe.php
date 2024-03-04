@@ -27,11 +27,7 @@ class Unsubscribe extends AbstractWebhook
     private $subscriberFactory;
 
     /**
-     * @param Context $context
-     * @param ConfigHelper $configHelper
-     * @param RawResultFactory $rawResultFactory
      * @param SubscriberFactory $subscriberFactory
-     * @param Logger $logger
      */
     public function __construct(
         Context $context,

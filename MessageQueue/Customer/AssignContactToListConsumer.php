@@ -26,11 +26,6 @@ class AssignContactToListConsumer extends AbstractConsumer implements ConsumerIn
 
     /**
      * AssignContactToListConsumer constructor.
-     *
-     * @param ContactListBuilder $requestBuilder
-     * @param Client                     $client
-     * @param ContactRepositoryInterface $contactRepository
-     * @param Logger                     $logger
      */
     public function __construct(
         private readonly ContactListBuilder $requestBuilder,
@@ -41,9 +36,6 @@ class AssignContactToListConsumer extends AbstractConsumer implements ConsumerIn
         parent::__construct($logger);
     }
 
-    /**
-     * @param string $message
-     */
     public function consume(string $message): void
     {
         $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
@@ -67,6 +59,5 @@ class AssignContactToListConsumer extends AbstractConsumer implements ConsumerIn
      */
     function processDuplicateEntity(array $request, string $key): void
     {
-        return;
     }
 }

@@ -25,7 +25,6 @@ class OrderBuilder extends AbstractBuilder
     /**
      * @param MagentoOrderInterface|MagentoOrder $magentoOrder
      *
-     * @return array
      * @throws Exception
      */
     public function build(MagentoOrderInterface $magentoOrder): array

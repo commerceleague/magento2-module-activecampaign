@@ -17,10 +17,6 @@ use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 class TagContactBuilder
 {
 
-    /**
-     *
-     * @return array
-     */
     public function buildWithContact(ContactInterface $contact, int $tagId): array
     {
         return [

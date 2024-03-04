@@ -10,16 +10,12 @@ namespace CommerceLeague\ActiveCampaign\Gateway\Request;
  */
 abstract class AbstractBuilder
 {
-    /**
-     * @return int
-     */
     protected function convertToCent(float $amount): int
     {
         return (int)($amount * 100);
     }
 
     /**
-     * @return string
      * @throws \Exception
      */
     protected  function formatDateTime(string $date): string

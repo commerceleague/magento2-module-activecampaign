@@ -27,13 +27,6 @@ use Magento\Sales\Model\Order as MagentoOrder;
 class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
-    /**
-     * @param MagentoOrderRepositoryInterface $magentoOrderRepository
-     * @param Logger                          $logger
-     * @param OrderRepositoryInterface        $orderRepository
-     * @param OrderRequestBuilder             $orderRequestBuilder
-     * @param Client                          $client
-     */
     public function __construct(
         private readonly MagentoOrderRepositoryInterface $magentoOrderRepository,
         Logger $logger,
@@ -45,7 +38,6 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
     }
 
     /**
-     * @param string $message
      *
      * @throws CouldNotSaveException
      * @throws Exception
@@ -101,10 +93,6 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         return [$key => $response->getItems()[0]];
     }
 
-    /**
-     *
-     * @return array
-     */
     private function performApiRequest(OrderInterface $order, array $request): array
     {
         if ($activeCampaignId = $order->getActiveCampaignId()) {

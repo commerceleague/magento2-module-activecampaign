@@ -56,9 +56,6 @@ class PublishOmittedContacts implements CronInterface
         }
     }
 
-    /**
-     * @return array
-     */
     private function getCustomerIds(): array
     {
         /** @var CustomerCollection $customerCollection */
@@ -68,9 +65,6 @@ class PublishOmittedContacts implements CronInterface
         return $customerCollection->getAllIds();
     }
 
-    /**
-     * @return array
-     */
     private function getSubscriberEmails(): array
     {
         /** @var SubscriberCollection $subscriberCollection */
