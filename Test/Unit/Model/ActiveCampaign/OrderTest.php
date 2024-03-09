@@ -7,8 +7,8 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Model;
 
 use CommerceLeague\ActiveCampaign\Api\Data\OrderInterface;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
-use CommerceLeague\ActiveCampaign\vendor\Model\ActiveCampaign\Order;
-use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\ActiveCampaign\Order as OrderResource;
+use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Order;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Order as OrderResource;
 use Magento\Framework\Model\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\MockObject\MockObject;
