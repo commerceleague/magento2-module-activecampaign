@@ -12,8 +12,8 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaign\Test\Unit\Console\Command\TestOutput;
-use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\Customer\Collection as CustomerCollection;
-use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;

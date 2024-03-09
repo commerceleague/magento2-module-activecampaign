@@ -10,7 +10,7 @@ use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\CollectionFactory as CustomerCollectionFactory;
-use CommerceLeague\ActiveCampaign\vendor\Model\ResourceModel\ActiveCampaign\GuestCustomer\Collection as CustomerCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\Collection as CustomerCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 /**
