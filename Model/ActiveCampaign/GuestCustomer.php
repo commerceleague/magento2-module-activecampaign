@@ -52,7 +52,8 @@ class GuestCustomer extends AbstractModel implements GuestCustomerInterface
      */
     public function getId(): ?int
     {
-        return $this->_getData(self::ENTITY_ID);
+        $value = $this->_getData(self::ENTITY_ID);
+        return $value !== null ? (int) $value : null;
     }
 
     /**
