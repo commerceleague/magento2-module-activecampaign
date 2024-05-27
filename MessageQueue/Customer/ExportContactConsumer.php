@@ -49,6 +49,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
             $contact         = $this->contactRepository->getOrCreateByEmail($magentoCustomer->getEmail());
             $request         = $this->contactRequestBuilder->buildWithMagentoCustomer($magentoCustomer);
+
         } catch (NoSuchEntityException|LocalizedException $e) {
             if (array_key_exists('customer_is_guest', $message)) {
                 // not a customer but a guest
@@ -69,6 +70,11 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
 
         try {
             $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
+
+            $contact->setActiveCampaignId($apiResponse['contact']['id']);
+            $this->contactRepository->save($contact);
+            // trigger event after contact has been saved
+            $this->eventManager->dispatch('commmerceleague_activecampaign_export_contact_success', ['contact' => $contact]);
         } catch (UnprocessableEntityHttpException $e) {
             $this->logUnprocessableEntityHttpException($e, $request);
             return;
@@ -77,10 +83,6 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             return;
         }
 
-        $contact->setActiveCampaignId($apiResponse['contact']['id']);
-        $this->contactRepository->save($contact);
-        // trigger event after contact has been saved
-        $this->eventManager->dispatch('commmerceleague_activecampaign_export_contact_success', ['contact' => $contact]);
     }
 
     /**

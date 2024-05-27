@@ -20,7 +20,8 @@ class GuestCustomer extends AbstractModel implements GuestCustomerInterface
      */
     public function getActiveCampaignId(): ?int
     {
-        return $this->_getData(self::ACTIVE_CAMPAIGN_ID);
+        $value = $this->_getData(self::ACTIVE_CAMPAIGN_ID);
+        return $value !== null ? (int) $value : null;
     }
 
     /**

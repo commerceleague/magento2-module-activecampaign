@@ -59,6 +59,10 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
 
         try {
             $apiResponse = $this->performApiRequest($order, $request);
+
+            $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
+
+            $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
             try {
                 $apiResponse = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
@@ -71,9 +75,6 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             return;
         }
 
-        $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
-
-        $this->orderRepository->save($order);
     }
 
     /**

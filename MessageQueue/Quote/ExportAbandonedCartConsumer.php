@@ -69,6 +69,8 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
 
         try {
             $apiResponse = $this->client->getOrderApi()->create(['ecomOrder' => $request]);
+            $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
+            $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
             $this->logUnprocessableEntityHttpException($e, $request);
             return;
@@ -77,8 +79,7 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
             return;
         }
 
-        $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
-        $this->orderRepository->save($order);
+
     }
 
     /**

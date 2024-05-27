@@ -46,6 +46,8 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
         if (!$guestCustomer->getActiveCampaignId()) {
             try {
                 $apiResponse = $this->performApiRequest($guestCustomer, $request);
+                $guestCustomer->setActiveCampaignId((int)$apiResponse['ecomCustomer']['id']);
+                $this->customerRepository->save($guestCustomer);
             } catch (UnprocessableEntityHttpException $e) {
                 try {
                     $apiResponse = $this->handleUnprocessableEntityHttpException(
@@ -61,9 +63,6 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                 $this->logException($e);
                 return;
             }
-
-            $guestCustomer->setActiveCampaignId($apiResponse['ecomCustomer']['id']);
-            $this->customerRepository->save($guestCustomer);
         }
     }
 

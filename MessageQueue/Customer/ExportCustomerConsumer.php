@@ -55,6 +55,8 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
         try {
             $apiResponse                  = $this->performApiRequest($customer, $request);
             $activeCampaignEcomCustomerId = $apiResponse['ecomCustomer']['id'];
+            $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
+            $this->customerRepository->save($customer);
         } catch (UnprocessableEntityHttpException $e) {
             $activeCampaignEcomCustomerId = $this->logUnprocessableEntityHttpException($e, $request);
             if ($activeCampaignEcomCustomerId === null) {
@@ -65,9 +67,6 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             $this->logException($e);
             return;
         }
-
-        $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
-        $this->customerRepository->save($customer);
     }
 
     /**
