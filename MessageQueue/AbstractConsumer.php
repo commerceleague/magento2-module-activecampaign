@@ -53,6 +53,7 @@ abstract class AbstractConsumer
         $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
         $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
         $this->getLogger()->error(print_r($request, true));
+        return '';
     }
 
     /**

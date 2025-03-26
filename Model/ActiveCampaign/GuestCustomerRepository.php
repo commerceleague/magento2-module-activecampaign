@@ -147,7 +147,7 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
                         $magentoCustomer->getId()
                     );
                     if ($activeCampaignCustomer->getActiveCampaignId()) {
-                        $guestCustomer->setActiveCampaignId($activeCampaignCustomer->getActiveCampaignId());
+                        $guestCustomer->setActiveCampaignId((int)$activeCampaignCustomer->getActiveCampaignId());
                     }
                 }
             } catch (NoSuchEntityException) {

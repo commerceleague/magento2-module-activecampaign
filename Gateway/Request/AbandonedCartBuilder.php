@@ -44,7 +44,7 @@ class AbandonedCartBuilder extends AbstractBuilder
             $request['orderProducts'][] = [
                 'externalid' => $quoteItem->getSku(),
                 'name' => $quoteItem->getName(),
-                'price' => $this->convertToCent($quoteItem->getPriceInclTax()),
+                'price' => $this->convertToCent((float)$quoteItem->getPriceInclTax()),
                 'quantity' => (int)$quoteItem->getQty(),
                 'productUrl' => $quoteItem->getProduct()->getProductUrl(),
             ];
