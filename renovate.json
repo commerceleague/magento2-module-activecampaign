@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "packageRules": [
+    { "matchManagers": ["composer"], "matchDepTypes": ["require"], "groupName": "runtime dependencies", "automerge": false },
+    { "matchManagers": ["composer"], "matchDepTypes": ["require-dev"], "groupName": "dev tooling", "automerge": true, "automergeType": "pr" },
+    { "matchPackagePatterns": ["magento/"], "enabled": false, "description": "Magento packages are pinned to the Magento version" }
+  ],
+  "ignoreDeps": ["commerceleague/api-client-activecampaign"],
+  "schedule": ["before 6am on Monday"]
+}
