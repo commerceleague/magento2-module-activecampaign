@@ -207,4 +207,94 @@ class ConfigTest extends AbstractTestCase
 
         $this->assertEquals($token, $this->config->getWebhookToken());
     }
+
+    public function testGetMaxExportAttemptsDefaultsToZero()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with('activecampaign/export/max_attempts')
+            ->willReturn(null);
+
+        $this->assertSame(0, $this->config->getMaxExportAttempts());
+    }
+
+    public function testGetMaxExportAttemptsReturnsCastValue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with('activecampaign/export/max_attempts')
+            ->willReturn('7');
+
+        $this->assertSame(7, $this->config->getMaxExportAttempts());
+    }
+
+    public function testIsDeadLetterEnabledFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/dead_letter_enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isDeadLetterEnabled());
+    }
+
+    public function testIsDeadLetterEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/dead_letter_enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isDeadLetterEnabled());
+    }
+
+    public function testIsBackoffEnabledFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/backoff_enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isBackoffEnabled());
+    }
+
+    public function testIsBackoffEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/backoff_enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isBackoffEnabled());
+    }
+
+    public function testGetBackoffThresholdDefaultsToFiveWhenUnset()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with('activecampaign/export/backoff_threshold')
+            ->willReturn(null);
+
+        $this->assertSame(5, $this->config->getBackoffThreshold());
+    }
+
+    public function testGetBackoffThresholdDefaultsToFiveWhenBelowOne()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with('activecampaign/export/backoff_threshold')
+            ->willReturn('0');
+
+        $this->assertSame(5, $this->config->getBackoffThreshold());
+    }
+
+    public function testGetBackoffThresholdReturnsCastValue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with('activecampaign/export/backoff_threshold')
+            ->willReturn('10');
+
+        $this->assertSame(10, $this->config->getBackoffThreshold());
+    }
 }

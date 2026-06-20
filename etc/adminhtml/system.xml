@@ -71,6 +71,37 @@
                         <field id="activecampaign/export/customer_enabled">1</field>
                     </depends>
                 </field>
+                <field id="max_attempts" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Max Export Attempts</label>
+                    <comment>Maximum number of times a failed export message is retried. 0 means unlimited (retry forever).</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                    </depends>
+                </field>
+                <field id="dead_letter_enabled" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Dead Lettering</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, messages that exhaust their retry ceiling are dead-lettered instead of retried forever.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                    </depends>
+                </field>
+                <field id="backoff_enabled" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Backoff</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, a cron run early-exits after repeated 503 responses from the API.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                    </depends>
+                </field>
+                <field id="backoff_threshold" translate="label comment" type="text" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Backoff Threshold</label>
+                    <comment>Number of consecutive 503 responses before a cron run early-exits. Only used when backoff is enabled.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                        <field id="activecampaign/export/backoff_enabled">1</field>
+                    </depends>
+                </field>
             </group>
             <group id="order_export" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Order Export Settings</label>

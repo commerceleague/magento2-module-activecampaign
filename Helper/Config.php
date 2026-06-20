@@ -27,6 +27,13 @@ class Config extends AbstractHelper
     private const XML_PATH_EXPORT_ORDER_ENABLED          = 'activecampaign/export/order_enabled';
     private const XML_PATH_EXPORT_ABANDONED_CART_ENABLED = 'activecampaign/export/abandoned_cart_enabled';
 
+    private const XML_PATH_EXPORT_MAX_ATTEMPTS        = 'activecampaign/export/max_attempts';
+    private const XML_PATH_EXPORT_DEAD_LETTER_ENABLED = 'activecampaign/export/dead_letter_enabled';
+    private const XML_PATH_EXPORT_BACKOFF_ENABLED     = 'activecampaign/export/backoff_enabled';
+    private const XML_PATH_EXPORT_BACKOFF_THRESHOLD   = 'activecampaign/export/backoff_threshold';
+
+    private const DEFAULT_BACKOFF_THRESHOLD = 5;
+
     private const XML_PATH_EXPORT_ORDER_STATUSES   = 'activecampaign/order_export/filter_order_statuses';
     private const XML_PATH_EXPORT_ORDER_START_DATE = 'activecampaign/order_export/filter_date_from';
 
@@ -88,6 +95,42 @@ class Config extends AbstractHelper
     public function isAbandonedCartExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_ABANDONED_CART_ENABLED);
+    }
+
+    /**
+     * Maximum export attempts before giving up (0 = unlimited, today's behavior)
+     */
+    public function getMaxExportAttempts(): int
+    {
+        return (int)$this->scopeConfig->getValue(self::XML_PATH_EXPORT_MAX_ATTEMPTS);
+    }
+
+    /**
+     * Whether exhausted messages should be dead-lettered instead of retried forever
+     */
+    public function isDeadLetterEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_DEAD_LETTER_ENABLED);
+    }
+
+    /**
+     * Whether a cron run should early-exit after repeated 503 responses
+     */
+    public function isBackoffEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_BACKOFF_ENABLED);
+    }
+
+    /**
+     * Number of consecutive 503s before a cron run early-exits (defaults to 5)
+     */
+    public function getBackoffThreshold(): int
+    {
+        $threshold = (int)$this->scopeConfig->getValue(self::XML_PATH_EXPORT_BACKOFF_THRESHOLD);
+        if ($threshold < 1) {
+            return self::DEFAULT_BACKOFF_THRESHOLD;
+        }
+        return $threshold;
     }
 
     public function isWebhookEnabled(): bool
