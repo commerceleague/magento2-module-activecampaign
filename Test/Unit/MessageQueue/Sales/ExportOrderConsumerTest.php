@@ -353,6 +353,56 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
+    public function testEmptyBodyDoesNotStrand()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request'];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willReturn(['ecomOrder' => []]);
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
     public function testConsumeCreate()
     {
         $magentoOrderId = 123;

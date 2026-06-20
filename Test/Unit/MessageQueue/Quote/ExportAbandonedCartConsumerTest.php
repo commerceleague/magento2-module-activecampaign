@@ -253,6 +253,51 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
         $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
     }
 
+    public function testEmptyBodyDoesNotStrand()
+    {
+        $quoteId = 123;
+        $request = ['request'];
+
+        $this->quote->expects($this->once())
+            ->method('loadByIdWithoutStore')
+            ->with(123)
+            ->willReturn($this->quote);
+
+        $this->quote->expects($this->any())
+            ->method('getId')
+            ->willReturn($quoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($quoteId)
+            ->willReturn($this->order);
+
+        $this->abandonedCartRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->quote)
+            ->willReturn($request);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willReturn(['ecomOrder' => []]);
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
+    }
+
     public function testConsumeDuplicateResolvesAndSaves()
     {
         $quoteId = 123;

@@ -200,6 +200,55 @@ class ExportContactConsumerTest extends AbstractTestCase
         $this->exportContactConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
     }
 
+    public function testEmptyBodyDoesNotStrand()
+    {
+        $magentoCustomerId = 123;
+        $email             = 'example@example.com';
+        $request           = ['request'];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactRepository->expects($this->once())
+            ->method('getOrCreateByEmail')
+            ->with($email)
+            ->willReturn($this->contact);
+
+        $this->contactRequestBuilder->expects($this->once())
+            ->method('buildWithMagentoCustomer')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->client->expects($this->once())
+            ->method('getContactApi')
+            ->willReturn($this->contactApi);
+
+        $this->contactApi->expects($this->once())
+            ->method('upsert')
+            ->with(['contact' => $request])
+            ->willReturn(['contact' => []]);
+
+        $this->contact->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->contactRepository->expects($this->never())
+            ->method('save');
+
+        $this->eventManager->expects($this->never())
+            ->method('dispatch');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportContactConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
     public function testConsume()
     {
         $magentoCustomerId = 123;

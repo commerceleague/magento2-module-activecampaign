@@ -184,6 +184,118 @@ class ExportCustomerConsumerTest extends AbstractTestCase
         $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
     }
 
+    public function testEmptyBodyDoesNotStrand()
+    {
+        $magentoCustomerId = 123;
+        $request = ['request'];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreateByMagentoCustomerId')
+            ->willReturn($this->customer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->customer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willReturn(['ecomCustomer' => []]);
+
+        $this->customer->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->customerRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
+    public function testConsumeDuplicateLookupEmptyDoesNotFatal()
+    {
+        $magentoCustomerId = 123;
+        $request = ['email' => 'example@example.com', 'connectionid' => 7];
+        $responseErrors = [['code' => 'duplicate']];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreateByMagentoCustomerId')
+            ->willReturn($this->customer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->customer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->atLeastOnce())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        /** @var MockObject|\CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException =
+            $this->createMock(\CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException::class);
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        /** @var MockObject|\CommerceLeague\ActiveCampaignApi\Paginator\PageInterface $page */
+        $page = $this->createMock(\CommerceLeague\ActiveCampaignApi\Paginator\PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([]);
+
+        $this->customerApi->expects($this->once())
+            ->method('listPerPage')
+            ->willReturn($page);
+
+        $this->customer->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->customerRepository->expects($this->never())
+            ->method('save');
+
+        $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
     public function testConsumeUpdate()
     {
         $magentoCustomerId = 123;

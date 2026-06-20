@@ -61,7 +61,17 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         try {
             $apiResponse = $this->performApiRequest($order, $request);
 
-            $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
+            if (!isset($apiResponse[self::RESPONSE_KEY_ORDER]['id'])) {
+                $this->getLogger()->error(sprintf(
+                    '%s: missing "%s.id" in API response for Magento order id "%s"; skipping save.',
+                    static::class,
+                    self::RESPONSE_KEY_ORDER,
+                    $message['magento_order_id']
+                ));
+                return;
+            }
+
+            $order->setActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id']);
 
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {

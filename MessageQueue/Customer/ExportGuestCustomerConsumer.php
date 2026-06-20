@@ -47,7 +47,18 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
         if (!$guestCustomer->getActiveCampaignId()) {
             try {
                 $apiResponse = $this->performApiRequest($guestCustomer, $request);
-                $guestCustomer->setActiveCampaignId((int)$apiResponse['ecomCustomer']['id']);
+
+                if (!isset($apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'])) {
+                    $this->getLogger()->error(sprintf(
+                        '%s: missing "%s.id" in API response for guest customer id "%s"; skipping save.',
+                        static::class,
+                        self::RESPONSE_KEY_CUSTOMER,
+                        (string)$guestCustomer->getId()
+                    ));
+                    return;
+                }
+
+                $guestCustomer->setActiveCampaignId((int)$apiResponse[self::RESPONSE_KEY_CUSTOMER]['id']);
                 $this->customerRepository->save($guestCustomer);
             } catch (UnprocessableEntityHttpException $e) {
                 try {

@@ -215,6 +215,57 @@ class ExportContactConsumerTest extends AbstractTestCase
         $this->exportContactConsumer->consume(json_encode(['email' => $email]));
     }
 
+    public function testEmptyBodyDoesNotStrand()
+    {
+        $email = 'example@example.com';
+        $request = ['request'];
+
+        $this->subscriber->expects($this->once())
+            ->method('load')
+            ->with($email, 'subscriber_email')
+            ->willReturnSelf();
+
+        $this->subscriber->expects($this->once())
+            ->method('getId')
+            ->willReturn(123);
+
+        $this->subscriber->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactRepository->expects($this->once())
+            ->method('getOrCreateByEmail')
+            ->with($email)
+            ->willReturn($this->contact);
+
+        $this->contactRequestBuilder->expects($this->once())
+            ->method('buildWithSubscriber')
+            ->willReturn($request);
+
+        $this->client->expects($this->once())
+            ->method('getContactApi')
+            ->willReturn($this->contactApi);
+
+        $this->contactApi->expects($this->once())
+            ->method('upsert')
+            ->with(['contact' => $request])
+            ->willReturn(['contact' => []]);
+
+        $this->contact->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->contactRepository->expects($this->never())
+            ->method('save');
+
+        $this->eventManager->expects($this->never())
+            ->method('dispatch');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportContactConsumer->consume(json_encode(['email' => $email]));
+    }
+
     public function testConsume()
     {
         $email = 'example@example.com';

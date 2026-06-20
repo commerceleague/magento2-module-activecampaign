@@ -114,6 +114,46 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
         $this->exportGuestCustomerConsumer->consume(json_encode(['customer_data' => $customerData]));
     }
 
+    public function testEmptyBodyDoesNotStrand()
+    {
+        $customerData = ['email' => 'guest@example.com'];
+        $request = ['email' => 'guest@example.com'];
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreate')
+            ->with($customerData)
+            ->willReturn($this->guestCustomer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('buildWithGuest')
+            ->with($this->guestCustomer)
+            ->willReturn($request);
+
+        $this->guestCustomer->expects($this->atLeastOnce())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willReturn(['ecomCustomer' => []]);
+
+        $this->guestCustomer->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->customerRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportGuestCustomerConsumer->consume(json_encode(['customer_data' => $customerData]));
+    }
+
     public function testConsumeApiHttpException()
     {
         $customerData = ['email' => 'guest@example.com'];

@@ -53,8 +53,19 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
         $request  = $this->customerRequestBuilder->build($magentoCustomer);
 
         try {
-            $apiResponse                  = $this->performApiRequest($customer, $request);
-            $activeCampaignEcomCustomerId = $apiResponse['ecomCustomer']['id'];
+            $apiResponse = $this->performApiRequest($customer, $request);
+
+            if (!isset($apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'])) {
+                $this->getLogger()->error(sprintf(
+                    '%s: missing "%s.id" in API response for Magento customer id "%s"; skipping save.',
+                    static::class,
+                    self::RESPONSE_KEY_CUSTOMER,
+                    $message['magento_customer_id']
+                ));
+                return;
+            }
+
+            $activeCampaignEcomCustomerId = $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'];
             $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
             $this->customerRepository->save($customer);
         } catch (UnprocessableEntityHttpException $e) {
@@ -92,6 +103,9 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
                 $this->getLogger()->info(print_r($filters, true));
                 $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
                 $items    = $response->getItems();
+                if ($items === []) {
+                    continue;
+                }
                 $customer = $items[0];
                 $this->getLogger()->info(print_r($customer, true));
                 if (strtolower((string) $customer['email']) === strtolower((string) $request['email'])) {

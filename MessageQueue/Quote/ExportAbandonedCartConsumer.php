@@ -67,7 +67,18 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
 
         try {
             $apiResponse = $this->client->getOrderApi()->create(['ecomOrder' => $request]);
-            $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
+
+            if (!isset($apiResponse[self::RESPONSE_KEY_ORDER]['id'])) {
+                $this->getLogger()->error(sprintf(
+                    '%s: missing "%s.id" in API response for quote id "%s"; skipping save.',
+                    static::class,
+                    self::RESPONSE_KEY_ORDER,
+                    $quote->getId()
+                ));
+                return;
+            }
+
+            $order->setActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id']);
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
             try {
