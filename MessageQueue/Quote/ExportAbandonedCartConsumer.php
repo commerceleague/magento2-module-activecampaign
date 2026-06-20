@@ -29,8 +29,6 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
      */
     private $quoteFactory;
 
-    private readonly \CommerceLeague\ActiveCampaign\Logger\Logger $logger;
-
     /**
      * @param QuoteFactory             $quoteFactory
      */
@@ -42,8 +40,7 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
         private readonly Client $client
     ) {
         parent::__construct($logger);
-        $this->quoteFactory                = $quoteFactory;
-        $this->logger                      = $logger;
+        $this->quoteFactory = $quoteFactory;
     }
 
     /**
@@ -60,7 +57,7 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
         $quote->loadByIdWithoutStore($message['quote_id']);
 
         if (!$quote->getId()) {
-            $this->logger->error(__('The Quote with the "%1" ID doesn\'t exist', $message['quote_id']));
+            $this->getLogger()->error(__('The Quote with the "%1" ID doesn\'t exist', $message['quote_id']));
             return;
         }
 
