@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerReq
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -33,7 +34,8 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
         private readonly CustomerRepositoryInterface $customerRepository,
         private readonly CustomerRequestBuilder $customerRequestBuilder,
         private readonly Client $client,
-        private readonly FailureRecorder $failureRecorder
+        private readonly FailureRecorder $failureRecorder,
+        private readonly BackoffState $backoffState
     ) {
         parent::__construct($logger);
     }
@@ -44,6 +46,11 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     public function consume(string $message): void
     {
         $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
+
+        if ($this->backoffState->shouldHalt()) {
+            $this->getLogger()->warning('ActiveCampaign export backing off after repeated 503s; skipping');
+            return;
+        }
 
         try {
             $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
@@ -74,6 +81,7 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             }
 
             $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
+            $this->backoffState->reset();
             $this->failureRecorder->recordSuccess($customer);
             $this->customerRepository->save($customer);
         } catch (UnprocessableEntityHttpException $e) {
@@ -89,6 +97,7 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
                 : null;
             if ($duplicateId !== null) {
                 $customer->setActiveCampaignId($duplicateId);
+                $this->backoffState->reset();
                 $this->failureRecorder->recordSuccess($customer);
                 $this->customerRepository->save($customer);
                 return;
@@ -99,8 +108,12 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             $this->customerRepository->save($customer);
             return;
         } catch (HttpException $e) {
+            if ($e->getCode() === 503) {
+                $this->backoffState->record503();
+            }
             $this->logException($e);
-            $this->failureRecorder->recordFailure($customer, 'http_error', $e->getMessage());
+            $transient = $e->getCode() >= 500;
+            $this->failureRecorder->recordFailure($customer, 'http_error', $e->getMessage(), $transient);
             $this->customerRepository->save($customer);
             return;
         }

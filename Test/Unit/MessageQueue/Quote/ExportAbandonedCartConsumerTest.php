@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\AbandonedCartBuilder as AbandonedCartRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Quote\ExportAbandonedCartConsumer;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
@@ -70,6 +71,11 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
     protected $failureRecorder;
 
     /**
+     * @var MockObject|BackoffState
+     */
+    protected $backoffState;
+
+    /**
      * @var ExportAbandonedCartConsumer
      */
     protected $exportAbandonedCartConsumer;
@@ -94,6 +100,7 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
         $this->orderApi = $this->createMock(OrderApiResourceInterface::class);
         $this->order = $this->createMock(OrderInterface::class);
         $this->failureRecorder = $this->createMock(FailureRecorder::class);
+        $this->backoffState = $this->createMock(BackoffState::class);
 
         $this->exportAbandonedCartConsumer = new ExportAbandonedCartConsumer(
             $this->quoteFactory,
@@ -101,7 +108,8 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
             $this->orderRepository,
             $this->abandonedCartRequestBuilder,
             $this->client,
-            $this->failureRecorder
+            $this->failureRecorder,
+            $this->backoffState
         );
     }
 

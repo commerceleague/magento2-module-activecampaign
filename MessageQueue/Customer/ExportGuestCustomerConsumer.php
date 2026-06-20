@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerReq
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -29,7 +30,8 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
         private readonly GuestCustomerRepositoryInterface $customerRepository,
         private readonly CustomerRequestBuilder $customerRequestBuilder,
         private readonly Client $client,
-        private readonly FailureRecorder $failureRecorder
+        private readonly FailureRecorder $failureRecorder,
+        private readonly BackoffState $backoffState
     ) {
         parent::__construct($logger);
     }
@@ -40,6 +42,11 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
     public function consume(string $message): void
     {
         $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
+
+        if ($this->backoffState->shouldHalt()) {
+            $this->getLogger()->warning('ActiveCampaign export backing off after repeated 503s; skipping');
+            return;
+        }
 
         $customerData = $message['customer_data'];
 
@@ -66,6 +73,7 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                 }
 
                 $guestCustomer->setActiveCampaignId($activeCampaignId);
+                $this->backoffState->reset();
                 $this->failureRecorder->recordSuccess($guestCustomer);
                 $this->customerRepository->save($guestCustomer);
             } catch (UnprocessableEntityHttpException $e) {
@@ -85,6 +93,7 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                     : null;
                 if ($duplicateId !== null) {
                     $guestCustomer->setActiveCampaignId($duplicateId);
+                    $this->backoffState->reset();
                     $this->failureRecorder->recordSuccess($guestCustomer);
                     $this->customerRepository->save($guestCustomer);
                     return;
@@ -95,8 +104,12 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                 $this->customerRepository->save($guestCustomer);
                 return;
             } catch (HttpException $e) {
+                if ($e->getCode() === 503) {
+                    $this->backoffState->record503();
+                }
                 $this->logException($e);
-                $this->failureRecorder->recordFailure($guestCustomer, 'http_error', $e->getMessage());
+                $transient = $e->getCode() >= 500;
+                $this->failureRecorder->recordFailure($guestCustomer, 'http_error', $e->getMessage(), $transient);
                 $this->customerRepository->save($guestCustomer);
                 return;
             }

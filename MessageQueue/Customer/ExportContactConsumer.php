@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactReque
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
@@ -34,7 +35,8 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
         private readonly ContactRequestBuilder $contactRequestBuilder,
         private readonly Client $client,
         private readonly ManagerInterface $eventManager,
-        private readonly FailureRecorder $failureRecorder
+        private readonly FailureRecorder $failureRecorder,
+        private readonly BackoffState $backoffState
     ) {
         parent::__construct($logger);
     }
@@ -45,6 +47,11 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
     public function consume(string $message): void
     {
         $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
+
+        if ($this->backoffState->shouldHalt()) {
+            $this->getLogger()->warning('ActiveCampaign export backing off after repeated 503s; skipping');
+            return;
+        }
 
         try {
             $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
@@ -86,6 +93,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             }
 
             $contact->setActiveCampaignId($activeCampaignId);
+            $this->backoffState->reset();
             $this->failureRecorder->recordSuccess($contact);
             $this->contactRepository->save($contact);
             // trigger event after contact has been saved
@@ -96,8 +104,12 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             $this->contactRepository->save($contact);
             return;
         } catch (HttpException $e) {
+            if ($e->getCode() === 503) {
+                $this->backoffState->record503();
+            }
             $this->logException($e);
-            $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage());
+            $transient = $e->getCode() >= 500;
+            $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage(), $transient);
             $this->contactRepository->save($contact);
             return;
         }

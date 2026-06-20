@@ -14,6 +14,7 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -45,7 +46,8 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         private readonly OrderRequestBuilder $orderRequestBuilder,
         private readonly Client $client,
         private readonly PublisherInterface $publisher,
-        private readonly FailureRecorder $failureRecorder
+        private readonly FailureRecorder $failureRecorder,
+        private readonly BackoffState $backoffState
     ) {
         parent::__construct($logger);
     }
@@ -58,6 +60,11 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
     public function consume(string $message): void
     {
         $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
+
+        if ($this->backoffState->shouldHalt()) {
+            $this->getLogger()->warning('ActiveCampaign export backing off after repeated 503s; skipping');
+            return;
+        }
 
         try {
             /** @var MagentoOrderInterface|MagentoOrder $magentoOrder */
@@ -143,6 +150,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             $order->setActiveCampaignId($activeCampaignId);
             $order->setMagentoOrderId($magentoOrder->getEntityId());
 
+            $this->backoffState->reset();
             $this->failureRecorder->recordSuccess($order);
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
@@ -159,6 +167,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             if ($duplicateId !== null) {
                 $order->setActiveCampaignId($duplicateId);
                 $order->setMagentoOrderId($magentoOrder->getEntityId());
+                $this->backoffState->reset();
                 $this->failureRecorder->recordSuccess($order);
                 $this->orderRepository->save($order);
                 return;
@@ -169,8 +178,12 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             $this->orderRepository->save($order);
             return;
         } catch (HttpException $e) {
+            if ($e->getCode() === 503) {
+                $this->backoffState->record503();
+            }
             $this->logException($e);
-            $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage());
+            $transient = $e->getCode() >= 500;
+            $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage(), $transient);
             $this->orderRepository->save($order);
             return;
         }

@@ -29,7 +29,8 @@ class FailureRecorder
     public function recordFailure(
         FailureTrackableInterface $entity,
         string $errorCode,
-        ?string $errorMessage
+        ?string $errorMessage,
+        bool $transient = false
     ): void {
         $attempts = (int)$entity->getExportAttempts() + 1;
         $entity->setExportAttempts($attempts);
@@ -38,7 +39,11 @@ class FailureRecorder
         $entity->setLastAttemptedAt($this->dateTime->gmtDate());
 
         $maxAttempts = $this->config->getMaxExportAttempts();
-        if ($this->config->isDeadLetterEnabled() && $maxAttempts > 0 && $attempts >= $maxAttempts) {
+        if (!$transient
+            && $this->config->isDeadLetterEnabled()
+            && $maxAttempts > 0
+            && $attempts >= $maxAttempts
+        ) {
             $entity->setExportStatus(FailureTrackableInterface::EXPORT_STATUS_FAILED);
         }
     }

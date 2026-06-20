@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder as OrderRequestBu
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Sales\ExportOrderConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
@@ -79,6 +80,11 @@ class ExportOrderConsumerTest extends AbstractTestCase
     protected $failureRecorder;
 
     /**
+     * @var MockObject|BackoffState
+     */
+    protected $backoffState;
+
+    /**
      * @var ExportOrderConsumer
      */
     protected $exportOrderConsumer;
@@ -95,6 +101,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order = $this->createMock(OrderInterface::class);
         $this->publisher = $this->createMock(PublisherInterface::class);
         $this->failureRecorder = $this->createMock(FailureRecorder::class);
+        $this->backoffState = $this->createMock(BackoffState::class);
 
         $this->exportOrderConsumer = new ExportOrderConsumer(
             $this->magentoOrderRepository,
@@ -103,8 +110,22 @@ class ExportOrderConsumerTest extends AbstractTestCase
             $this->orderRequestBuilder,
             $this->client,
             $this->publisher,
-            $this->failureRecorder
+            $this->failureRecorder,
+            $this->backoffState
         );
+    }
+
+    /**
+     * Builds a real HttpException carrying the given HTTP status code, so
+     * $e->getCode() returns it (getCode() is final and cannot be mocked).
+     */
+    private function httpExceptionWithCode(int $statusCode): HttpException
+    {
+        $request = $this->createMock(\Psr\Http\Message\RequestInterface::class);
+        $response = $this->createMock(\Psr\Http\Message\ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn($statusCode);
+
+        return new HttpException('boom', $request, $response);
     }
 
     public function testConsumeWithAbsentMagentoOrder()
@@ -885,6 +906,186 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->exportOrderConsumer->consume(
             json_encode(['magento_order_id' => $magentoOrderId, 'deferred_count' => 1])
         );
+    }
+
+    public function testConsumeHaltsWhenBackoffShouldHalt()
+    {
+        $this->backoffState->expects($this->once())
+            ->method('shouldHalt')
+            ->willReturn(true);
+
+        $this->logger->expects($this->once())
+            ->method('warning');
+
+        // Nothing else happens: no order lookup, no API call.
+        $this->magentoOrderRepository->expects($this->never())
+            ->method('get');
+
+        $this->client->expects($this->never())
+            ->method('getOrderApi');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => 123]));
+    }
+
+    public function testConsume503RecordsTransientFailureAndCounts503()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request', 'customerid' => 999];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($this->httpExceptionWithCode(503));
+
+        // 503 increments the consecutive counter for the process-wide backoff.
+        $this->backoffState->expects($this->once())
+            ->method('record503');
+
+        // 5xx is transient: recordFailure is called with $transient = true so a
+        // ceiling can never dead-letter a 503.
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'http_error', $this->anything(), true);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testConsume500IsTransientButDoesNotCount503()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request', 'customerid' => 999];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($this->httpExceptionWithCode(500));
+
+        // 500 is transient but not a 503, so the 503 backoff counter is untouched.
+        $this->backoffState->expects($this->never())
+            ->method('record503');
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'http_error', $this->anything(), true);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testConsume4xxIsPermanent()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request', 'customerid' => 999];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($this->httpExceptionWithCode(404));
+
+        $this->backoffState->expects($this->never())
+            ->method('record503');
+
+        // 4xx is permanent: $transient = false (counts toward the dead-letter ceiling).
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'http_error', $this->anything(), false);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
 }

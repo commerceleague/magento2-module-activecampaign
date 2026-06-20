@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerReq
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportGuestCustomerConsumer;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomerRepository;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
@@ -57,6 +58,11 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
     protected $failureRecorder;
 
     /**
+     * @var MockObject|BackoffState
+     */
+    protected $backoffState;
+
+    /**
      * @var ExportGuestCustomerConsumer
      */
     protected $exportGuestCustomerConsumer;
@@ -70,13 +76,15 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
         $this->customerApi = $this->createMock(CustomerApiResourceInterface::class);
         $this->guestCustomer = $this->createMock(GuestCustomerInterface::class);
         $this->failureRecorder = $this->createMock(FailureRecorder::class);
+        $this->backoffState = $this->createMock(BackoffState::class);
 
         $this->exportGuestCustomerConsumer = new ExportGuestCustomerConsumer(
             $this->logger,
             $this->customerRepository,
             $this->customerRequestBuilder,
             $this->client,
-            $this->failureRecorder
+            $this->failureRecorder,
+            $this->backoffState
         );
     }
 
