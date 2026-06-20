@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder as OrderRequestBu
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Sales\ExportOrderConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -73,6 +74,11 @@ class ExportOrderConsumerTest extends AbstractTestCase
     protected $publisher;
 
     /**
+     * @var MockObject|FailureRecorder
+     */
+    protected $failureRecorder;
+
+    /**
      * @var ExportOrderConsumer
      */
     protected $exportOrderConsumer;
@@ -88,6 +94,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->magentoOrder = $this->createMock(MagentoOrder::class);
         $this->order = $this->createMock(OrderInterface::class);
         $this->publisher = $this->createMock(PublisherInterface::class);
+        $this->failureRecorder = $this->createMock(FailureRecorder::class);
 
         $this->exportOrderConsumer = new ExportOrderConsumer(
             $this->magentoOrderRepository,
@@ -95,7 +102,8 @@ class ExportOrderConsumerTest extends AbstractTestCase
             $this->orderRepository,
             $this->orderRequestBuilder,
             $this->client,
-            $this->publisher
+            $this->publisher,
+            $this->failureRecorder
         );
     }
 
@@ -243,6 +251,10 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->with($magentoOrderId)
             ->willReturnSelf();
 
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->order);
+
         $this->orderRepository->expects($this->once())
             ->method('save')
             ->with($this->order);
@@ -310,6 +322,12 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
 
+        // Empty duplicate lookup throws DuplicateNotFoundException, caught by the
+        // inner catch which logs and returns BEFORE an outcome is computed; this is
+        // not treated as a recordable failure.
+        $this->failureRecorder->expects($this->never())
+            ->method('recordFailure');
+
         $this->orderRepository->expects($this->never())
             ->method('save');
 
@@ -373,6 +391,10 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->with($magentoOrderId)
             ->willReturnSelf();
 
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->order);
+
         $this->orderRepository->expects($this->once())
             ->method('save')
             ->with($this->order);
@@ -421,8 +443,13 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->orderRepository->expects($this->never())
-            ->method('save');
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'empty_response', null);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
 
         $this->logger->expects($this->atLeastOnce())
             ->method('error');
@@ -484,6 +511,10 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->with($magentoOrderId)
             ->willReturnSelf();
 
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->order);
+
         $this->orderRepository->expects($this->once())
             ->method('save')
             ->with($this->order);
@@ -533,8 +564,13 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->orderRepository->expects($this->never())
-            ->method('save');
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'empty_response', null);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
 
         $this->logger->expects($this->atLeastOnce())
             ->method('error');
@@ -602,8 +638,13 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->orderRepository->expects($this->never())
-            ->method('save');
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'duplicate', $this->anything());
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
 
         $this->logger->expects($this->atLeastOnce())
             ->method('error');
@@ -786,8 +827,13 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->orderRepository->expects($this->never())
-            ->method('save');
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'builder_error', $this->anything());
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
 
         $this->logger->expects($this->atLeastOnce())
             ->method('error');

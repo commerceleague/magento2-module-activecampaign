@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactReque
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Framework\Event\ManagerInterface;
@@ -38,7 +39,8 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
         private readonly ContactRequestBuilder $contactRequestBuilder,
         private readonly Client $client,
         private readonly ManagerInterface $eventManager,
-        Logger $logger
+        Logger $logger,
+        private readonly FailureRecorder $failureRecorder
     ) {
         parent::__construct($logger);
         $this->subscriberFactory     = $subscriberFactory;
@@ -74,10 +76,13 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                     self::RESPONSE_KEY_CONTACT,
                     (string)$contact->getId()
                 ));
+                $this->failureRecorder->recordFailure($contact, 'empty_response', null);
+                $this->contactRepository->save($contact);
                 return;
             }
 
             $contact->setActiveCampaignId($activeCampaignId);
+            $this->failureRecorder->recordSuccess($contact);
             $this->contactRepository->save($contact);
 
             // trigger event after contact has been saved
@@ -87,9 +92,13 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             );
         } catch (UnprocessableEntityHttpException $e) {
             $this->logUnprocessableEntityHttpException($e, $request);
+            $this->failureRecorder->recordFailure($contact, 'unknown', $e->getMessage());
+            $this->contactRepository->save($contact);
             return;
         } catch (HttpException $e) {
             $this->logException($e);
+            $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage());
+            $this->contactRepository->save($contact);
             return;
         }
 

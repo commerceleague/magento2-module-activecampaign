@@ -13,6 +13,7 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
@@ -31,7 +32,8 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
         Logger $logger,
         private readonly CustomerRepositoryInterface $customerRepository,
         private readonly CustomerRequestBuilder $customerRequestBuilder,
-        private readonly Client $client
+        private readonly Client $client,
+        private readonly FailureRecorder $failureRecorder
     ) {
         parent::__construct($logger);
     }
@@ -66,10 +68,13 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
                     self::RESPONSE_KEY_CUSTOMER,
                     $message['magento_customer_id']
                 ));
+                $this->failureRecorder->recordFailure($customer, 'empty_response', null);
+                $this->customerRepository->save($customer);
                 return;
             }
 
             $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
+            $this->failureRecorder->recordSuccess($customer);
             $this->customerRepository->save($customer);
         } catch (UnprocessableEntityHttpException $e) {
             try {
@@ -84,14 +89,19 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
                 : null;
             if ($duplicateId !== null) {
                 $customer->setActiveCampaignId($duplicateId);
+                $this->failureRecorder->recordSuccess($customer);
                 $this->customerRepository->save($customer);
                 return;
             }
 
             $this->logUnprocessableEntityHttpException($e, $request);
+            $this->failureRecorder->recordFailure($customer, $outcome->code ?? 'unknown', $outcome->message);
+            $this->customerRepository->save($customer);
             return;
         } catch (HttpException $e) {
             $this->logException($e);
+            $this->failureRecorder->recordFailure($customer, 'http_error', $e->getMessage());
+            $this->customerRepository->save($customer);
             return;
         }
     }

@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Newsletter\ExportContactConsumer;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -74,6 +75,11 @@ class ExportContactConsumerTest extends AbstractTestCase
      */
     protected $eventManager;
 
+    /**
+     * @var MockObject|FailureRecorder
+     */
+    protected $failureRecorder;
+
     protected function setUp(): void
     {
         $this->subscriberFactory = $this->getMockBuilder(SubscriberFactory::class)
@@ -94,10 +100,11 @@ class ExportContactConsumerTest extends AbstractTestCase
         $this->contact               = $this->createMock(ContactInterface::class);
         $this->contactApi            = $this->createMock(ContactApiResourceInterface::class);
         $this->eventManager          = $this->createMock(ManagerInterface::class);
+        $this->failureRecorder       = $this->createMock(FailureRecorder::class);
 
         $this->exportContactConsumer = new ExportContactConsumer(
             $this->subscriberFactory, $this->contactRepository, $this->contactRequestBuilder, $this->client,
-            $this->eventManager, $this->logger
+            $this->eventManager, $this->logger, $this->failureRecorder
         );
     }
 
@@ -254,8 +261,13 @@ class ExportContactConsumerTest extends AbstractTestCase
         $this->contact->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->contactRepository->expects($this->never())
-            ->method('save');
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->contact, 'empty_response', null);
+
+        $this->contactRepository->expects($this->once())
+            ->method('save')
+            ->with($this->contact);
 
         $this->eventManager->expects($this->never())
             ->method('dispatch');
@@ -309,6 +321,10 @@ class ExportContactConsumerTest extends AbstractTestCase
             ->method('setActiveCampaignId')
             ->with($activeCampaignId)
             ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->contact);
 
         $this->contactRepository->expects($this->once())
             ->method('save')

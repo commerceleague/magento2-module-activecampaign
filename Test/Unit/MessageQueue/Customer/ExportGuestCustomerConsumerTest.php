@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerReq
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportGuestCustomerConsumer;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomerRepository;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -51,6 +52,11 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
     protected $guestCustomer;
 
     /**
+     * @var MockObject|FailureRecorder
+     */
+    protected $failureRecorder;
+
+    /**
      * @var ExportGuestCustomerConsumer
      */
     protected $exportGuestCustomerConsumer;
@@ -63,12 +69,14 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
         $this->client = $this->createMock(Client::class);
         $this->customerApi = $this->createMock(CustomerApiResourceInterface::class);
         $this->guestCustomer = $this->createMock(GuestCustomerInterface::class);
+        $this->failureRecorder = $this->createMock(FailureRecorder::class);
 
         $this->exportGuestCustomerConsumer = new ExportGuestCustomerConsumer(
             $this->logger,
             $this->customerRepository,
             $this->customerRequestBuilder,
-            $this->client
+            $this->client,
+            $this->failureRecorder
         );
     }
 
@@ -106,6 +114,10 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
             ->method('setActiveCampaignId')
             ->with($activeCampaignId)
             ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->guestCustomer);
 
         $this->customerRepository->expects($this->once())
             ->method('save')
@@ -145,8 +157,13 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
         $this->guestCustomer->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->customerRepository->expects($this->never())
-            ->method('save');
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->guestCustomer, 'empty_response', null);
+
+        $this->customerRepository->expects($this->once())
+            ->method('save')
+            ->with($this->guestCustomer);
 
         $this->logger->expects($this->atLeastOnce())
             ->method('error');
@@ -246,6 +263,10 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
             ->method('setActiveCampaignId')
             ->with($resolvedId)
             ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->guestCustomer);
 
         $this->customerRepository->expects($this->once())
             ->method('save')

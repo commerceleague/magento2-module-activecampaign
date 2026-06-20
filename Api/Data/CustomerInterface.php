@@ -7,7 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Api\Data;
 /**
  * Interface CustomerInterface
  */
-interface CustomerInterface
+interface CustomerInterface extends FailureTrackableInterface
 {
     public const ENTITY_ID = 'entity_id';
     public const MAGENTO_CUSTOMER_ID = 'magento_customer_id';

@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\AbandonedCartBuilder as AbandonedCartRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Quote\ExportAbandonedCartConsumer;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -64,6 +65,11 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
     protected $order;
 
     /**
+     * @var MockObject|FailureRecorder
+     */
+    protected $failureRecorder;
+
+    /**
      * @var ExportAbandonedCartConsumer
      */
     protected $exportAbandonedCartConsumer;
@@ -87,13 +93,15 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
         $this->client = $this->createMock(Client::class);
         $this->orderApi = $this->createMock(OrderApiResourceInterface::class);
         $this->order = $this->createMock(OrderInterface::class);
+        $this->failureRecorder = $this->createMock(FailureRecorder::class);
 
         $this->exportAbandonedCartConsumer = new ExportAbandonedCartConsumer(
             $this->quoteFactory,
             $this->logger,
             $this->orderRepository,
             $this->abandonedCartRequestBuilder,
-            $this->client
+            $this->client,
+            $this->failureRecorder
         );
     }
 
@@ -246,6 +254,10 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
             ->with($activeCampaignId)
             ->willReturnSelf();
 
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->order);
+
         $this->orderRepository->expects($this->once())
             ->method('save')
             ->with($this->order);
@@ -289,8 +301,13 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->orderRepository->expects($this->never())
-            ->method('save');
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'empty_response', null);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
 
         $this->logger->expects($this->atLeastOnce())
             ->method('error');
@@ -321,15 +338,20 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
             ->with($this->quote)
             ->willThrowException(new \RuntimeException('builder boom'));
 
-        // No API request and no save.
+        // No API request, but the failed attempt is recorded and persisted.
         $this->client->expects($this->never())
             ->method('getOrderApi');
 
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
 
-        $this->orderRepository->expects($this->never())
-            ->method('save');
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'builder_error', $this->anything());
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
 
         $this->logger->expects($this->atLeastOnce())
             ->method('error');
@@ -394,6 +416,10 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
             ->method('setActiveCampaignId')
             ->with($resolvedId)
             ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->order);
 
         $this->orderRepository->expects($this->once())
             ->method('save')

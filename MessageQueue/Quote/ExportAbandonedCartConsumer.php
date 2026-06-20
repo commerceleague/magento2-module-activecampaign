@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Request\AbandonedCartBuilder;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
@@ -38,7 +39,8 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
         Logger $logger,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly AbandonedCartBuilder $abandonedCartRequestBuilder,
-        private readonly Client $client
+        private readonly Client $client,
+        private readonly FailureRecorder $failureRecorder
     ) {
         parent::__construct($logger);
         $this->quoteFactory = $quoteFactory;
@@ -73,6 +75,8 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
                 $quote->getId(),
                 $e->getMessage()
             ));
+            $this->failureRecorder->recordFailure($order, 'builder_error', $e->getMessage());
+            $this->orderRepository->save($order);
             return;
         }
 
@@ -87,10 +91,13 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
                     self::RESPONSE_KEY_ORDER,
                     $quote->getId()
                 ));
+                $this->failureRecorder->recordFailure($order, 'empty_response', null);
+                $this->orderRepository->save($order);
                 return;
             }
 
             $order->setActiveCampaignId($activeCampaignId);
+            $this->failureRecorder->recordSuccess($order);
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
             try {
@@ -105,14 +112,19 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
                 : null;
             if ($duplicateId !== null) {
                 $order->setActiveCampaignId($duplicateId);
+                $this->failureRecorder->recordSuccess($order);
                 $this->orderRepository->save($order);
                 return;
             }
 
             $this->logUnprocessableEntityHttpException($e, $request);
+            $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
+            $this->orderRepository->save($order);
             return;
         } catch (HttpException $e) {
             $this->logException($e);
+            $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage());
+            $this->orderRepository->save($order);
             return;
         }
 

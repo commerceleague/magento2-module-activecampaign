@@ -6,7 +6,7 @@ namespace CommerceLeague\ActiveCampaign\Api\Data;
 /**
  * Interface GuestCustomerInterface
  */
-interface GuestCustomerInterface
+interface GuestCustomerInterface extends FailureTrackableInterface
 {
 
     public const ENTITY_ID          = 'entity_id';

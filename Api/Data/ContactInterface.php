@@ -8,7 +8,7 @@ namespace CommerceLeague\ActiveCampaign\Api\Data;
 /**
  * Interface ContactInterface
  */
-interface ContactInterface
+interface ContactInterface extends FailureTrackableInterface
 {
     public const ENTITY_ID = 'entity_id';
     public const EMAIL = 'email';

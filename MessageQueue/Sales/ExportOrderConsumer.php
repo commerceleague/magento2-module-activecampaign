@@ -15,6 +15,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
@@ -43,7 +44,8 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly OrderRequestBuilder $orderRequestBuilder,
         private readonly Client $client,
-        private readonly PublisherInterface $publisher
+        private readonly PublisherInterface $publisher,
+        private readonly FailureRecorder $failureRecorder
     ) {
         parent::__construct($logger);
     }
@@ -76,6 +78,8 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 $message['magento_order_id'],
                 $e->getMessage()
             ));
+            $this->failureRecorder->recordFailure($order, 'builder_error', $e->getMessage());
+            $this->orderRepository->save($order);
             return;
         }
 
@@ -131,12 +135,15 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     self::RESPONSE_KEY_ORDER,
                     $message['magento_order_id']
                 ));
+                $this->failureRecorder->recordFailure($order, 'empty_response', null);
+                $this->orderRepository->save($order);
                 return;
             }
 
             $order->setActiveCampaignId($activeCampaignId);
             $order->setMagentoOrderId($magentoOrder->getEntityId());
 
+            $this->failureRecorder->recordSuccess($order);
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
             try {
@@ -152,14 +159,19 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             if ($duplicateId !== null) {
                 $order->setActiveCampaignId($duplicateId);
                 $order->setMagentoOrderId($magentoOrder->getEntityId());
+                $this->failureRecorder->recordSuccess($order);
                 $this->orderRepository->save($order);
                 return;
             }
 
             $this->logUnprocessableEntityHttpException($e, $request);
+            $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
+            $this->orderRepository->save($order);
             return;
         } catch (HttpException $e) {
             $this->logException($e);
+            $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage());
+            $this->orderRepository->save($order);
             return;
         }
 
