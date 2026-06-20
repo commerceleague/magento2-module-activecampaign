@@ -61,12 +61,14 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                     $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
                 );
                 if ($activeCampaignId === null) {
-                    $this->getLogger()->error(sprintf(
-                        '%s: missing "%s.id" in API response for guest customer id "%s"; skipping save.',
-                        static::class,
-                        self::RESPONSE_KEY_CUSTOMER,
-                        (string)$guestCustomer->getId()
-                    ));
+                    $this->logFailure(
+                        'guest_customer',
+                        $this->castId($guestCustomer->getId()),
+                        null,
+                        null,
+                        'empty_response',
+                        sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CUSTOMER)
+                    );
                     $this->failureRecorder->recordFailure($guestCustomer, 'empty_response', null);
                     $this->customerRepository->save($guestCustomer);
                     return;
@@ -84,7 +86,14 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                         self::RESPONSE_KEY_CUSTOMER
                     );
                 } catch (UnprocessableEntityHttpException $duplicateLookupException) {
-                    $this->logUnprocessableEntityHttpException($duplicateLookupException, $request);
+                    $this->logFailure(
+                        'guest_customer',
+                        $this->castId($guestCustomer->getId()),
+                        null,
+                        $duplicateLookupException->getCode(),
+                        'http_error',
+                        $duplicateLookupException->getMessage()
+                    );
                     return;
                 }
 
@@ -99,7 +108,14 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                     return;
                 }
 
-                $this->logUnprocessableEntityHttpException($e, $request);
+                $this->logFailure(
+                    'guest_customer',
+                    $this->castId($guestCustomer->getId()),
+                    null,
+                    $e->getCode() ?: 422,
+                    $outcome->code ?? 'unknown',
+                    $outcome->message
+                );
                 $this->failureRecorder->recordFailure($guestCustomer, $outcome->code ?? 'unknown', $outcome->message);
                 $this->customerRepository->save($guestCustomer);
                 return;
@@ -107,7 +123,14 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                 if ($e->getCode() === 503) {
                     $this->backoffState->record503();
                 }
-                $this->logException($e);
+                $this->logFailure(
+                    'guest_customer',
+                    $this->castId($guestCustomer->getId()),
+                    null,
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
                 $transient = $e->getCode() >= 500;
                 $this->failureRecorder->recordFailure($guestCustomer, 'http_error', $e->getMessage(), $transient);
                 $this->customerRepository->save($guestCustomer);

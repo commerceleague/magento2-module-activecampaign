@@ -218,10 +218,22 @@ class ExportContactConsumerTest extends AbstractTestCase
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 
-        $apiResponseKey = 'contact';
-        $apiMethod = 'upsert';
-        $this->unprocessableEntityHttpException(
-            $this->contactApi, $this->logger, $request, $responseErrors, $apiResponseKey, $apiMethod);
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->contactApi->expects($this->once())
+            ->method('upsert')
+            ->with(['contact' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        // Task 6.1: single structured failure line carrying the entity + AC code.
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('export failed'),
+                $this->stringContains('entity=contact'),
+                $this->stringContains('code=unknown')
+            ));
 
         $this->contact->expects($this->never())
             ->method('setActiveCampaignId');

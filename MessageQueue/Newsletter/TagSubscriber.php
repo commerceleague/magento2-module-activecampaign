@@ -49,10 +49,24 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
             try {
                 $apiResponse = $this->client->getContactApi()->tagContact(['contactTag' => $request]);
             } catch (UnprocessableEntityHttpException $e) {
-                $this->logUnprocessableEntityHttpException($e, $request);
+                $this->logFailure(
+                    'contact',
+                    $this->castId($contact->getId()),
+                    null,
+                    $e->getCode() ?: 422,
+                    'unknown',
+                    $e->getMessage()
+                );
                 return;
             } catch (HttpException $e) {
-                $this->logException($e);
+                $this->logFailure(
+                    'contact',
+                    $this->castId($contact->getId()),
+                    null,
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
                 return;
             }
         }

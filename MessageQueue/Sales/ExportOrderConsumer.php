@@ -79,12 +79,14 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         try {
             $request = $this->orderRequestBuilder->build($magentoOrder);
         } catch (\Throwable $e) {
-            $this->getLogger()->error(sprintf(
-                '%s: failed to build request for Magento order id "%s": %s',
-                static::class,
-                $message['magento_order_id'],
+            $this->logFailure(
+                'order',
+                $this->castId($order->getId()),
+                $this->castId($message['magento_order_id']),
+                null,
+                'builder_error',
                 $e->getMessage()
-            ));
+            );
             $this->failureRecorder->recordFailure($order, 'builder_error', $e->getMessage());
             $this->orderRepository->save($order);
             return;
@@ -136,12 +138,14 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
 
             $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null);
             if ($activeCampaignId === null) {
-                $this->getLogger()->error(sprintf(
-                    '%s: missing "%s.id" in API response for Magento order id "%s"; skipping save.',
-                    static::class,
-                    self::RESPONSE_KEY_ORDER,
-                    $message['magento_order_id']
-                ));
+                $this->logFailure(
+                    'order',
+                    $this->castId($order->getId()),
+                    $this->castId($message['magento_order_id']),
+                    null,
+                    'empty_response',
+                    sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_ORDER)
+                );
                 $this->failureRecorder->recordFailure($order, 'empty_response', null);
                 $this->orderRepository->save($order);
                 return;
@@ -157,7 +161,14 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             try {
                 $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
             } catch (UnprocessableEntityHttpException $duplicateLookupException) {
-                $this->logUnprocessableEntityHttpException($duplicateLookupException, $request);
+                $this->logFailure(
+                    'order',
+                    $this->castId($order->getId()),
+                    $this->castId($message['magento_order_id']),
+                    $duplicateLookupException->getCode(),
+                    'http_error',
+                    $duplicateLookupException->getMessage()
+                );
                 return;
             }
 
@@ -173,7 +184,14 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 return;
             }
 
-            $this->logUnprocessableEntityHttpException($e, $request);
+            $this->logFailure(
+                'order',
+                $this->castId($order->getId()),
+                $this->castId($message['magento_order_id']),
+                $e->getCode() ?: 422,
+                $outcome->code ?? 'unknown',
+                $outcome->message
+            );
             $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
             $this->orderRepository->save($order);
             return;
@@ -181,7 +199,14 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             if ($e->getCode() === 503) {
                 $this->backoffState->record503();
             }
-            $this->logException($e);
+            $this->logFailure(
+                'order',
+                $this->castId($order->getId()),
+                $this->castId($message['magento_order_id']),
+                $e->getCode(),
+                'http_error',
+                $e->getMessage()
+            );
             $transient = $e->getCode() >= 500;
             $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage(), $transient);
             $this->orderRepository->save($order);

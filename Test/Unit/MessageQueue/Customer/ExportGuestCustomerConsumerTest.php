@@ -210,8 +210,14 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
             ->with(['ecomCustomer' => $request])
             ->willThrowException($httpException);
 
+        // Task 6.1: structured failure line; guests carry no magento id (magento_id=null).
         $this->logger->expects($this->once())
-            ->method('error');
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=guest_customer'),
+                $this->stringContains('magento_id=null'),
+                $this->stringContains('code=http_error')
+            ));
 
         $this->guestCustomer->expects($this->never())
             ->method('setActiveCampaignId');

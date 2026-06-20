@@ -77,12 +77,14 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
 
             $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_CONTACT]['id'] ?? null);
             if ($activeCampaignId === null) {
-                $this->getLogger()->error(sprintf(
-                    '%s: missing "%s.id" in API response for contact id "%s"; skipping save.',
-                    static::class,
-                    self::RESPONSE_KEY_CONTACT,
-                    (string)$contact->getId()
-                ));
+                $this->logFailure(
+                    'contact',
+                    $this->castId($contact->getId()),
+                    null,
+                    null,
+                    'empty_response',
+                    sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CONTACT)
+                );
                 $this->failureRecorder->recordFailure($contact, 'empty_response', null);
                 $this->contactRepository->save($contact);
                 return;
@@ -99,7 +101,14 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                 ['contact' => $contact]
             );
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logUnprocessableEntityHttpException($e, $request);
+            $this->logFailure(
+                'contact',
+                $this->castId($contact->getId()),
+                null,
+                $e->getCode() ?: 422,
+                'unknown',
+                $e->getMessage()
+            );
             $this->failureRecorder->recordFailure($contact, 'unknown', $e->getMessage());
             $this->contactRepository->save($contact);
             return;
@@ -107,7 +116,14 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             if ($e->getCode() === 503) {
                 $this->backoffState->record503();
             }
-            $this->logException($e);
+            $this->logFailure(
+                'contact',
+                $this->castId($contact->getId()),
+                null,
+                $e->getCode(),
+                'http_error',
+                $e->getMessage()
+            );
             $transient = $e->getCode() >= 500;
             $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage(), $transient);
             $this->contactRepository->save($contact);

@@ -69,12 +69,14 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
                 $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
             );
             if ($activeCampaignEcomCustomerId === null) {
-                $this->getLogger()->error(sprintf(
-                    '%s: missing "%s.id" in API response for Magento customer id "%s"; skipping save.',
-                    static::class,
-                    self::RESPONSE_KEY_CUSTOMER,
-                    $message['magento_customer_id']
-                ));
+                $this->logFailure(
+                    'customer',
+                    $this->castId($customer->getId()),
+                    $this->castId($message['magento_customer_id']),
+                    null,
+                    'empty_response',
+                    sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CUSTOMER)
+                );
                 $this->failureRecorder->recordFailure($customer, 'empty_response', null);
                 $this->customerRepository->save($customer);
                 return;
@@ -88,7 +90,14 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             try {
                 $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_CUSTOMER);
             } catch (UnprocessableEntityHttpException $duplicateLookupException) {
-                $this->logUnprocessableEntityHttpException($duplicateLookupException, $request);
+                $this->logFailure(
+                    'customer',
+                    $this->castId($customer->getId()),
+                    $this->castId($message['magento_customer_id']),
+                    $duplicateLookupException->getCode(),
+                    'http_error',
+                    $duplicateLookupException->getMessage()
+                );
                 return;
             }
 
@@ -103,7 +112,14 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
                 return;
             }
 
-            $this->logUnprocessableEntityHttpException($e, $request);
+            $this->logFailure(
+                'customer',
+                $this->castId($customer->getId()),
+                $this->castId($message['magento_customer_id']),
+                $e->getCode() ?: 422,
+                $outcome->code ?? 'unknown',
+                $outcome->message
+            );
             $this->failureRecorder->recordFailure($customer, $outcome->code ?? 'unknown', $outcome->message);
             $this->customerRepository->save($customer);
             return;
@@ -111,7 +127,14 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             if ($e->getCode() === 503) {
                 $this->backoffState->record503();
             }
-            $this->logException($e);
+            $this->logFailure(
+                'customer',
+                $this->castId($customer->getId()),
+                $this->castId($message['magento_customer_id']),
+                $e->getCode(),
+                'http_error',
+                $e->getMessage()
+            );
             $transient = $e->getCode() >= 500;
             $this->failureRecorder->recordFailure($customer, 'http_error', $e->getMessage(), $transient);
             $this->customerRepository->save($customer);

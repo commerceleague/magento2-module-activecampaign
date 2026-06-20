@@ -59,16 +59,43 @@ abstract class AbstractConsumer
     }
 
     /**
-     * @param array<mixed> $request
+     * Coerces an id-ish value (string/int from a model getter or message payload)
+     * into a positive int for structured logging, or null when absent/invalid.
      */
-    public function logUnprocessableEntityHttpException(
-        UnprocessableEntityHttpException $unprocessableEntityHttpException,
-        array                            $request
+    protected function castId(mixed $value): ?int
+    {
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $id = (int)$value;
+
+        return $id > 0 ? $id : null;
+    }
+
+    /**
+     * Structured, diagnosable failure log: entity type + ids + HTTP status + AC code/message.
+     *
+     * Replaces the old print_r dump that produced undiagnosable
+     * "Unprocessable Entity [] []" lines with no entity id and no AC error code.
+     */
+    protected function logFailure(
+        string $entityType,
+        ?int $localId,
+        ?int $magentoId,
+        ?int $httpStatus,
+        ?string $errorCode,
+        ?string $errorMessage
     ): void {
-        $this->getLogger()->error(static::class);
-        $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
-        $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
-        $this->getLogger()->error(print_r($request, true));
+        $this->getLogger()->error(sprintf(
+            'ActiveCampaign export failed [entity=%s local_id=%s magento_id=%s http_status=%s code=%s]: %s',
+            $entityType,
+            $localId ?? 'null',
+            $magentoId ?? 'null',
+            $httpStatus ?? 'null',
+            $errorCode ?? 'null',
+            $errorMessage ?? ''
+        ));
     }
 
     /**

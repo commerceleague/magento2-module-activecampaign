@@ -6,5 +6,6 @@ reports/
 .docker/
 compose.yaml
 .stale-sync-conflict-backup/
+*.sync-conflict-*
 .phpunit.result.cache
 .phpunit.cache/

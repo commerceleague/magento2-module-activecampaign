@@ -39,36 +39,17 @@ abstract class AbstractTestCase extends TestCase
             ->method('getResponseErrors')
             ->willReturn($responseErrors);
 
-//        $unprocessableEntityHttpException->expects($this->once())
-//            ->method('getMessage')
-//            ->willReturn($responseMessage);
-
-//        $logger->expects($this->at(0))
-//            ->method('error')
-//            ->with(print_r($responseErrors, true));
-
-//        $logger->expects($this->at(1))
-//            ->method('error')
-//            ->with($responseMessage);
-
-        // PHPUnit 11 removed the ->at() matcher; assert the ordered error() calls
-        // via a call-index counter while preserving the exactly(4) expectation and
-        // the original argument assertions for the 3rd and 4th calls.
-        $errorCallIndex = 0;
-        $logger->expects($this->exactly(4))
+        // Task 6.1: failure logging is now a single structured line via logFailure()
+        // instead of the old four-call print_r dump. Assert exactly one error() call
+        // carrying the diagnosable "export failed [...] code=..." marker.
+        $logger->expects($this->once())
             ->method('error')
-            ->with($this->callback(function ($argument) use (&$errorCallIndex, $responseErrors, $request) {
-                if ($errorCallIndex === 2) {
-                    $this->assertSame(print_r($responseErrors, true), $argument);
-                }
-
-                if ($errorCallIndex === 3) {
-                    $this->assertSame(print_r($request, true), $argument);
-                }
-
-                $errorCallIndex++;
-
-                return true;
-            }));
+            ->with($this->logicalAnd(
+                $this->stringContains('export failed'),
+                $this->stringContains('entity='),
+                $this->stringContains('local_id='),
+                $this->stringContains('http_status='),
+                $this->stringContains('code=')
+            ));
     }
 }

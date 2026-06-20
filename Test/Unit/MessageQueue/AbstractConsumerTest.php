@@ -98,4 +98,36 @@ class AbstractConsumerTest extends AbstractTestCase
         $this->assertSame('Email is invalid', $outcome->message);
         $this->assertSame([], $outcome->payload);
     }
+
+    public function testLogFailureProducesSingleStructuredErrorLine()
+    {
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('order'),
+                $this->stringContains('42'),
+                $this->stringContains('123'),
+                $this->stringContains('422'),
+                $this->stringContains('duplicate'),
+                $this->stringContains('Email is invalid')
+            ));
+
+        $method = new ReflectionMethod(AbstractConsumer::class, 'logFailure');
+        $method->setAccessible(true);
+        $method->invoke($this->consumer, 'order', 42, 123, 422, 'duplicate', 'Email is invalid');
+    }
+
+    public function testLogFailureRendersNullsWithoutFatal()
+    {
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('guest_customer'),
+                $this->stringContains('null')
+            ));
+
+        $method = new ReflectionMethod(AbstractConsumer::class, 'logFailure');
+        $method->setAccessible(true);
+        $method->invoke($this->consumer, 'guest_customer', null, null, null, null, null);
+    }
 }

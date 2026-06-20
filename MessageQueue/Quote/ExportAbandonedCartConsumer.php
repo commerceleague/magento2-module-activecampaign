@@ -76,12 +76,14 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
         try {
             $request = $this->abandonedCartRequestBuilder->build($quote);
         } catch (\Throwable $e) {
-            $this->getLogger()->error(sprintf(
-                '%s: failed to build request for quote id "%s": %s',
-                static::class,
-                $quote->getId(),
+            $this->logFailure(
+                'abandoned_cart',
+                $this->castId($order->getId()),
+                $this->castId($message['quote_id']),
+                null,
+                'builder_error',
                 $e->getMessage()
-            ));
+            );
             $this->failureRecorder->recordFailure($order, 'builder_error', $e->getMessage());
             $this->orderRepository->save($order);
             return;
@@ -92,12 +94,14 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
 
             $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null);
             if ($activeCampaignId === null) {
-                $this->getLogger()->error(sprintf(
-                    '%s: missing "%s.id" in API response for quote id "%s"; skipping save.',
-                    static::class,
-                    self::RESPONSE_KEY_ORDER,
-                    $quote->getId()
-                ));
+                $this->logFailure(
+                    'abandoned_cart',
+                    $this->castId($order->getId()),
+                    $this->castId($message['quote_id']),
+                    null,
+                    'empty_response',
+                    sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_ORDER)
+                );
                 $this->failureRecorder->recordFailure($order, 'empty_response', null);
                 $this->orderRepository->save($order);
                 return;
@@ -111,7 +115,14 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
             try {
                 $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
             } catch (UnprocessableEntityHttpException $duplicateLookupException) {
-                $this->logUnprocessableEntityHttpException($duplicateLookupException, $request);
+                $this->logFailure(
+                    'abandoned_cart',
+                    $this->castId($order->getId()),
+                    $this->castId($message['quote_id']),
+                    $duplicateLookupException->getCode(),
+                    'http_error',
+                    $duplicateLookupException->getMessage()
+                );
                 return;
             }
 
@@ -126,7 +137,14 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
                 return;
             }
 
-            $this->logUnprocessableEntityHttpException($e, $request);
+            $this->logFailure(
+                'abandoned_cart',
+                $this->castId($order->getId()),
+                $this->castId($message['quote_id']),
+                $e->getCode() ?: 422,
+                $outcome->code ?? 'unknown',
+                $outcome->message
+            );
             $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
             $this->orderRepository->save($order);
             return;
@@ -134,7 +152,14 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
             if ($e->getCode() === 503) {
                 $this->backoffState->record503();
             }
-            $this->logException($e);
+            $this->logFailure(
+                'abandoned_cart',
+                $this->castId($order->getId()),
+                $this->castId($message['quote_id']),
+                $e->getCode(),
+                'http_error',
+                $e->getMessage()
+            );
             $transient = $e->getCode() >= 500;
             $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage(), $transient);
             $this->orderRepository->save($order);

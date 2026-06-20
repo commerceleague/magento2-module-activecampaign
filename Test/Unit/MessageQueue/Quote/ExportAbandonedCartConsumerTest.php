@@ -174,8 +174,14 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
             ->with(['ecomOrder' => $request])
             ->willThrowException($httpException);
 
+        // Task 6.1: structured failure line with entity type, magento (quote) id and AC code.
         $this->logger->expects($this->once())
-            ->method('error');
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=abandoned_cart'),
+                $this->stringContains('magento_id=' . $quoteId),
+                $this->stringContains('code=http_error')
+            ));
 
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
