@@ -89,6 +89,86 @@ class Order extends AbstractModel implements OrderInterface
     /**
      * @inheritDoc
      */
+    public function getExportAttempts()
+    {
+        return (int) $this->_getData(self::EXPORT_ATTEMPTS);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setExportAttempts($exportAttempts): OrderInterface
+    {
+        return $this->setData(self::EXPORT_ATTEMPTS, $exportAttempts);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastErrorCode()
+    {
+        return $this->_getData(self::LAST_ERROR_CODE);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastErrorCode($lastErrorCode): OrderInterface
+    {
+        return $this->setData(self::LAST_ERROR_CODE, $lastErrorCode);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastErrorMessage()
+    {
+        return $this->_getData(self::LAST_ERROR_MESSAGE);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastErrorMessage($lastErrorMessage): OrderInterface
+    {
+        return $this->setData(self::LAST_ERROR_MESSAGE, $lastErrorMessage);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastAttemptedAt()
+    {
+        return $this->_getData(self::LAST_ATTEMPTED_AT);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastAttemptedAt($lastAttemptedAt): OrderInterface
+    {
+        return $this->setData(self::LAST_ATTEMPTED_AT, $lastAttemptedAt);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getExportStatus()
+    {
+        return (int) $this->_getData(self::EXPORT_STATUS);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setExportStatus($exportStatus): OrderInterface
+    {
+        return $this->setData(self::EXPORT_STATUS, $exportStatus);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getCreatedAt()
     {
         return $this->_getData(self::CREATED_AT);

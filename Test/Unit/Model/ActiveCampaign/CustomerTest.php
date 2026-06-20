@@ -86,6 +86,76 @@ class CustomerTest extends AbstractTestCase
         $this->assertEquals($activeCampaignId, $this->customer->getData(CustomerInterface::ACTIVE_CAMPAIGN_ID));
     }
 
+    public function testGetExportAttempts()
+    {
+        $exportAttempts = 3;
+        $this->customer->setData(CustomerInterface::EXPORT_ATTEMPTS, $exportAttempts);
+        $this->assertSame($exportAttempts, $this->customer->getExportAttempts());
+    }
+
+    public function testSetExportAttempts()
+    {
+        $exportAttempts = 3;
+        $this->customer->setExportAttempts($exportAttempts);
+        $this->assertEquals($exportAttempts, $this->customer->getData(CustomerInterface::EXPORT_ATTEMPTS));
+    }
+
+    public function testGetLastErrorCode()
+    {
+        $lastErrorCode = 'HTTP_500';
+        $this->customer->setData(CustomerInterface::LAST_ERROR_CODE, $lastErrorCode);
+        $this->assertEquals($lastErrorCode, $this->customer->getLastErrorCode());
+    }
+
+    public function testSetLastErrorCode()
+    {
+        $lastErrorCode = 'HTTP_500';
+        $this->customer->setLastErrorCode($lastErrorCode);
+        $this->assertEquals($lastErrorCode, $this->customer->getData(CustomerInterface::LAST_ERROR_CODE));
+    }
+
+    public function testGetLastErrorMessage()
+    {
+        $lastErrorMessage = 'Something went wrong';
+        $this->customer->setData(CustomerInterface::LAST_ERROR_MESSAGE, $lastErrorMessage);
+        $this->assertEquals($lastErrorMessage, $this->customer->getLastErrorMessage());
+    }
+
+    public function testSetLastErrorMessage()
+    {
+        $lastErrorMessage = 'Something went wrong';
+        $this->customer->setLastErrorMessage($lastErrorMessage);
+        $this->assertEquals($lastErrorMessage, $this->customer->getData(CustomerInterface::LAST_ERROR_MESSAGE));
+    }
+
+    public function testGetLastAttemptedAt()
+    {
+        $lastAttemptedAt = '2019-01-01 00:00:00';
+        $this->customer->setData(CustomerInterface::LAST_ATTEMPTED_AT, $lastAttemptedAt);
+        $this->assertEquals($lastAttemptedAt, $this->customer->getLastAttemptedAt());
+    }
+
+    public function testSetLastAttemptedAt()
+    {
+        $lastAttemptedAt = '2019-01-01 00:00:00';
+        $this->customer->setLastAttemptedAt($lastAttemptedAt);
+        $this->assertEquals($lastAttemptedAt, $this->customer->getData(CustomerInterface::LAST_ATTEMPTED_AT));
+    }
+
+    public function testGetExportStatus()
+    {
+        $exportStatus = CustomerInterface::EXPORT_STATUS_FAILED;
+        $this->customer->setData(CustomerInterface::EXPORT_STATUS, $exportStatus);
+        $this->assertSame($exportStatus, $this->customer->getExportStatus());
+    }
+
+    public function testSetExportStatus()
+    {
+        $exportStatus = CustomerInterface::EXPORT_STATUS_SYNCED;
+        $this->customer->setExportStatus($exportStatus);
+        $this->assertEquals($exportStatus, $this->customer->getData(CustomerInterface::EXPORT_STATUS));
+    }
+
     public function testGetCreatedAt()
     {
         $createdAt = '2019-01-01 00:00:00';

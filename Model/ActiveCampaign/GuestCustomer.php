@@ -68,6 +68,46 @@ class GuestCustomer extends AbstractModel implements GuestCustomerInterface
     /**
      * @inheritDoc
      */
+    public function getExportAttempts(): int
+    {
+        return (int) $this->_getData(self::EXPORT_ATTEMPTS);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastErrorCode(): ?string
+    {
+        return $this->_getData(self::LAST_ERROR_CODE);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastErrorMessage(): ?string
+    {
+        return $this->_getData(self::LAST_ERROR_MESSAGE);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastAttemptedAt(): ?string
+    {
+        return $this->_getData(self::LAST_ATTEMPTED_AT);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getExportStatus(): int
+    {
+        return (int) $this->_getData(self::EXPORT_STATUS);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getUpdatedAt(): ?string
     {
         return $this->_getData(self::UPDATED_AT);
@@ -125,6 +165,46 @@ class GuestCustomer extends AbstractModel implements GuestCustomerInterface
     public function setLastname(string $lastname): GuestCustomerInterface
     {
         return $this->setData(self::LASTNAME, $lastname);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setExportAttempts(int $exportAttempts): GuestCustomerInterface
+    {
+        return $this->setData(self::EXPORT_ATTEMPTS, $exportAttempts);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastErrorCode(?string $lastErrorCode): GuestCustomerInterface
+    {
+        return $this->setData(self::LAST_ERROR_CODE, $lastErrorCode);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastErrorMessage(?string $lastErrorMessage): GuestCustomerInterface
+    {
+        return $this->setData(self::LAST_ERROR_MESSAGE, $lastErrorMessage);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastAttemptedAt(?string $lastAttemptedAt): GuestCustomerInterface
+    {
+        return $this->setData(self::LAST_ATTEMPTED_AT, $lastAttemptedAt);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setExportStatus(int $exportStatus): GuestCustomerInterface
+    {
+        return $this->setData(self::EXPORT_STATUS, $exportStatus);
     }
 
     /**

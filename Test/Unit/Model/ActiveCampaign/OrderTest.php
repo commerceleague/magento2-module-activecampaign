@@ -87,6 +87,76 @@ class OrderTest extends AbstractTestCase
         $this->assertEquals($activeCampaignId, $this->order->getData(OrderInterface::ACTIVE_CAMPAIGN_ID));
     }
 
+    public function testGetExportAttempts()
+    {
+        $exportAttempts = 3;
+        $this->order->setData(OrderInterface::EXPORT_ATTEMPTS, $exportAttempts);
+        $this->assertSame($exportAttempts, $this->order->getExportAttempts());
+    }
+
+    public function testSetExportAttempts()
+    {
+        $exportAttempts = 3;
+        $this->order->setExportAttempts($exportAttempts);
+        $this->assertEquals($exportAttempts, $this->order->getData(OrderInterface::EXPORT_ATTEMPTS));
+    }
+
+    public function testGetLastErrorCode()
+    {
+        $lastErrorCode = 'HTTP_500';
+        $this->order->setData(OrderInterface::LAST_ERROR_CODE, $lastErrorCode);
+        $this->assertEquals($lastErrorCode, $this->order->getLastErrorCode());
+    }
+
+    public function testSetLastErrorCode()
+    {
+        $lastErrorCode = 'HTTP_500';
+        $this->order->setLastErrorCode($lastErrorCode);
+        $this->assertEquals($lastErrorCode, $this->order->getData(OrderInterface::LAST_ERROR_CODE));
+    }
+
+    public function testGetLastErrorMessage()
+    {
+        $lastErrorMessage = 'Something went wrong';
+        $this->order->setData(OrderInterface::LAST_ERROR_MESSAGE, $lastErrorMessage);
+        $this->assertEquals($lastErrorMessage, $this->order->getLastErrorMessage());
+    }
+
+    public function testSetLastErrorMessage()
+    {
+        $lastErrorMessage = 'Something went wrong';
+        $this->order->setLastErrorMessage($lastErrorMessage);
+        $this->assertEquals($lastErrorMessage, $this->order->getData(OrderInterface::LAST_ERROR_MESSAGE));
+    }
+
+    public function testGetLastAttemptedAt()
+    {
+        $lastAttemptedAt = '2019-01-01 00:00:00';
+        $this->order->setData(OrderInterface::LAST_ATTEMPTED_AT, $lastAttemptedAt);
+        $this->assertEquals($lastAttemptedAt, $this->order->getLastAttemptedAt());
+    }
+
+    public function testSetLastAttemptedAt()
+    {
+        $lastAttemptedAt = '2019-01-01 00:00:00';
+        $this->order->setLastAttemptedAt($lastAttemptedAt);
+        $this->assertEquals($lastAttemptedAt, $this->order->getData(OrderInterface::LAST_ATTEMPTED_AT));
+    }
+
+    public function testGetExportStatus()
+    {
+        $exportStatus = OrderInterface::EXPORT_STATUS_FAILED;
+        $this->order->setData(OrderInterface::EXPORT_STATUS, $exportStatus);
+        $this->assertSame($exportStatus, $this->order->getExportStatus());
+    }
+
+    public function testSetExportStatus()
+    {
+        $exportStatus = OrderInterface::EXPORT_STATUS_SYNCED;
+        $this->order->setExportStatus($exportStatus);
+        $this->assertEquals($exportStatus, $this->order->getData(OrderInterface::EXPORT_STATUS));
+    }
+
     public function testGetCreatedAt()
     {
         $createdAt = '2019-01-01 00:00:00';
