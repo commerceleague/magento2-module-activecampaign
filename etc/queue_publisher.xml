@@ -18,6 +18,9 @@
     <publisher topic="activecampaign.quote.export.abandoned_cart">
         <connection name="amqp" exchange="magento"/>
     </publisher>
+    <publisher topic="activecampaign.quote.delete.abandoned_cart">
+        <connection name="amqp" exchange="magento"/>
+    </publisher>
     <publisher topic="activecampaign.customer.assign.contact.to.list">
         <connection name="amqp" exchange="magento"/>
     </publisher>
