@@ -58,8 +58,10 @@
     <table name="activecampaign_order" resource="default" engine="innodb" comment="ActiveCampaign Order Table">
         <column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true"
                 comment="Entity Id"/>
-        <column xsi:type="int" name="magento_quote_id" padding="11" unsigned="false" nullable="true" identity="false"
+        <column xsi:type="int" name="magento_quote_id" padding="10" unsigned="true" nullable="true" identity="false"
                 comment="Magento Quote Id"/>
+        <column xsi:type="int" name="magento_order_id" padding="10" unsigned="true" nullable="true" identity="false"
+                comment="Magento Order Id"/>
         <column xsi:type="int" name="activecampaign_id" padding="10" unsigned="true" nullable="true" identity="false"
                 comment="Active Campaign Id"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"

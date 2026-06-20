@@ -135,6 +135,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             }
 
             $order->setActiveCampaignId($activeCampaignId);
+            $order->setMagentoOrderId($magentoOrder->getEntityId());
 
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
@@ -150,6 +151,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 : null;
             if ($duplicateId !== null) {
                 $order->setActiveCampaignId($duplicateId);
+                $order->setMagentoOrderId($magentoOrder->getEntityId());
                 $this->orderRepository->save($order);
                 return;
             }

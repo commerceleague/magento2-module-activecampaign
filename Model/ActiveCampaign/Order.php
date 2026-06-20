@@ -57,6 +57,22 @@ class Order extends AbstractModel implements OrderInterface
     /**
      * @inheritDoc
      */
+    public function getMagentoOrderId()
+    {
+        return $this->_getData(self::MAGENTO_ORDER_ID);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setMagentoOrderId($magentoOrderId): OrderInterface
+    {
+        return $this->setData(self::MAGENTO_ORDER_ID, $magentoOrderId);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getActiveCampaignId()
     {
         return $this->_getData(self::ACTIVE_CAMPAIGN_ID);

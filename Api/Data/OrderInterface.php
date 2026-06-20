@@ -40,6 +40,16 @@ interface OrderInterface
     /**
      * @return int|null
      */
+    public function getMagentoOrderId();
+
+    /**
+     * @param int $magentoOrderId
+     */
+    public function setMagentoOrderId($magentoOrderId): self;
+
+    /**
+     * @return int|null
+     */
     public function getActiveCampaignId();
 
     /**

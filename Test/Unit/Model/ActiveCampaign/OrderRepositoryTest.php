@@ -113,6 +113,41 @@ class OrderRepositoryTest extends AbstractTestCase
     }
 
 
+    public function testGetByMagentoOrderId()
+    {
+        $magentoOrderId = 123;
+
+        $this->orderResource->expects($this->once())
+            ->method('load')
+            ->with($this->order, $magentoOrderId, OrderInterface::MAGENTO_ORDER_ID)
+            ->willReturn($this->order);
+
+        $this->order->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoOrderId);
+
+        $this->assertSame($this->order, $this->orderRepository->getByMagentoOrderId($magentoOrderId));
+    }
+
+    public function testGetByMagentoOrderIdThrowsException()
+    {
+        $magentoOrderId = 123;
+
+        $this->orderResource->expects($this->once())
+            ->method('load')
+            ->with($this->order, $magentoOrderId, OrderInterface::MAGENTO_ORDER_ID)
+            ->willReturn($this->order);
+
+        $this->order->expects($this->once())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->expectException(NoSuchEntityException::class);
+        $this->expectExceptionMessage('The Order with the "123" Magento Order ID doesn\'t exist');
+
+        $this->orderRepository->getByMagentoOrderId($magentoOrderId);
+    }
+
     public function testGetOrCreateByMagentoQuoteIdWithKnownMagentoOrder()
     {
         $magentoQuoteId = 123;

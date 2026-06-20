@@ -188,6 +188,10 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->method('getQuoteId')
             ->willReturn($magentoQuoteId);
 
+        $this->magentoOrder->expects($this->once())
+            ->method('getEntityId')
+            ->willReturn($magentoOrderId);
+
         $this->orderRepository->expects($this->once())
             ->method('getOrCreateByMagentoQuoteId')
             ->with($magentoQuoteId)
@@ -232,6 +236,11 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->once())
             ->method('setActiveCampaignId')
             ->with($resolvedId)
+            ->willReturnSelf();
+
+        $this->order->expects($this->once())
+            ->method('setMagentoOrderId')
+            ->with($magentoOrderId)
             ->willReturnSelf();
 
         $this->orderRepository->expects($this->once())
@@ -327,6 +336,10 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->method('getQuoteId')
             ->willReturn($magentoQuoteId);
 
+        $this->magentoOrder->expects($this->once())
+            ->method('getEntityId')
+            ->willReturn($magentoOrderId);
+
         $this->orderRepository->expects($this->once())
             ->method('getOrCreateByMagentoQuoteId')
             ->with($magentoQuoteId)
@@ -353,6 +366,11 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->once())
             ->method('setActiveCampaignId')
             ->with($activeCampaignId)
+            ->willReturnSelf();
+
+        $this->order->expects($this->once())
+            ->method('setMagentoOrderId')
+            ->with($magentoOrderId)
             ->willReturnSelf();
 
         $this->orderRepository->expects($this->once())
@@ -429,6 +447,10 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->method('getQuoteId')
             ->willReturn($magentoQuoteId);
 
+        $this->magentoOrder->expects($this->once())
+            ->method('getEntityId')
+            ->willReturn($magentoOrderId);
+
         $this->orderRepository->expects($this->once())
             ->method('getOrCreateByMagentoQuoteId')
             ->with($magentoQuoteId)
@@ -455,6 +477,11 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->once())
             ->method('setActiveCampaignId')
             ->with($activeCampaignId)
+            ->willReturnSelf();
+
+        $this->order->expects($this->once())
+            ->method('setMagentoOrderId')
+            ->with($magentoOrderId)
             ->willReturnSelf();
 
         $this->orderRepository->expects($this->once())
