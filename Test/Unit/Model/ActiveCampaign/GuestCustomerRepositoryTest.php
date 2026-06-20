@@ -46,6 +46,16 @@ class GuestCustomerRepositoryTest extends AbstractTestCase
      */
     protected $guestCustomerRepository;
 
+    /**
+     * @var MockObject|\Magento\Customer\Model\ResourceModel\CustomerRepository
+     */
+    protected $magentoCustomerRepository;
+
+    /**
+     * @var MockObject|CustomerRepository
+     */
+    protected $customerRepository;
+
     public function testSaveThrowsException()
     {
         $this->customerResource->expects($this->once())

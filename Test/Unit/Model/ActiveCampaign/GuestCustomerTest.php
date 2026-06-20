@@ -28,7 +28,7 @@ class GuestCustomerTest extends AbstractTestCase
     /**
      * @var GuestCustomer
      */
-    protected $customer;
+    protected $GuestCustomer;
 
     public function testGetId()
     {
