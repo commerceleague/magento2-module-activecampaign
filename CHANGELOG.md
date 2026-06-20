@@ -79,7 +79,7 @@ behaviour; schema changes are additive and backward-compatible.
   `SchemaInterface::ABANDONED_CART_TABLE` constant (the table never existed).
 
 ### Notes
-- The full PHP 8.4 / PHPUnit 13 / Magento 2.4.8 dependency bump (and the Rector
+- The full PHP 8.4 / PHPUnit 10.5 / Magento 2.4.8 dependency bump (and the Rector
   8.4 pass) is prepared but must be run and verified in a PHP 8.4 CI toolchain;
   the locked, verified stack for this release is magento/framework 103 +
   PHPUnit 9.6 on PHP 8.3. See `RELEASE-READINESS.md`.
