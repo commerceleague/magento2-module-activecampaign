@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer;
 
+use CommerceLeague\ActiveCampaign\Api\Data\FailureTrackableInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomer;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer as CustomerResource;
@@ -41,6 +42,22 @@ class Collection extends AbstractCollection
     public function addOmittedFilter(): self
     {
         $this->getSelect()->where('main_table.activecampaign_id IS NULL');
+        return $this;
+    }
+
+    /**
+     * Exclude dead-lettered rows while keeping pending and synced rows.
+     *
+     * The guest customer AC table is the main_table here, so export_status is never null.
+     *
+     * @return Collection
+     */
+    public function addNotDeadLetteredFilter(): self
+    {
+        $this->getSelect()->where(
+            'main_table.export_status != ? OR main_table.export_status IS NULL',
+            FailureTrackableInterface::EXPORT_STATUS_FAILED
+        );
         return $this;
     }
 

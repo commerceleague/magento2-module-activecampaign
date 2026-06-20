@@ -106,12 +106,20 @@ class ExportOmittedAbandonedCartsTest extends AbstractTestCase
             ->method('isAbandonedCartExportEnabled')
             ->willReturn(true);
 
+        $this->configHelper->expects($this->once())
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(false);
+
         $this->quoteCollection->expects($this->once())
             ->method('addAbandonedFilter')
             ->willReturnSelf();
 
         $this->quoteCollection->expects($this->once())
             ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->quoteCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
             ->willReturnSelf();
 
         $this->quoteCollection->expects($this->once())
@@ -132,5 +140,42 @@ class ExportOmittedAbandonedCartsTest extends AbstractTestCase
         $this->exportOmittedAbandonedCarts->run();
 
         $this->assertSame($expectedPublishArguments, $actualPublishArguments);
+    }
+
+    public function testRunWithRetryAllOmittedSkipsWindowFilters()
+    {
+        $quoteIds = [123, 456];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(true);
+
+        $this->quoteCollection->expects($this->never())
+            ->method('addAbandonedFilter');
+
+        $this->quoteCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->quoteCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->quoteCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn($quoteIds);
+
+        $this->publisher->expects($this->exactly(2))
+            ->method('publish');
+
+        $this->exportOmittedAbandonedCarts->run();
     }
 }

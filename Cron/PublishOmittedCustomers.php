@@ -47,7 +47,9 @@ class PublishOmittedCustomers implements CronInterface
     {
         /** @var CustomerCollection $customerCollection */
         $customerCollection = $this->customerCollectionFactory->create();
-        $customerCollection->addCustomerOmittedFilter();
+        $applyCustomerGroupFilter = !$this->configHelper->isRetryAllOmittedEnabled();
+        $customerCollection->addCustomerOmittedFilter($applyCustomerGroupFilter);
+        $customerCollection->addCustomerNotDeadLetteredFilter();
 
         return $customerCollection->getAllIds();
     }

@@ -102,6 +102,14 @@
                         <field id="activecampaign/export/backoff_enabled">1</field>
                     </depends>
                 </field>
+                <field id="retry_all_omitted" translate="label comment" type="select" sortOrder="100" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Retry All Omitted</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, the omitted crons ignore the date/status/customer-group window filters and retry every non-dead-lettered row that has no ActiveCampaign id yet. Use to recover rows that fell outside the original export window.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                    </depends>
+                </field>
             </group>
             <group id="order_export" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Order Export Settings</label>

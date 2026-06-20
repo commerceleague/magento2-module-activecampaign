@@ -297,4 +297,24 @@ class ConfigTest extends AbstractTestCase
 
         $this->assertSame(10, $this->config->getBackoffThreshold());
     }
+
+    public function testIsRetryAllOmittedEnabledDefaultsToFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/retry_all_omitted')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isRetryAllOmittedEnabled());
+    }
+
+    public function testIsRetryAllOmittedEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/retry_all_omitted')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isRetryAllOmittedEnabled());
+    }
 }

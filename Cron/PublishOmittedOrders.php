@@ -30,9 +30,12 @@ class PublishOmittedOrders implements CronInterface
         /** @var OrderCollection $orderCollection */
         $orderCollection = $this->orderCollectionFactory->create();
 //        $orderCollection->addExcludeGuestFilter();
-        $orderCollection->addExportFilterOrderStatus();
-        $orderCollection->addExportFilterStartDate();
+        if (!$this->configHelper->isRetryAllOmittedEnabled()) {
+            $orderCollection->addExportFilterOrderStatus();
+            $orderCollection->addExportFilterStartDate();
+        }
         $orderCollection->addOmittedFilter();
+        $orderCollection->addNotDeadLetteredFilter();
 
         return $orderCollection->getAllIds();
     }

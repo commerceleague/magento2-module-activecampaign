@@ -100,8 +100,24 @@ class ExportOmittedOrdersTest extends AbstractTestCase
             ->method('isOrderExportEnabled')
             ->willReturn(true);
 
+        $this->configHelper->expects($this->once())
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(false);
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterOrderStatus')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterStartDate')
+            ->willReturnSelf();
+
         $this->orderCollection->expects($this->once())
             ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
             ->willReturnSelf();
 
         $this->orderCollection->expects($this->once())
@@ -122,5 +138,45 @@ class ExportOmittedOrdersTest extends AbstractTestCase
         $this->exportOmittedOrders->run();
 
         $this->assertSame($expectedPublishArguments, $actualPublishArguments);
+    }
+
+    public function testRunWithRetryAllOmittedSkipsWindowFilters()
+    {
+        $orderIds = [123, 456];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(true);
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterOrderStatus');
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterStartDate');
+
+        $this->orderCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn($orderIds);
+
+        $this->publisher->expects($this->exactly(2))
+            ->method('publish');
+
+        $this->exportOmittedOrders->run();
     }
 }

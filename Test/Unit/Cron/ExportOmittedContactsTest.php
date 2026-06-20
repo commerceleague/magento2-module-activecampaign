@@ -131,8 +131,17 @@ class ExportOmittedContactsTest extends AbstractTestCase
             ->method('isContactExportEnabled')
             ->willReturn(true);
 
+        $this->configHelper->expects($this->once())
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(false);
+
         $this->customerCollection->expects($this->once())
             ->method('addContactOmittedFilter')
+            ->with(true)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactNotDeadLetteredFilter')
             ->willReturnSelf();
 
         $this->customerCollection->expects($this->once())
@@ -145,6 +154,10 @@ class ExportOmittedContactsTest extends AbstractTestCase
 
         $this->subscriberCollection->expects($this->once())
             ->method('addContactOmittedFilter')
+            ->willReturnSelf();
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
             ->willReturnSelf();
 
         $this->subscriberCollection->expects($this->once())
@@ -167,5 +180,57 @@ class ExportOmittedContactsTest extends AbstractTestCase
         $this->exportOmittedContacts->run();
 
         $this->assertSame($expectedPublishArguments, $actualPublishArguments);
+    }
+
+    public function testRunWithRetryAllOmittedSkipsCustomerGroupFilter()
+    {
+        $customerIds = [123, 456];
+        $emails = ['example1@example.com', 'example2@example.com'];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactOmittedFilter')
+            ->with(false)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn($customerIds);
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('excludeCustomers')
+            ->willReturnSelf();
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('addContactOmittedFilter')
+            ->willReturnSelf();
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('getAllEmails')
+            ->willReturn($emails);
+
+        $this->publisher->expects($this->exactly(4))
+            ->method('publish');
+
+        $this->exportOmittedContacts->run();
     }
 }

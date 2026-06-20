@@ -14,6 +14,7 @@
 				<dead_letter_enabled>0</dead_letter_enabled>
 				<backoff_enabled>0</backoff_enabled>
 				<backoff_threshold>5</backoff_threshold>
+				<retry_all_omitted>0</retry_all_omitted>
 			</export>
 		</activecampaign>
 	</default>

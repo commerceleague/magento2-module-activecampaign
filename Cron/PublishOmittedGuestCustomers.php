@@ -60,8 +60,11 @@ class PublishOmittedGuestCustomers implements CronInterface
         /** @var CustomerCollection $customerCollection */
         $customerCollection = $this->customerCollectionFactory->create();
         $customerCollection->addOmittedFilter();
-        $customerCollection->addExportFilterOrderStatus();
-        $customerCollection->addExportFilterStartDate();
+        $customerCollection->addNotDeadLetteredFilter();
+        if (!$this->configHelper->isRetryAllOmittedEnabled()) {
+            $customerCollection->addExportFilterOrderStatus();
+            $customerCollection->addExportFilterStartDate();
+        }
 
         return $customerCollection->getItems();
     }

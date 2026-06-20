@@ -60,7 +60,9 @@ class PublishOmittedContacts implements CronInterface
     {
         /** @var CustomerCollection $customerCollection */
         $customerCollection = $this->customerCollectionFactory->create();
-        $customerCollection->addContactOmittedFilter();
+        $applyCustomerGroupFilter = !$this->configHelper->isRetryAllOmittedEnabled();
+        $customerCollection->addContactOmittedFilter($applyCustomerGroupFilter);
+        $customerCollection->addContactNotDeadLetteredFilter();
 
         return $customerCollection->getAllIds();
     }
@@ -71,6 +73,7 @@ class PublishOmittedContacts implements CronInterface
         $subscriberCollection = $this->subscriberCollectionFactory->create();
         $subscriberCollection->excludeCustomers();
         $subscriberCollection->addContactOmittedFilter();
+        $subscriberCollection->addNotDeadLetteredFilter();
 
         return $subscriberCollection->getAllEmails();
     }

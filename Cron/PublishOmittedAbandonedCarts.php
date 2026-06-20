@@ -51,8 +51,11 @@ class PublishOmittedAbandonedCarts implements CronInterface
     {
         /** @var QuoteCollection $quoteCollection */
         $quoteCollection = $this->quoteCollectionFactory->create();
-        $quoteCollection->addAbandonedFilter();
+        if (!$this->configHelper->isRetryAllOmittedEnabled()) {
+            $quoteCollection->addAbandonedFilter();
+        }
         $quoteCollection->addOmittedFilter();
+        $quoteCollection->addNotDeadLetteredFilter();
 
         return $quoteCollection->getAllIds();
     }

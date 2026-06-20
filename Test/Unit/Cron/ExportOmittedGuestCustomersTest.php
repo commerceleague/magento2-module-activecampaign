@@ -5,16 +5,15 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\PublishOmittedCustomers;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedGuestCustomers;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\CollectionFactory as CustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\Collection as CustomerCollection;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class ExportOmittedCustomersTest extends AbstractTestCase
+class ExportOmittedGuestCustomersTest extends AbstractTestCase
 {
 
     /**
@@ -38,9 +37,9 @@ class ExportOmittedCustomersTest extends AbstractTestCase
     protected $publisher;
 
     /**
-     * @var PublishOmittedCustomers
+     * @var PublishOmittedGuestCustomers
      */
-    protected $exportOmittedCustomers;
+    protected $exportOmittedGuestCustomers;
 
     protected function setUp(): void
     {
@@ -59,7 +58,7 @@ class ExportOmittedCustomersTest extends AbstractTestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedCustomers = new PublishOmittedCustomers(
+        $this->exportOmittedGuestCustomers = new PublishOmittedGuestCustomers(
             $this->configHelper,
             $this->customerCollectionFactory,
             $this->publisher
@@ -73,12 +72,12 @@ class ExportOmittedCustomersTest extends AbstractTestCase
             ->willReturn(false);
 
         $this->customerCollection->expects($this->never())
-            ->method('addCustomerOmittedFilter');
+            ->method('addOmittedFilter');
 
-        $this->exportOmittedCustomers->run();
+        $this->exportOmittedGuestCustomers->run();
     }
 
-    public function testRunContactExportDisabled()
+    public function testRunCustomerExportDisabled()
     {
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
@@ -89,15 +88,13 @@ class ExportOmittedCustomersTest extends AbstractTestCase
             ->willReturn(false);
 
         $this->customerCollection->expects($this->never())
-            ->method('addCustomerOmittedFilter');
+            ->method('addOmittedFilter');
 
-        $this->exportOmittedCustomers->run();
+        $this->exportOmittedGuestCustomers->run();
     }
 
     public function testRun()
     {
-        $customerIds = [123, 456];
-
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
             ->willReturn(true);
@@ -111,38 +108,33 @@ class ExportOmittedCustomersTest extends AbstractTestCase
             ->willReturn(false);
 
         $this->customerCollection->expects($this->once())
-            ->method('addCustomerOmittedFilter')
-            ->with(true)
+            ->method('addOmittedFilter')
             ->willReturnSelf();
 
         $this->customerCollection->expects($this->once())
-            ->method('addCustomerNotDeadLetteredFilter')
+            ->method('addNotDeadLetteredFilter')
             ->willReturnSelf();
 
         $this->customerCollection->expects($this->once())
-            ->method('getAllIds')
-            ->willReturn($customerIds);
+            ->method('addExportFilterOrderStatus')
+            ->willReturnSelf();
 
-        $expectedPublishArguments = [
-            [Topics::CUSTOMER_CUSTOMER_EXPORT, json_encode(['magento_customer_id' => $customerIds[0]])],
-            [Topics::CUSTOMER_CUSTOMER_EXPORT, json_encode(['magento_customer_id' => $customerIds[1]])],
-        ];
-        $actualPublishArguments = [];
-        $this->publisher->expects($this->exactly(2))
-            ->method('publish')
-            ->willReturnCallback(function (...$args) use (&$actualPublishArguments) {
-                $actualPublishArguments[] = $args;
-            });
+        $this->customerCollection->expects($this->once())
+            ->method('addExportFilterStartDate')
+            ->willReturnSelf();
 
-        $this->exportOmittedCustomers->run();
+        $this->customerCollection->expects($this->once())
+            ->method('getItems')
+            ->willReturn([]);
 
-        $this->assertSame($expectedPublishArguments, $actualPublishArguments);
+        $this->publisher->expects($this->never())
+            ->method('publish');
+
+        $this->exportOmittedGuestCustomers->run();
     }
 
-    public function testRunWithRetryAllOmittedSkipsCustomerGroupFilter()
+    public function testRunWithRetryAllOmittedSkipsWindowFilters()
     {
-        $customerIds = [123, 456];
-
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
             ->willReturn(true);
@@ -156,21 +148,23 @@ class ExportOmittedCustomersTest extends AbstractTestCase
             ->willReturn(true);
 
         $this->customerCollection->expects($this->once())
-            ->method('addCustomerOmittedFilter')
-            ->with(false)
+            ->method('addOmittedFilter')
             ->willReturnSelf();
 
         $this->customerCollection->expects($this->once())
-            ->method('addCustomerNotDeadLetteredFilter')
+            ->method('addNotDeadLetteredFilter')
             ->willReturnSelf();
 
+        $this->customerCollection->expects($this->never())
+            ->method('addExportFilterOrderStatus');
+
+        $this->customerCollection->expects($this->never())
+            ->method('addExportFilterStartDate');
+
         $this->customerCollection->expects($this->once())
-            ->method('getAllIds')
-            ->willReturn($customerIds);
+            ->method('getItems')
+            ->willReturn([]);
 
-        $this->publisher->expects($this->exactly(2))
-            ->method('publish');
-
-        $this->exportOmittedCustomers->run();
+        $this->exportOmittedGuestCustomers->run();
     }
 }

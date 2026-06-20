@@ -31,6 +31,7 @@ class Config extends AbstractHelper
     private const XML_PATH_EXPORT_DEAD_LETTER_ENABLED = 'activecampaign/export/dead_letter_enabled';
     private const XML_PATH_EXPORT_BACKOFF_ENABLED     = 'activecampaign/export/backoff_enabled';
     private const XML_PATH_EXPORT_BACKOFF_THRESHOLD   = 'activecampaign/export/backoff_threshold';
+    private const XML_PATH_EXPORT_RETRY_ALL_OMITTED   = 'activecampaign/export/retry_all_omitted';
 
     private const DEFAULT_BACKOFF_THRESHOLD = 5;
 
@@ -131,6 +132,15 @@ class Config extends AbstractHelper
             return self::DEFAULT_BACKOFF_THRESHOLD;
         }
         return $threshold;
+    }
+
+    /**
+     * Whether the omitted crons should ignore the date/status/customer-group window
+     * filters and retry ALL non-dead-lettered rows (defaults to false / today's behavior)
+     */
+    public function isRetryAllOmittedEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_RETRY_ALL_OMITTED);
     }
 
     public function isWebhookEnabled(): bool
