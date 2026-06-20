@@ -55,7 +55,10 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
         try {
             $apiResponse = $this->performApiRequest($customer, $request);
 
-            if (!isset($apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'])) {
+            $activeCampaignEcomCustomerId = $this->extractActiveCampaignId(
+                $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
+            );
+            if ($activeCampaignEcomCustomerId === null) {
                 $this->getLogger()->error(sprintf(
                     '%s: missing "%s.id" in API response for Magento customer id "%s"; skipping save.',
                     static::class,
@@ -65,7 +68,6 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
                 return;
             }
 
-            $activeCampaignEcomCustomerId = $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'];
             $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
             $this->customerRepository->save($customer);
         } catch (UnprocessableEntityHttpException $e) {

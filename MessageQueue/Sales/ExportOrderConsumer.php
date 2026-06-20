@@ -61,7 +61,8 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         try {
             $apiResponse = $this->performApiRequest($order, $request);
 
-            if (!isset($apiResponse[self::RESPONSE_KEY_ORDER]['id'])) {
+            $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null);
+            if ($activeCampaignId === null) {
                 $this->getLogger()->error(sprintf(
                     '%s: missing "%s.id" in API response for Magento order id "%s"; skipping save.',
                     static::class,
@@ -71,7 +72,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 return;
             }
 
-            $order->setActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id']);
+            $order->setActiveCampaignId($activeCampaignId);
 
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
@@ -82,8 +83,11 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 return;
             }
 
-            if ($outcome->isDuplicate() && isset($outcome->payload[self::RESPONSE_KEY_ORDER]['id'])) {
-                $order->setActiveCampaignId((int)$outcome->payload[self::RESPONSE_KEY_ORDER]['id']);
+            $duplicateId = $outcome->isDuplicate()
+                ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_ORDER]['id'] ?? null)
+                : null;
+            if ($duplicateId !== null) {
+                $order->setActiveCampaignId($duplicateId);
                 $this->orderRepository->save($order);
                 return;
             }

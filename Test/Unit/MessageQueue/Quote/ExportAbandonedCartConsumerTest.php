@@ -302,7 +302,7 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
     {
         $quoteId = 123;
         $resolvedId = 555;
-        $request = ['externalid' => 'EXT-1'];
+        $request = ['externalcheckoutid' => $quoteId];
         $responseErrors = [['code' => 'duplicate']];
 
         $this->quote->expects($this->once())
@@ -348,7 +348,7 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
 
         $this->orderApi->expects($this->once())
             ->method('listPerPage')
-            ->with(1, 0, ['filters' => ['externalid' => 'EXT-1']])
+            ->with(1, 0, ['filters' => ['externalcheckoutid' => $quoteId]])
             ->willReturn($page);
 
         $this->order->expects($this->once())
@@ -366,7 +366,7 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
     public function testConsumeDuplicateLookupEmptyDoesNotFatal()
     {
         $quoteId = 123;
-        $request = ['externalid' => 'EXT-1'];
+        $request = ['externalcheckoutid' => $quoteId];
         $responseErrors = [['code' => 'duplicate']];
 
         $this->quote->expects($this->once())
@@ -412,7 +412,7 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
 
         $this->orderApi->expects($this->once())
             ->method('listPerPage')
-            ->with(1, 0, ['filters' => ['externalid' => 'EXT-1']])
+            ->with(1, 0, ['filters' => ['externalcheckoutid' => $quoteId]])
             ->willReturn($page);
 
         $this->order->expects($this->never())

@@ -66,7 +66,8 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
         try {
             $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
 
-            if (!isset($apiResponse[self::RESPONSE_KEY_CONTACT]['id'])) {
+            $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_CONTACT]['id'] ?? null);
+            if ($activeCampaignId === null) {
                 $this->getLogger()->error(sprintf(
                     '%s: missing "%s.id" in API response for contact id "%s"; skipping save.',
                     static::class,
@@ -76,7 +77,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                 return;
             }
 
-            $contact->setActiveCampaignId($apiResponse[self::RESPONSE_KEY_CONTACT]['id']);
+            $contact->setActiveCampaignId($activeCampaignId);
             $this->contactRepository->save($contact);
 
             // trigger event after contact has been saved

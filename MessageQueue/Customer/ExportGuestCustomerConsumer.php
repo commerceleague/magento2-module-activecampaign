@@ -48,7 +48,10 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
             try {
                 $apiResponse = $this->performApiRequest($guestCustomer, $request);
 
-                if (!isset($apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'])) {
+                $activeCampaignId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
+                );
+                if ($activeCampaignId === null) {
                     $this->getLogger()->error(sprintf(
                         '%s: missing "%s.id" in API response for guest customer id "%s"; skipping save.',
                         static::class,
@@ -58,7 +61,7 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                     return;
                 }
 
-                $guestCustomer->setActiveCampaignId((int)$apiResponse[self::RESPONSE_KEY_CUSTOMER]['id']);
+                $guestCustomer->setActiveCampaignId($activeCampaignId);
                 $this->customerRepository->save($guestCustomer);
             } catch (UnprocessableEntityHttpException $e) {
                 try {
@@ -72,8 +75,11 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                     return;
                 }
 
-                if ($outcome->isDuplicate() && isset($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'])) {
-                    $guestCustomer->setActiveCampaignId((int)$outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id']);
+                $duplicateId = $outcome->isDuplicate()
+                    ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null)
+                    : null;
+                if ($duplicateId !== null) {
+                    $guestCustomer->setActiveCampaignId($duplicateId);
                     $this->customerRepository->save($guestCustomer);
                     return;
                 }

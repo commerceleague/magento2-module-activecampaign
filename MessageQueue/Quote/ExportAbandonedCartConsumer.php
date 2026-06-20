@@ -68,7 +68,8 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
         try {
             $apiResponse = $this->client->getOrderApi()->create(['ecomOrder' => $request]);
 
-            if (!isset($apiResponse[self::RESPONSE_KEY_ORDER]['id'])) {
+            $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null);
+            if ($activeCampaignId === null) {
                 $this->getLogger()->error(sprintf(
                     '%s: missing "%s.id" in API response for quote id "%s"; skipping save.',
                     static::class,
@@ -78,7 +79,7 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
                 return;
             }
 
-            $order->setActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id']);
+            $order->setActiveCampaignId($activeCampaignId);
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
             try {
@@ -88,8 +89,11 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
                 return;
             }
 
-            if ($outcome->isDuplicate() && isset($outcome->payload[self::RESPONSE_KEY_ORDER]['id'])) {
-                $order->setActiveCampaignId((int)$outcome->payload[self::RESPONSE_KEY_ORDER]['id']);
+            $duplicateId = $outcome->isDuplicate()
+                ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_ORDER]['id'] ?? null)
+                : null;
+            if ($duplicateId !== null) {
+                $order->setActiveCampaignId($duplicateId);
                 $this->orderRepository->save($order);
                 return;
             }
@@ -114,7 +118,7 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
             0,
             [
                 'filters' => [
-                    'externalid' => $request['externalid']
+                    'externalcheckoutid' => $request['externalcheckoutid']
                 ]
             ]
         );

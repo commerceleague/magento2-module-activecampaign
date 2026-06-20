@@ -43,6 +43,22 @@ abstract class AbstractConsumer
     }
 
     /**
+     * Returns the ActiveCampaign id as a positive int, or null when the value is
+     * missing, non-numeric or not greater than zero. AC ids are always positive,
+     * so a sentinel like 0/"0" must never be persisted.
+     */
+    protected function extractActiveCampaignId(mixed $value): ?int
+    {
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $id = (int)$value;
+
+        return $id > 0 ? $id : null;
+    }
+
+    /**
      * @param array<mixed> $request
      * @return mixed
      */
