@@ -68,7 +68,7 @@ class ExportCustomerConsumerTest extends AbstractTestCase
      */
     protected $exportCustomerConsumer;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->magentoCustomerRepository = $this->createMock(MagentoCustomerRepositoryInterface::class);
         $this->logger = $this->createMock(Logger::class);

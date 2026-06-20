@@ -35,9 +35,6 @@ abstract class AbstractTestCase extends TestCase
             ->with([$apiResponseKey => $request])
             ->willThrowException($unprocessableEntityHttpException);
 
-        $logger->expects($this->exactly(4))
-            ->method('error');
-
         $unprocessableEntityHttpException->expects($this->atLeastOnce())
             ->method('getResponseErrors')
             ->willReturn($responseErrors);
@@ -54,12 +51,24 @@ abstract class AbstractTestCase extends TestCase
 //            ->method('error')
 //            ->with($responseMessage);
 
-        $logger->expects($this->at(2))
+        // PHPUnit 11 removed the ->at() matcher; assert the ordered error() calls
+        // via a call-index counter while preserving the exactly(4) expectation and
+        // the original argument assertions for the 3rd and 4th calls.
+        $errorCallIndex = 0;
+        $logger->expects($this->exactly(4))
             ->method('error')
-            ->with(print_r($responseErrors, true));
+            ->with($this->callback(function ($argument) use (&$errorCallIndex, $responseErrors, $request) {
+                if ($errorCallIndex === 2) {
+                    $this->assertSame(print_r($responseErrors, true), $argument);
+                }
 
-        $logger->expects($this->at(3))
-            ->method('error')
-            ->with(print_r($request, true));
+                if ($errorCallIndex === 3) {
+                    $this->assertSame(print_r($request, true), $argument);
+                }
+
+                $errorCallIndex++;
+
+                return true;
+            }));
     }
 }

@@ -74,11 +74,11 @@ class ExportContactConsumerTest extends AbstractTestCase
      */
     protected $eventManager;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->subscriberFactory = $this->getMockBuilder(SubscriberFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->subscriber = $this->createMock(Subscriber::class);
@@ -106,13 +106,13 @@ class ExportContactConsumerTest extends AbstractTestCase
         $email = 'example@example.com';
 
         $this->subscriber->expects($this->once())
-            ->method('loadByEmail')
-            ->with($email)
+            ->method('load')
+            ->with($email, 'subscriber_email')
             ->willReturnSelf();
 
         $this->subscriber->expects($this->once())
             ->method('getId')
-            ->willReturn(null);
+            ->willReturn(0);
 
         $this->logger->expects($this->once())
             ->method('error')
@@ -130,8 +130,8 @@ class ExportContactConsumerTest extends AbstractTestCase
         $request = ['request'];
 
         $this->subscriber->expects($this->once())
-            ->method('loadByEmail')
-            ->with($email)
+            ->method('load')
+            ->with($email, 'subscriber_email')
             ->willReturnSelf();
 
         $this->subscriber->expects($this->once())
@@ -179,8 +179,8 @@ class ExportContactConsumerTest extends AbstractTestCase
         $responseErrors = ['first error', 'second error'];
 
         $this->subscriber->expects($this->once())
-            ->method('loadByEmail')
-            ->with($email)
+            ->method('load')
+            ->with($email, 'subscriber_email')
             ->willReturnSelf();
 
         $this->subscriber->expects($this->once())
@@ -223,8 +223,8 @@ class ExportContactConsumerTest extends AbstractTestCase
         $response = ['contact' => ['id' => $activeCampaignId]];
 
         $this->subscriber->expects($this->once())
-            ->method('loadByEmail')
-            ->with($email)
+            ->method('load')
+            ->with($email, 'subscriber_email')
             ->willReturnSelf();
 
         $this->subscriber->expects($this->once())

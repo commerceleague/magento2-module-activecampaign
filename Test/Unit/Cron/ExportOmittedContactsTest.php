@@ -54,13 +54,13 @@ class ExportOmittedContactsTest extends AbstractTestCase
      */
     protected $exportOmittedContacts;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->customerCollection = $this->createMock(CustomerCollection::class);
@@ -71,7 +71,7 @@ class ExportOmittedContactsTest extends AbstractTestCase
 
         $this->subscriberCollectionFactory = $this->getMockBuilder(SubscriberCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->subscriberCollection = $this->createMock(SubscriberCollection::class);
@@ -151,37 +151,21 @@ class ExportOmittedContactsTest extends AbstractTestCase
             ->method('getAllEmails')
             ->willReturn($emails);
 
+        $expectedPublishArguments = [
+            [Topics::CUSTOMER_CONTACT_EXPORT, json_encode(['magento_customer_id' => $customerIds[0]])],
+            [Topics::CUSTOMER_CONTACT_EXPORT, json_encode(['magento_customer_id' => $customerIds[1]])],
+            [Topics::NEWSLETTER_CONTACT_EXPORT, json_encode(['email' => $emails[0]])],
+            [Topics::NEWSLETTER_CONTACT_EXPORT, json_encode(['email' => $emails[1]])],
+        ];
+        $actualPublishArguments = [];
         $this->publisher->expects($this->exactly(4))
-            ->method('publish');
-
-        $this->publisher->expects($this->at(0))
             ->method('publish')
-            ->with(
-                Topics::CUSTOMER_CONTACT_EXPORT,
-                json_encode(['magento_customer_id' => $customerIds[0]])
-            );
-
-        $this->publisher->expects($this->at(1))
-            ->method('publish')
-            ->with(
-                Topics::CUSTOMER_CONTACT_EXPORT,
-                json_encode(['magento_customer_id' => $customerIds[1]])
-            );
-
-        $this->publisher->expects($this->at(2))
-            ->method('publish')
-            ->with(
-                Topics::NEWSLETTER_CONTACT_EXPORT,
-                json_encode(['email' => $emails[0]])
-            );
-
-        $this->publisher->expects($this->at(3))
-            ->method('publish')
-            ->with(
-                Topics::NEWSLETTER_CONTACT_EXPORT,
-                json_encode(['email' => $emails[1]])
-            );
+            ->willReturnCallback(function (...$args) use (&$actualPublishArguments) {
+                $actualPublishArguments[] = $args;
+            });
 
         $this->exportOmittedContacts->run();
+
+        $this->assertSame($expectedPublishArguments, $actualPublishArguments);
     }
 }

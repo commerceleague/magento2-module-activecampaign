@@ -67,11 +67,11 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
      */
     protected $exportAbandonedCartConsumer;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->quote = $this->createMock(Quote::class);

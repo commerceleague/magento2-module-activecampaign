@@ -23,7 +23,7 @@ class ConfigTest extends AbstractTestCase
      */
     protected $config;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->scopeConfig = $this->createPartialMock(
             ScopeConfigInterface::class,

@@ -44,7 +44,7 @@ class CustomerRepositoryTest extends AbstractTestCase
      */
     protected $customerRepository;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->customerResource = $this->getMockBuilder(CustomerResource::class)
             ->disableOriginalConstructor()
@@ -52,7 +52,7 @@ class CustomerRepositoryTest extends AbstractTestCase
 
         $this->customerFactory = $this->getMockBuilder(CustomerFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->customer = $this->getMockBuilder(Customer::class)

@@ -48,7 +48,7 @@ class ExportContactObserverTest extends AbstractTestCase
      */
     protected $exportContactObserver;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->publisher = $this->createMock(PublisherInterface::class);

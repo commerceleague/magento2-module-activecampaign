@@ -30,7 +30,7 @@ class ContactTest extends AbstractTestCase
      */
     protected $contact;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->context = $this->createMock(Context::class);
         $this->resource = $this->createMock(ContactResource::class);

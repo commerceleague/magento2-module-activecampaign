@@ -69,7 +69,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
      */
     protected $exportOrderConsumer;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->magentoOrderRepository = $this->createMock(MagentoOrderRepositoryInterface::class);
         $this->logger = $this->createMock(Logger::class);

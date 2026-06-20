@@ -30,7 +30,7 @@ class CustomerTest extends AbstractTestCase
      */
     protected $customer;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->context = $this->createMock(Context::class);
         $this->resource = $this->createMock(CustomerResource::class);

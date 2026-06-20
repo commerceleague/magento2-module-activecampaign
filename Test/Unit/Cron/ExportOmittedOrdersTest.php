@@ -42,13 +42,13 @@ class ExportOmittedOrdersTest extends AbstractTestCase
      */
     protected $exportOmittedOrders;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->orderCollectionFactory = $this->getMockBuilder(OrderCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->orderCollection = $this->createMock(OrderCollection::class);
@@ -108,23 +108,19 @@ class ExportOmittedOrdersTest extends AbstractTestCase
             ->method('getAllIds')
             ->willReturn($orderIds);
 
+        $expectedPublishArguments = [
+            [Topics::SALES_ORDER_EXPORT, json_encode(['magento_order_id' => $orderIds[0]])],
+            [Topics::SALES_ORDER_EXPORT, json_encode(['magento_order_id' => $orderIds[1]])],
+        ];
+        $actualPublishArguments = [];
         $this->publisher->expects($this->exactly(2))
-            ->method('publish');
-
-        $this->publisher->expects($this->at(0))
             ->method('publish')
-            ->with(
-                Topics::SALES_ORDER_EXPORT,
-                json_encode(['magento_order_id' => $orderIds[0]])
-            );
-
-        $this->publisher->expects($this->at(1))
-            ->method('publish')
-            ->with(
-                Topics::SALES_ORDER_EXPORT,
-                json_encode(['magento_order_id' => $orderIds[1]])
-            );
+            ->willReturnCallback(function (...$args) use (&$actualPublishArguments) {
+                $actualPublishArguments[] = $args;
+            });
 
         $this->exportOmittedOrders->run();
+
+        $this->assertSame($expectedPublishArguments, $actualPublishArguments);
     }
 }

@@ -2,3 +2,9 @@ vendor/
 phpunit.xml
 .idea/
 reports/
+.env
+.docker/
+compose.yaml
+.stale-sync-conflict-backup/
+.phpunit.result.cache
+.phpunit.cache/

@@ -57,13 +57,13 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
      */
     protected $exportAbandonedCartCommandTester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->quoteCollectionFactory = $this->getMockBuilder(QuoteCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->quoteCollection = $this->createMock(QuoteCollection::class);
@@ -74,7 +74,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
 
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->publisher = $this->createMock(PublisherInterface::class);
@@ -187,7 +187,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             'No abandoned cart(s) found matching your criteria',
             $this->exportAbandonedCartCommandTester->getDisplay()
         );
@@ -239,7 +239,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
             ['--quote-id' => $quoteId]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 abandoned cart(s) have been scheduled for export.',
             $this->exportAbandonedCartCommandTester->getDisplay()
         );
@@ -283,7 +283,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
             ['--omitted' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '2 abandoned cart(s) have been scheduled for export.',
             $this->exportAbandonedCartCommandTester->getDisplay()
         );
@@ -326,7 +326,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '3 abandoned cart(s) have been scheduled for export.',
             $this->exportAbandonedCartCommandTester->getDisplay()
         );

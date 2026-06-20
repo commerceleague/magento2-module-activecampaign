@@ -42,13 +42,13 @@ class ExportOmittedCustomersTest extends AbstractTestCase
      */
     protected $exportOmittedCustomers;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->customerCollection = $this->createMock(CustomerCollection::class);
@@ -114,23 +114,19 @@ class ExportOmittedCustomersTest extends AbstractTestCase
             ->method('getAllIds')
             ->willReturn($customerIds);
 
+        $expectedPublishArguments = [
+            [Topics::CUSTOMER_CUSTOMER_EXPORT, json_encode(['magento_customer_id' => $customerIds[0]])],
+            [Topics::CUSTOMER_CUSTOMER_EXPORT, json_encode(['magento_customer_id' => $customerIds[1]])],
+        ];
+        $actualPublishArguments = [];
         $this->publisher->expects($this->exactly(2))
-            ->method('publish');
-
-        $this->publisher->expects($this->at(0))
             ->method('publish')
-            ->with(
-                Topics::CUSTOMER_CUSTOMER_EXPORT,
-                json_encode(['magento_customer_id' => $customerIds[0]])
-            );
-
-        $this->publisher->expects($this->at(1))
-            ->method('publish')
-            ->with(
-                Topics::CUSTOMER_CUSTOMER_EXPORT,
-                json_encode(['magento_customer_id' => $customerIds[1]])
-            );
+            ->willReturnCallback(function (...$args) use (&$actualPublishArguments) {
+                $actualPublishArguments[] = $args;
+            });
 
         $this->exportOmittedCustomers->run();
+
+        $this->assertSame($expectedPublishArguments, $actualPublishArguments);
     }
 }

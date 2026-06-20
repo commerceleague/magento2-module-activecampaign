@@ -22,7 +22,7 @@ class ClientTest extends AbstractTestCase
      */
     protected $client;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->client = new Client($this->configHelper);

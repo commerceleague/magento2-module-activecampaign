@@ -31,7 +31,7 @@ class OrderTest extends AbstractTestCase
      */
     protected $order;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->context = $this->createMock(Context::class);
         $this->resource = $this->createMock(OrderResource::class);

@@ -57,13 +57,13 @@ class ExportOrderCommandTest extends AbstractTestCase
      */
     protected $exportOrderCommandTester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->orderCollectionFactory = $this->getMockBuilder(OrderCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->orderCollection = $this->createMock(OrderCollection::class);
@@ -74,7 +74,7 @@ class ExportOrderCommandTest extends AbstractTestCase
 
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->publisher = $this->createMock(PublisherInterface::class);
@@ -187,7 +187,7 @@ class ExportOrderCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             'No order(s) found matching your criteria',
             $this->exportOrderCommandTester->getDisplay()
         );
@@ -239,7 +239,7 @@ class ExportOrderCommandTest extends AbstractTestCase
             ['--order-id' => $orderId]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );
@@ -283,7 +283,7 @@ class ExportOrderCommandTest extends AbstractTestCase
             ['--omitted' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '2 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );
@@ -327,7 +327,7 @@ class ExportOrderCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '3 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );

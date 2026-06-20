@@ -57,13 +57,13 @@ class ExportCustomerCommandTest extends AbstractTestCase
      */
     protected $exportCustomerCommandTester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->customerCollection = $this->createMock(CustomerCollection::class);
@@ -76,7 +76,7 @@ class ExportCustomerCommandTest extends AbstractTestCase
 
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->exportCustomerCommand = new ExportCustomerCommand(
@@ -187,7 +187,7 @@ class ExportCustomerCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             'No customer(s) found matching your criteria',
             $this->exportCustomerCommandTester->getDisplay()
         );
@@ -240,7 +240,7 @@ class ExportCustomerCommandTest extends AbstractTestCase
             ['--email' => $email]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 customers(s) have been scheduled for export.',
             $this->exportCustomerCommandTester->getDisplay()
         );
@@ -284,7 +284,7 @@ class ExportCustomerCommandTest extends AbstractTestCase
             ['--omitted' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '2 customers(s) have been scheduled for export.',
             $this->exportCustomerCommandTester->getDisplay()
         );
@@ -325,7 +325,7 @@ class ExportCustomerCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '3 customers(s) have been scheduled for export.',
             $this->exportCustomerCommandTester->getDisplay()
         );

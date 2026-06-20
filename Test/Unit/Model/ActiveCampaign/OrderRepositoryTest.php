@@ -39,7 +39,7 @@ class OrderRepositoryTest extends AbstractTestCase
      */
     protected $orderRepository;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->orderResource = $this->getMockBuilder(OrderResource::class)
             ->disableOriginalConstructor()
@@ -47,7 +47,7 @@ class OrderRepositoryTest extends AbstractTestCase
 
         $this->orderFactory = $this->getMockBuilder(OrderFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->order = $this->getMockBuilder(Order::class)

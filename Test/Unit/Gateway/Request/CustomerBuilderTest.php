@@ -35,12 +35,12 @@ class CustomerBuilderTest extends AbstractTestCase
      */
     protected $customerBuilder;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->magentoCustomer = $this->createMock(MagentoCustomerInterface::class);
         $this->extensionAttributes = $this->getMockBuilder(ExtensionAttributesInterface::class)
-            ->setMethods(['getIsSubscribed'])
+            ->addMethods(['getIsSubscribed'])
             ->getMockForAbstractClass();
 
         $this->customerBuilder = new CustomerBuilder(
@@ -50,7 +50,7 @@ class CustomerBuilderTest extends AbstractTestCase
 
     public function testBuildSubscribed()
     {
-        $connectionId = 123;
+        $connectionId = '123';
         $magentoCustomerId = 456;
         $email = 'example@example.com';
 

@@ -38,7 +38,7 @@ class ContactRepositoryTest extends AbstractTestCase
      */
     protected $contactRepository;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->contactResource = $this->getMockBuilder(ContactResource::class)
             ->disableOriginalConstructor()
@@ -46,7 +46,7 @@ class ContactRepositoryTest extends AbstractTestCase
 
         $this->contactFactory = $this->getMockBuilder(ContactFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->contact = $this->getMockBuilder(Contact::class)

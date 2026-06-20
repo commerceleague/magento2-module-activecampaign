@@ -42,13 +42,13 @@ class ExportOmittedAbandonedCartsTest extends AbstractTestCase
      */
     protected $exportOmittedAbandonedCarts;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->quoteCollectionFactory = $this->getMockBuilder(QuoteCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->quoteCollection = $this->createMock(QuoteCollection::class);
@@ -118,23 +118,19 @@ class ExportOmittedAbandonedCartsTest extends AbstractTestCase
             ->method('getAllIds')
             ->willReturn($quoteIds);
 
+        $expectedPublishArguments = [
+            [Topics::QUOTE_ABANDONED_CART_EXPORT, json_encode(['quote_id' => $quoteIds[0]])],
+            [Topics::QUOTE_ABANDONED_CART_EXPORT, json_encode(['quote_id' => $quoteIds[1]])],
+        ];
+        $actualPublishArguments = [];
         $this->publisher->expects($this->exactly(2))
-            ->method('publish');
-
-        $this->publisher->expects($this->at(0))
             ->method('publish')
-            ->with(
-                Topics::QUOTE_ABANDONED_CART_EXPORT,
-                json_encode(['quote_id' => $quoteIds[0]])
-            );
-
-        $this->publisher->expects($this->at(1))
-            ->method('publish')
-            ->with(
-                Topics::QUOTE_ABANDONED_CART_EXPORT,
-                json_encode(['quote_id' => $quoteIds[1]])
-            );
+            ->willReturnCallback(function (...$args) use (&$actualPublishArguments) {
+                $actualPublishArguments[] = $args;
+            });
 
         $this->exportOmittedAbandonedCarts->run();
+
+        $this->assertSame($expectedPublishArguments, $actualPublishArguments);
     }
 }
