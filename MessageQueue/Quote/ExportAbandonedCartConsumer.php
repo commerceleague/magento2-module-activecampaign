@@ -62,8 +62,19 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
             return;
         }
 
-        $order   = $this->orderRepository->getOrCreateByMagentoQuoteId($quote->getId());
-        $request = $this->abandonedCartRequestBuilder->build($quote);
+        $order = $this->orderRepository->getOrCreateByMagentoQuoteId($quote->getId());
+
+        try {
+            $request = $this->abandonedCartRequestBuilder->build($quote);
+        } catch (\Throwable $e) {
+            $this->getLogger()->error(sprintf(
+                '%s: failed to build request for quote id "%s": %s',
+                static::class,
+                $quote->getId(),
+                $e->getMessage()
+            ));
+            return;
+        }
 
         try {
             $apiResponse = $this->client->getOrderApi()->create(['ecomOrder' => $request]);

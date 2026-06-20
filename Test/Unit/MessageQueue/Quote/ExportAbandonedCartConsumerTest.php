@@ -298,6 +298,45 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
         $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
     }
 
+    public function testBuildFailureDoesNotStrand()
+    {
+        $quoteId = 123;
+
+        $this->quote->expects($this->once())
+            ->method('loadByIdWithoutStore')
+            ->with(123)
+            ->willReturn($this->quote);
+
+        $this->quote->expects($this->any())
+            ->method('getId')
+            ->willReturn($quoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($quoteId)
+            ->willReturn($this->order);
+
+        $this->abandonedCartRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->quote)
+            ->willThrowException(new \RuntimeException('builder boom'));
+
+        // No API request and no save.
+        $this->client->expects($this->never())
+            ->method('getOrderApi');
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
+    }
+
     public function testConsumeDuplicateResolvesAndSaves()
     {
         $quoteId = 123;

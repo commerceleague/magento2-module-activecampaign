@@ -725,6 +725,49 @@ class ExportOrderConsumerTest extends AbstractTestCase
         );
     }
 
+    public function testBuildFailureDoesNotStrand()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willThrowException(new \RuntimeException('builder boom'));
+
+        // No API request, no publishing, no save.
+        $this->client->expects($this->never())
+            ->method('getOrderApi');
+
+        $this->publisher->expects($this->never())
+            ->method('publish');
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
     public function testOrderDeferralCapReachedSkips()
     {
         $magentoOrderId = 123;

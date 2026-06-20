@@ -65,8 +65,19 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             return;
         }
 
-        $order   = $this->orderRepository->getOrCreateByMagentoQuoteId($magentoOrder->getQuoteId());
-        $request = $this->orderRequestBuilder->build($magentoOrder);
+        $order = $this->orderRepository->getOrCreateByMagentoQuoteId($magentoOrder->getQuoteId());
+
+        try {
+            $request = $this->orderRequestBuilder->build($magentoOrder);
+        } catch (\Throwable $e) {
+            $this->getLogger()->error(sprintf(
+                '%s: failed to build request for Magento order id "%s": %s',
+                static::class,
+                $message['magento_order_id'],
+                $e->getMessage()
+            ));
+            return;
+        }
 
         if (empty($request['customerid'])) {
             $deferredCount = (int)($message['deferred_count'] ?? 0);
