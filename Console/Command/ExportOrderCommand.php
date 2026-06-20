@@ -40,6 +40,9 @@ class ExportOrderCommand extends AbstractExportCommand
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getOrderIds(InputInterface $input): array
     {
         /** @var OrderCollection $orderCollection */
@@ -62,7 +65,7 @@ class ExportOrderCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Export orders')
@@ -89,7 +92,7 @@ class ExportOrderCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isOrderExportEnabled()) {
             throw new RuntimeException('Export disabled by system configuration');

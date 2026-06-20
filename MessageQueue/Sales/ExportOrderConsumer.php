@@ -238,6 +238,10 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         return [$key => $items[0]];
     }
 
+    /**
+     * @param array<string, mixed> $request
+     * @return array<string, mixed>
+     */
     private function performApiRequest(OrderInterface $order, array $request): array
     {
         if ($activeCampaignId = $order->getActiveCampaignId()) {

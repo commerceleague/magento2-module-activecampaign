@@ -2,7 +2,7 @@ includes:
 	- phpstan-baseline.neon
 
 parameters:
-    level: 5
+    level: 6
     paths:
         - Api
         - Block
@@ -20,7 +20,4 @@ parameters:
         - vendor/bitexpert/phpstan-magento/autoload.php
 
     ignoreErrors:
-        - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:isPost\(\)#'
-        - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:getPost\(\)#'
-        - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:getPostValue\(\)#'
         - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:isAjax\(\)#'

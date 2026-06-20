@@ -80,7 +80,7 @@ class BackfillMissingIdsCommand extends Command
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Backfill missing ActiveCampaign ids by re-publishing export topics')

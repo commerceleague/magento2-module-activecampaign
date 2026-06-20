@@ -43,7 +43,7 @@ class ExportStatusCommand extends Command
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Report ActiveCampaign export status per mapping table');

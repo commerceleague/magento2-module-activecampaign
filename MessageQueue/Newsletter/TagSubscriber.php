@@ -80,6 +80,10 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
         return [];
     }
 
+    /**
+     * @param array<int, int|string> $tagIds
+     * @return array<int, array<string, mixed>>
+     */
     private function buildRequests(ContactInterface $contact, array $tagIds): array
     {
         $requestBuilder = $this->requestBuilder;

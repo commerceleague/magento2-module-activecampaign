@@ -26,6 +26,7 @@ interface FailureTrackableInterface
 
     /**
      * @param int $exportAttempts
+     * @return self
      */
     public function setExportAttempts(int $exportAttempts);
 
@@ -36,6 +37,7 @@ interface FailureTrackableInterface
 
     /**
      * @param string|null $lastErrorCode
+     * @return self
      */
     public function setLastErrorCode(?string $lastErrorCode);
 
@@ -46,6 +48,7 @@ interface FailureTrackableInterface
 
     /**
      * @param string|null $lastErrorMessage
+     * @return self
      */
     public function setLastErrorMessage(?string $lastErrorMessage);
 
@@ -56,6 +59,7 @@ interface FailureTrackableInterface
 
     /**
      * @param string|null $lastAttemptedAt
+     * @return self
      */
     public function setLastAttemptedAt(?string $lastAttemptedAt);
 
@@ -66,6 +70,7 @@ interface FailureTrackableInterface
 
     /**
      * @param int $exportStatus
+     * @return self
      */
     public function setExportStatus(int $exportStatus);
 }

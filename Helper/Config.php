@@ -179,6 +179,8 @@ class Config extends AbstractHelper
 
     /**
      * Get the tags selected to be added to the Newsletter subscriber
+     *
+     * @return array<int, string>|null
      */
     public function getNewsletterSubscriberTags(): ?array
     {
@@ -208,6 +210,8 @@ class Config extends AbstractHelper
 
     /**
      * Get the set order status filters
+     *
+     * @return array<int, string>|null
      */
     public function getOrderExportStatuses(): ?array
     {
@@ -226,6 +230,11 @@ class Config extends AbstractHelper
         return $this->scopeConfig->getValue(self::XML_PATH_EXPORT_ORDER_START_DATE);
     }
 
+    /**
+     * Get the allowed customer group ids
+     *
+     * @return array<int, string>
+     */
     public function getAllowedCustomerGroupIds(): array
     {
         $list = $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST);

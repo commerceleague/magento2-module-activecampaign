@@ -20,6 +20,9 @@ class CustomerBuilder
     {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function build(MagentoCustomerInterface $magentoCustomer): array
     {
         return [
@@ -30,6 +33,9 @@ class CustomerBuilder
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function buildWithGuest(GuestCustomerInterface $guestCustomer): array
     {
         return [

@@ -140,6 +140,8 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
     }
 
     /**
+     * @param array<string, mixed> $request
+     * @return array<string, mixed>
      * @throws HttpException
      */
     private function performApiRequest(GuestCustomerInterface $customer, array $request): array

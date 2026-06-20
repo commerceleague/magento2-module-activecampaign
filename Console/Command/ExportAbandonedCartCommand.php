@@ -42,7 +42,7 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Export abandoned carts')
@@ -69,7 +69,7 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isAbandonedCartExportEnabled()) {
             throw new RuntimeException('Export disabled by system configuration');
@@ -132,6 +132,9 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
 
     /**
      * @throws \Exception
+     */
+    /**
+     * @return array<int, string>
      */
     private function getQuoteIds(InputInterface $input): array
     {

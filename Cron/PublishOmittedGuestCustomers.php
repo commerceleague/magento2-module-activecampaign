@@ -55,6 +55,9 @@ class PublishOmittedGuestCustomers implements CronInterface
         }
     }
 
+    /**
+     * @return array<int, GuestCustomerInterface>
+     */
     private function getCustomers(): array
     {
         /** @var CustomerCollection $customerCollection */
@@ -66,6 +69,9 @@ class PublishOmittedGuestCustomers implements CronInterface
             $customerCollection->addExportFilterStartDate();
         }
 
-        return $customerCollection->getItems();
+        /** @var array<int, GuestCustomerInterface> $items */
+        $items = $customerCollection->getItems();
+
+        return $items;
     }
 }

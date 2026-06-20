@@ -45,6 +45,7 @@ class PublishOmittedAbandonedCarts implements CronInterface
     }
 
     /**
+     * @return array<int, string>
      * @throws Exception
      */
     private function getQuoteIds(): array

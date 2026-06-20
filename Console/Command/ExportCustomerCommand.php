@@ -39,7 +39,7 @@ class ExportCustomerCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Export customers')
@@ -66,7 +66,7 @@ class ExportCustomerCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isCustomerExportEnabled()) {
             throw new RuntimeException('Export disabled by system configuration');
@@ -126,6 +126,9 @@ class ExportCustomerCommand extends AbstractExportCommand
         return Cli::RETURN_SUCCESS;
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function getCustomerIds(InputInterface $input): array
     {
         /** @var CustomerCollection $customerCollection */

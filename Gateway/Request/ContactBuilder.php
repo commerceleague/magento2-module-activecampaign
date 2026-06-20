@@ -16,6 +16,9 @@ use Magento\Newsletter\Model\Subscriber;
 class ContactBuilder
 {
 
+    /**
+     * @return array<string, mixed>
+     */
     public function buildWithMagentoCustomer(MagentoCustomerInterface $magentoCustomer): array
     {
         return [
@@ -26,6 +29,9 @@ class ContactBuilder
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function buildWithSubscriber(Subscriber $subscriber): array
     {
         return [
@@ -34,6 +40,9 @@ class ContactBuilder
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function buildWithGuestContact(ContactInterface $contact, string $firstname, string $lastname): array
     {
         return [

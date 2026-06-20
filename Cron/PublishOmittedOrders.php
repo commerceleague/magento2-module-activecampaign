@@ -25,6 +25,9 @@ class PublishOmittedOrders implements CronInterface
     }
 
 
+    /**
+     * @return array<int, string>
+     */
     public function getOrderIds(): array
     {
         /** @var OrderCollection $orderCollection */
