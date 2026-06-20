@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerReq
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -50,15 +51,24 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                 $this->customerRepository->save($guestCustomer);
             } catch (UnprocessableEntityHttpException $e) {
                 try {
-                    $apiResponse = $this->handleUnprocessableEntityHttpException(
+                    $outcome = $this->handleUnprocessableEntityHttpException(
                         $e,
                         $request,
                         self::RESPONSE_KEY_CUSTOMER
                     );
-                } catch (UnprocessableEntityHttpException $e) {
-                    $this->logUnprocessableEntityHttpException($e, $request);
+                } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                    $this->logUnprocessableEntityHttpException($duplicateLookupException, $request);
                     return;
                 }
+
+                if ($outcome->isDuplicate() && isset($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'])) {
+                    $guestCustomer->setActiveCampaignId((int)$outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id']);
+                    $this->customerRepository->save($guestCustomer);
+                    return;
+                }
+
+                $this->logUnprocessableEntityHttpException($e, $request);
+                return;
             } catch (HttpException $e) {
                 $this->logException($e);
                 return;
@@ -92,6 +102,12 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
                 ]
             ]
         );
-        return [$key => $response->getItems()[0]];
+
+        $items = $response->getItems();
+        if ($items === []) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $items[0]];
     }
 }

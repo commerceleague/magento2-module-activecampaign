@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Request\AbandonedCartBuilder;
+use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
@@ -69,6 +70,19 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
             $order->setActiveCampaignId($apiResponse['ecomOrder']['id']);
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
+            try {
+                $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
+            } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                $this->logUnprocessableEntityHttpException($duplicateLookupException, $request);
+                return;
+            }
+
+            if ($outcome->isDuplicate() && isset($outcome->payload[self::RESPONSE_KEY_ORDER]['id'])) {
+                $order->setActiveCampaignId((int)$outcome->payload[self::RESPONSE_KEY_ORDER]['id']);
+                $this->orderRepository->save($order);
+                return;
+            }
+
             $this->logUnprocessableEntityHttpException($e, $request);
             return;
         } catch (HttpException $e) {
@@ -82,7 +96,23 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key): void
+    function processDuplicateEntity(array $request, string $key): array
     {
+        $response = $this->client->getOrderApi()->listPerPage(
+            1,
+            0,
+            [
+                'filters' => [
+                    'externalid' => $request['externalid']
+                ]
+            ]
+        );
+
+        $items = $response->getItems();
+        if ($items === []) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $items[0]];
     }
 }

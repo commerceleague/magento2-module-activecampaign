@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\MessageQueue;
 
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\Model\Export\UnprocessableOutcome;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
 
@@ -42,8 +43,8 @@ abstract class AbstractConsumer
     }
 
     /**
-     * @param array<mixed>                     $request
-     * @return void
+     * @param array<mixed> $request
+     * @return mixed
      */
     public function logUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $unprocessableEntityHttpException,
@@ -53,33 +54,50 @@ abstract class AbstractConsumer
         $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
         $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
         $this->getLogger()->error(print_r($request, true));
-        return '';
+        return null;
     }
 
     /**
+     * Resolves the existing ActiveCampaign entity behind a 422 "duplicate" error.
+     *
+     * Implementations that recover a duplicate return `[$key => $resolvedItem]`
+     * (where `$resolvedItem` is the AC entity array containing an `'id'`); stub
+     * implementations that do not recover may return void. The return value is
+     * passed through to UnprocessableOutcome::$payload, so a non-array return
+     * simply yields an empty payload and is treated as "not resolved".
      *
      * @param array<mixed> $request
      *
-     * @return mixed
+     * @return array<string,mixed>|void
      */
     abstract function processDuplicateEntity(array $request, string $key);
 
     /**
      *
-     * @param array<mixed>                     $request
-     *
+     * @param array<mixed> $request
      */
     protected function handleUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $e,
         array                            $request,
         string                           $key
-    ) {
-        $errors    = $e->getResponseErrors();
-        $errors    = array_shift($errors);
-        $errorCode = $errors['code'];
+    ): UnprocessableOutcome {
+        $errors  = $e->getResponseErrors();
+        $first   = array_shift($errors);
+        $code    = is_array($first) ? ($first['code'] ?? null) : null;
+        $message = is_array($first) ? ($first['title'] ?? $first['message'] ?? null) : null;
 
-        if ($errorCode == self::ERROR_CODE_DUPLICATE) {
-            return $this->processDuplicateEntity($request, $key);
+        if ($code === self::ERROR_CODE_DUPLICATE) {
+            $resolved = $this->processDuplicateEntity($request, $key);
+            return new UnprocessableOutcome(
+                UnprocessableOutcome::TYPE_DUPLICATE,
+                $code,
+                $message,
+                is_array($resolved) ? $resolved : []
+            );
         }
+        if ($code !== null) {
+            return new UnprocessableOutcome(UnprocessableOutcome::TYPE_VALIDATION, $code, $message);
+        }
+        return new UnprocessableOutcome(UnprocessableOutcome::TYPE_UNKNOWN, null, $message);
     }
 }

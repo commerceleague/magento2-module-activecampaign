@@ -15,6 +15,7 @@ use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
+use CommerceLeague\ActiveCampaignApi\Paginator\PageInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteFactory;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -248,6 +249,135 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
         $this->orderRepository->expects($this->once())
             ->method('save')
             ->with($this->order);
+
+        $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
+    }
+
+    public function testConsumeDuplicateResolvesAndSaves()
+    {
+        $quoteId = 123;
+        $resolvedId = 555;
+        $request = ['externalid' => 'EXT-1'];
+        $responseErrors = [['code' => 'duplicate']];
+
+        $this->quote->expects($this->once())
+            ->method('loadByIdWithoutStore')
+            ->with(123)
+            ->willReturn($this->quote);
+
+        $this->quote->expects($this->any())
+            ->method('getId')
+            ->willReturn($quoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($quoteId)
+            ->willReturn($this->order);
+
+        $this->abandonedCartRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->quote)
+            ->willReturn($request);
+
+        $this->client->expects($this->atLeastOnce())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        /** @var MockObject|PageInterface $page */
+        $page = $this->createMock(PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([['id' => $resolvedId]]);
+
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => 'EXT-1']])
+            ->willReturn($page);
+
+        $this->order->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($resolvedId)
+            ->willReturnSelf();
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
+    }
+
+    public function testConsumeDuplicateLookupEmptyDoesNotFatal()
+    {
+        $quoteId = 123;
+        $request = ['externalid' => 'EXT-1'];
+        $responseErrors = [['code' => 'duplicate']];
+
+        $this->quote->expects($this->once())
+            ->method('loadByIdWithoutStore')
+            ->with(123)
+            ->willReturn($this->quote);
+
+        $this->quote->expects($this->any())
+            ->method('getId')
+            ->willReturn($quoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($quoteId)
+            ->willReturn($this->order);
+
+        $this->abandonedCartRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->quote)
+            ->willReturn($request);
+
+        $this->client->expects($this->atLeastOnce())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        /** @var MockObject|PageInterface $page */
+        $page = $this->createMock(PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([]);
+
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => 'EXT-1']])
+            ->willReturn($page);
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
 
         $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
     }

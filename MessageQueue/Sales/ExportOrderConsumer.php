@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder as OrderRequestBu
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
@@ -65,11 +66,20 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             $this->orderRepository->save($order);
         } catch (UnprocessableEntityHttpException $e) {
             try {
-                $apiResponse = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
-            } catch (UnprocessableEntityHttpException $e) {
-                $this->logUnprocessableEntityHttpException($e, $request);
+                $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
+            } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                $this->logUnprocessableEntityHttpException($duplicateLookupException, $request);
                 return;
             }
+
+            if ($outcome->isDuplicate() && isset($outcome->payload[self::RESPONSE_KEY_ORDER]['id'])) {
+                $order->setActiveCampaignId((int)$outcome->payload[self::RESPONSE_KEY_ORDER]['id']);
+                $this->orderRepository->save($order);
+                return;
+            }
+
+            $this->logUnprocessableEntityHttpException($e, $request);
+            return;
         } catch (HttpException $e) {
             $this->logException($e);
             return;
@@ -91,7 +101,13 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 ]
             ]
         );
-        return [$key => $response->getItems()[0]];
+
+        $items = $response->getItems();
+        if ($items === []) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $items[0]];
     }
 
     private function performApiRequest(OrderInterface $order, array $request): array

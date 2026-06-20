@@ -15,6 +15,7 @@ use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
+use CommerceLeague\ActiveCampaignApi\Paginator\PageInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Phrase;
 use Magento\Sales\Api\OrderRepositoryInterface as MagentoOrderRepositoryInterface;
@@ -165,7 +166,8 @@ class ExportOrderConsumerTest extends AbstractTestCase
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
-        $request = ['request'];
+        $resolvedId = 555;
+        $request = ['externalid' => 'EXT-1'];
         $responseErrors = [['code' => 'duplicate']];
 
         $this->magentoOrderRepository->expects($this->once())
@@ -203,13 +205,98 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->with(['ecomOrder' => $request])
             ->willThrowException($unprocessableEntityHttpException);
 
-
-        $unprocessableEntityHttpException->expects($this->once())
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
             ->method('getResponseErrors')
             ->willReturn($responseErrors);
 
+        /** @var MockObject|PageInterface $page */
+        $page = $this->createMock(PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([['id' => $resolvedId]]);
+
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => 'EXT-1']])
+            ->willReturn($page);
+
         $this->order->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($resolvedId)
+            ->willReturnSelf();
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testDuplicateLookupEmptyDoesNotFatal()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['externalid' => 'EXT-1'];
+        $responseErrors = [['code' => 'duplicate']];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->atLeastOnce())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->atLeastOnce())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        /** @var MockObject|PageInterface $page */
+        $page = $this->createMock(PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([]);
+
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => 'EXT-1']])
+            ->willReturn($page);
+
+        $this->order->expects($this->never())
             ->method('setActiveCampaignId');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
 
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
