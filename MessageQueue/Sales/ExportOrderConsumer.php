@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Sales;
 
+use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\OrderInterface;
 use CommerceLeague\ActiveCampaign\Api\OrderRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
@@ -12,12 +13,14 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder as OrderRequestBu
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Sales\Api\Data\OrderInterface as MagentoOrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as MagentoOrderRepositoryInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
@@ -28,12 +31,19 @@ use Magento\Sales\Model\Order as MagentoOrder;
 class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
+    /**
+     * Maximum number of times an order export may be deferred while waiting for
+     * its customer/guest to be exported to ActiveCampaign first.
+     */
+    private const MAX_DEFERRALS = 1;
+
     public function __construct(
         private readonly MagentoOrderRepositoryInterface $magentoOrderRepository,
         Logger $logger,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly OrderRequestBuilder $orderRequestBuilder,
-        private readonly Client $client
+        private readonly Client $client,
+        private readonly PublisherInterface $publisher
     ) {
         parent::__construct($logger);
     }
@@ -57,6 +67,47 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
 
         $order   = $this->orderRepository->getOrCreateByMagentoQuoteId($magentoOrder->getQuoteId());
         $request = $this->orderRequestBuilder->build($magentoOrder);
+
+        if (empty($request['customerid'])) {
+            $deferredCount = (int)($message['deferred_count'] ?? 0);
+            if ($deferredCount < self::MAX_DEFERRALS) {
+                // Publish the dependency export first so the customer/guest gets an AC id.
+                if ($magentoOrder->getCustomerIsGuest()) {
+                    $this->publisher->publish(Topics::GUEST_CUSTOMER_EXPORT, json_encode([
+                        'magento_customer_id' => null,
+                        'customer_is_guest'   => true,
+                        'customer_data'       => [
+                            GuestCustomerInterface::FIRSTNAME => $magentoOrder->getCustomerFirstname(),
+                            GuestCustomerInterface::LASTNAME  => $magentoOrder->getCustomerLastname(),
+                            GuestCustomerInterface::EMAIL     => $magentoOrder->getCustomerEmail(),
+                        ],
+                    ], JSON_THROW_ON_ERROR));
+                } else {
+                    $this->publisher->publish(Topics::CUSTOMER_CUSTOMER_EXPORT, json_encode([
+                        'magento_customer_id' => $magentoOrder->getCustomerId(),
+                    ], JSON_THROW_ON_ERROR));
+                }
+
+                // Re-queue the order with an incremented deferral counter.
+                $this->publisher->publish(Topics::SALES_ORDER_EXPORT, json_encode([
+                    'magento_order_id' => $message['magento_order_id'],
+                    'deferred_count'   => $deferredCount + 1,
+                ], JSON_THROW_ON_ERROR));
+
+                $this->getLogger()->info(sprintf(
+                    'Order %s deferred: customer not yet exported to ActiveCampaign',
+                    $message['magento_order_id']
+                ));
+                return;
+            }
+
+            // Deferral cap reached: do NOT send customerid:null; log and stop (Phase 5 will track this).
+            $this->getLogger()->error(sprintf(
+                'Order %s still has no ActiveCampaign customer id after deferral; skipping to avoid field_missing',
+                $message['magento_order_id']
+            ));
+            return;
+        }
 
         try {
             $apiResponse = $this->performApiRequest($order, $request);

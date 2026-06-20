@@ -11,12 +11,14 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder as OrderRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Sales\ExportOrderConsumer;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use CommerceLeague\ActiveCampaignApi\Paginator\PageInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Framework\Phrase;
 use Magento\Sales\Api\OrderRepositoryInterface as MagentoOrderRepositoryInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
@@ -66,6 +68,11 @@ class ExportOrderConsumerTest extends AbstractTestCase
     protected $order;
 
     /**
+     * @var MockObject|PublisherInterface
+     */
+    protected $publisher;
+
+    /**
      * @var ExportOrderConsumer
      */
     protected $exportOrderConsumer;
@@ -80,13 +87,15 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->orderApi = $this->createMock(OrderApiResourceInterface::class);
         $this->magentoOrder = $this->createMock(MagentoOrder::class);
         $this->order = $this->createMock(OrderInterface::class);
+        $this->publisher = $this->createMock(PublisherInterface::class);
 
         $this->exportOrderConsumer = new ExportOrderConsumer(
             $this->magentoOrderRepository,
             $this->logger,
             $this->orderRepository,
             $this->orderRequestBuilder,
-            $this->client
+            $this->client,
+            $this->publisher
         );
     }
 
@@ -116,7 +125,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
-        $request = ['request'];
+        $request = ['request', 'customerid' => 999];
 
         $this->magentoOrderRepository->expects($this->once())
             ->method('get')
@@ -167,7 +176,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
         $resolvedId = 555;
-        $request = ['externalid' => 'EXT-1'];
+        $request = ['externalid' => 'EXT-1', 'customerid' => 999];
         $responseErrors = [['code' => 'duplicate']];
 
         $this->magentoOrderRepository->expects($this->once())
@@ -236,7 +245,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
-        $request = ['externalid' => 'EXT-1'];
+        $request = ['externalid' => 'EXT-1', 'customerid' => 999];
         $responseErrors = [['code' => 'duplicate']];
 
         $this->magentoOrderRepository->expects($this->once())
@@ -305,7 +314,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
-        $request = ['request'];
+        $request = ['request', 'customerid' => 999];
         $activeCampaignId = 789;
         $response = ['ecomOrder' => ['id' => $activeCampaignId]];
 
@@ -357,7 +366,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
-        $request = ['request'];
+        $request = ['request', 'customerid' => 999];
 
         $this->magentoOrderRepository->expects($this->once())
             ->method('get')
@@ -407,7 +416,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
-        $request = ['request'];
+        $request = ['request', 'customerid' => 999];
         $activeCampaignId = 789;
         $response = ['ecomOrder' => ['id' => $activeCampaignId]];
 
@@ -459,7 +468,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
-        $request = ['request'];
+        $request = ['request', 'customerid' => 999];
         $response = ['ecomOrder' => ['id' => 0]];
 
         $this->magentoOrderRepository->expects($this->once())
@@ -510,7 +519,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
-        $request = ['externalid' => 'EXT-1'];
+        $request = ['externalid' => 'EXT-1', 'customerid' => 999];
         $responseErrors = [['code' => 'duplicate']];
 
         $this->magentoOrderRepository->expects($this->once())
@@ -573,6 +582,193 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->method('error');
 
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testOrderWithUnsyncedCustomerRepublishesCustomerAndDefers()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $magentoCustomerId = 42;
+        $request = ['request', 'customerid' => null];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getCustomerIsGuest')
+            ->willReturn(false);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getCustomerId')
+            ->willReturn($magentoCustomerId);
+
+        $publishedTopics = [];
+        $this->publisher->expects($this->exactly(2))
+            ->method('publish')
+            ->willReturnCallback(function (string $topic, string $body) use (&$publishedTopics) {
+                $publishedTopics[$topic] = json_decode($body, true);
+            });
+
+        // The order must NOT be sent to ActiveCampaign.
+        $this->client->expects($this->never())
+            ->method('getOrderApi');
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->once())
+            ->method('info');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+
+        $this->assertArrayHasKey(Topics::CUSTOMER_CUSTOMER_EXPORT, $publishedTopics);
+        $this->assertSame(
+            ['magento_customer_id' => $magentoCustomerId],
+            $publishedTopics[Topics::CUSTOMER_CUSTOMER_EXPORT]
+        );
+
+        $this->assertArrayHasKey(Topics::SALES_ORDER_EXPORT, $publishedTopics);
+        $this->assertSame(
+            ['magento_order_id' => $magentoOrderId, 'deferred_count' => 1],
+            $publishedTopics[Topics::SALES_ORDER_EXPORT]
+        );
+    }
+
+    public function testOrderWithUnsyncedGuestRepublishesGuestAndDefers()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request', 'customerid' => null];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getCustomerIsGuest')
+            ->willReturn(true);
+
+        $this->magentoOrder->method('getCustomerFirstname')->willReturn('Jane');
+        $this->magentoOrder->method('getCustomerLastname')->willReturn('Doe');
+        $this->magentoOrder->method('getCustomerEmail')->willReturn('jane@example.com');
+
+        $publishedTopics = [];
+        $this->publisher->expects($this->exactly(2))
+            ->method('publish')
+            ->willReturnCallback(function (string $topic, string $body) use (&$publishedTopics) {
+                $publishedTopics[$topic] = json_decode($body, true);
+            });
+
+        $this->client->expects($this->never())
+            ->method('getOrderApi');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->once())
+            ->method('info');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+
+        $this->assertArrayHasKey(Topics::GUEST_CUSTOMER_EXPORT, $publishedTopics);
+        $this->assertSame(
+            [
+                'magento_customer_id' => null,
+                'customer_is_guest'   => true,
+                'customer_data'       => [
+                    'firstname' => 'Jane',
+                    'lastname'  => 'Doe',
+                    'email'     => 'jane@example.com',
+                ],
+            ],
+            $publishedTopics[Topics::GUEST_CUSTOMER_EXPORT]
+        );
+
+        $this->assertArrayHasKey(Topics::SALES_ORDER_EXPORT, $publishedTopics);
+        $this->assertSame(
+            ['magento_order_id' => $magentoOrderId, 'deferred_count' => 1],
+            $publishedTopics[Topics::SALES_ORDER_EXPORT]
+        );
+    }
+
+    public function testOrderDeferralCapReachedSkips()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request', 'customerid' => null];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        // Cap reached: nothing republished, order not sent.
+        $this->publisher->expects($this->never())
+            ->method('publish');
+
+        $this->client->expects($this->never())
+            ->method('getOrderApi');
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->once())
+            ->method('error');
+
+        $this->exportOrderConsumer->consume(
+            json_encode(['magento_order_id' => $magentoOrderId, 'deferred_count' => 1])
+        );
     }
 
 }
