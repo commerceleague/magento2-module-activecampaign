@@ -60,17 +60,15 @@ abstract class AbstractConsumer
 
     /**
      * @param array<mixed> $request
-     * @return mixed
      */
     public function logUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $unprocessableEntityHttpException,
         array                            $request
-    ): mixed {
+    ): void {
         $this->getLogger()->error(static::class);
         $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
         $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
         $this->getLogger()->error(print_r($request, true));
-        return null;
     }
 
     /**
@@ -78,15 +76,15 @@ abstract class AbstractConsumer
      *
      * Implementations that recover a duplicate return `[$key => $resolvedItem]`
      * (where `$resolvedItem` is the AC entity array containing an `'id'`); stub
-     * implementations that do not recover may return void. The return value is
-     * passed through to UnprocessableOutcome::$payload, so a non-array return
-     * simply yields an empty payload and is treated as "not resolved".
+     * implementations that do not recover return `[]`. The return value is
+     * passed through to UnprocessableOutcome::$payload, so an empty array simply
+     * yields an empty payload and is treated as "not resolved".
      *
      * @param array<mixed> $request
      *
-     * @return array<string,mixed>|void
+     * @return array<string,mixed>
      */
-    abstract function processDuplicateEntity(array $request, string $key);
+    abstract function processDuplicateEntity(array $request, string $key): array;
 
     /**
      *
@@ -108,7 +106,7 @@ abstract class AbstractConsumer
                 UnprocessableOutcome::TYPE_DUPLICATE,
                 $code,
                 $message,
-                is_array($resolved) ? $resolved : []
+                $resolved
             );
         }
         if ($code !== null) {

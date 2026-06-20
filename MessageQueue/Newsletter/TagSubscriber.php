@@ -61,8 +61,9 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key): void
+    function processDuplicateEntity(array $request, string $key): array
     {
+        return [];
     }
 
     private function buildRequests(ContactInterface $contact, array $tagIds): array

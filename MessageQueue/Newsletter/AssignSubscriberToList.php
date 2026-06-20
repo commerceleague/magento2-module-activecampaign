@@ -57,7 +57,8 @@ class AssignSubscriberToList extends AbstractConsumer implements ConsumerInterfa
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key): void
+    function processDuplicateEntity(array $request, string $key): array
     {
+        return [];
     }
 }

@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerReq
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
@@ -71,56 +72,28 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
             $this->customerRepository->save($customer);
         } catch (UnprocessableEntityHttpException $e) {
-            $activeCampaignEcomCustomerId = $this->logUnprocessableEntityHttpException($e, $request);
-            if ($activeCampaignEcomCustomerId === null) {
+            try {
+                $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_CUSTOMER);
+            } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                $this->logUnprocessableEntityHttpException($duplicateLookupException, $request);
                 return;
             }
 
+            $duplicateId = $outcome->isDuplicate()
+                ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null)
+                : null;
+            if ($duplicateId !== null) {
+                $customer->setActiveCampaignId($duplicateId);
+                $this->customerRepository->save($customer);
+                return;
+            }
+
+            $this->logUnprocessableEntityHttpException($e, $request);
+            return;
         } catch (HttpException $e) {
             $this->logException($e);
             return;
         }
-    }
-
-    /**
-     * override the default logging to update the entry in database
-     *
-     * @param                                  $request
-     * @return mixed|void|null
-     */
-    public function logUnprocessableEntityHttpException(
-        UnprocessableEntityHttpException $unprocessableEntityHttpException, array $request
-    ): mixed {
-
-        $activeCampaignEcommerceId = null;
-        $errors                    = $unprocessableEntityHttpException->getResponseErrors();
-        foreach ($errors as $error) {
-            if (isset($error['code']) && $error['code'] == 'duplicate') {
-                $filters = [
-                    'filters' => [
-                        'email'        => $request['email'],
-                        'connectionid' => $request['connectionid']
-                    ]
-                ];
-                $this->getLogger()->info(print_r($filters, true));
-                $response = $this->client->getCustomerApi()->listPerPage(1, 0, $filters);
-                $items    = $response->getItems();
-                if ($items === []) {
-                    continue;
-                }
-                $customer = $items[0];
-                $this->getLogger()->info(print_r($customer, true));
-                if (strtolower((string) $customer['email']) === strtolower((string) $request['email'])) {
-                    $activeCampaignEcommerceId = $customer['id'];
-                }
-            }
-        }
-        if (null === $activeCampaignEcommerceId) {
-            parent::logUnprocessableEntityHttpException(
-                $unprocessableEntityHttpException, $request
-            );
-        }
-        return $activeCampaignEcommerceId;
     }
 
     /**
@@ -138,7 +111,29 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key): void
+    function processDuplicateEntity(array $request, string $key): array
     {
+        $response = $this->client->getCustomerApi()->listPerPage(
+            1,
+            0,
+            [
+                'filters' => [
+                    'email'        => $request['email'],
+                    'connectionid' => $request['connectionid']
+                ]
+            ]
+        );
+
+        $items = $response->getItems();
+        if ($items === []) {
+            throw new DuplicateNotFoundException();
+        }
+
+        $item = $items[0];
+        if (strtolower((string)$item['email']) !== strtolower((string)$request['email'])) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $item];
     }
 }

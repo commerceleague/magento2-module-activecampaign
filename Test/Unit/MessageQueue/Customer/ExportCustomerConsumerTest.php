@@ -296,6 +296,140 @@ class ExportCustomerConsumerTest extends AbstractTestCase
         $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
     }
 
+    public function testConsumeDuplicateResolvesAndSaves()
+    {
+        $magentoCustomerId = 123;
+        $request = ['email' => 'example@example.com', 'connectionid' => 7];
+        $responseErrors = [['code' => 'duplicate']];
+        $activeCampaignId = 789;
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreateByMagentoCustomerId')
+            ->willReturn($this->customer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->customer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->atLeastOnce())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        /** @var MockObject|\CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException =
+            $this->createMock(\CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException::class);
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        /** @var MockObject|\CommerceLeague\ActiveCampaignApi\Paginator\PageInterface $page */
+        $page = $this->createMock(\CommerceLeague\ActiveCampaignApi\Paginator\PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([['id' => $activeCampaignId, 'email' => 'example@example.com']]);
+
+        $this->customerApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['email' => $request['email'], 'connectionid' => $request['connectionid']]])
+            ->willReturn($page);
+
+        $this->customer->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($activeCampaignId)
+            ->willReturnSelf();
+
+        $this->customerRepository->expects($this->once())
+            ->method('save')
+            ->with($this->customer);
+
+        $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
+    public function testConsumeDuplicateEmailMismatchDoesNotSave()
+    {
+        $magentoCustomerId = 123;
+        $request = ['email' => 'example@example.com', 'connectionid' => 7];
+        $responseErrors = [['code' => 'duplicate']];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreateByMagentoCustomerId')
+            ->willReturn($this->customer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->customer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->atLeastOnce())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        /** @var MockObject|\CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException =
+            $this->createMock(\CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException::class);
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        /** @var MockObject|\CommerceLeague\ActiveCampaignApi\Paginator\PageInterface $page */
+        $page = $this->createMock(\CommerceLeague\ActiveCampaignApi\Paginator\PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([['id' => 789, 'email' => 'someone-else@example.com']]);
+
+        $this->customerApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['email' => $request['email'], 'connectionid' => $request['connectionid']]])
+            ->willReturn($page);
+
+        $this->customer->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->customerRepository->expects($this->never())
+            ->method('save');
+
+        $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
     public function testConsumeUpdate()
     {
         $magentoCustomerId = 123;
