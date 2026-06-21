@@ -289,6 +289,76 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
         $this->exportGuestCustomerConsumer->consume(json_encode(['customer_data' => $customerData]));
     }
 
+    public function testConsumeSwallowsUnexpectedThrowableFromGetOrCreate()
+    {
+        $customerData = ['email' => 'guest@example.com', 'firstname' => null, 'lastname' => null];
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreate')
+            ->with($customerData)
+            ->willThrowException(new \TypeError('firstname must be of type string, null given'));
+
+        // entity is unavailable when getOrCreate throws → null local id, no save
+        $this->customerRequestBuilder->expects($this->never())
+            ->method('buildWithGuest');
+
+        $this->failureRecorder->expects($this->never())
+            ->method('recordFailure');
+
+        $this->customerRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=guest_customer'),
+                $this->stringContains('local_id=null'),
+                $this->stringContains('code=unexpected_error')
+            ));
+
+        // Must NOT propagate.
+        $this->exportGuestCustomerConsumer->consume(json_encode(['customer_data' => $customerData]));
+    }
+
+    public function testConsumeSwallowsUnexpectedThrowableWithEntityAvailable()
+    {
+        $customerData = ['email' => 'guest@example.com'];
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreate')
+            ->with($customerData)
+            ->willReturn($this->guestCustomer);
+
+        $this->guestCustomer->expects($this->atLeastOnce())
+            ->method('getId')
+            ->willReturn(99);
+
+        // A later step throws after the entity is available.
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('buildWithGuest')
+            ->with($this->guestCustomer)
+            ->willThrowException(new \RuntimeException('boom'));
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->guestCustomer, 'unexpected_error', 'boom');
+
+        $this->customerRepository->expects($this->once())
+            ->method('save')
+            ->with($this->guestCustomer);
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=guest_customer'),
+                $this->stringContains('local_id=99'),
+                $this->stringContains('code=unexpected_error')
+            ));
+
+        // Must NOT propagate.
+        $this->exportGuestCustomerConsumer->consume(json_encode(['customer_data' => $customerData]));
+    }
+
     public function testConsumeDuplicateLookupEmptyDoesNotFatal()
     {
         $customerData = ['email' => 'guest@example.com'];

@@ -111,8 +111,8 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
             'Guest Customer(s)'
         );
 
-        /** @var OrderInterface $customer */
-        foreach ($customers as $customer) {
+        /** @var OrderInterface $order */
+        foreach ($customers as $order) {
 
             $this->publisher->publish(
                 Topics::GUEST_CUSTOMER_EXPORT,
@@ -121,9 +121,11 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
                         'magento_customer_id' => null,
                         'customer_is_guest'   => true,
                         'customer_data'       => [
-                            GuestCustomerInterface::FIRSTNAME => $customer->getCustomerFirstname(),
-                            GuestCustomerInterface::LASTNAME  => $customer->getCustomerLastname(),
-                            GuestCustomerInterface::EMAIL     => $customer->getCustomerEmail()
+                            GuestCustomerInterface::FIRSTNAME =>
+                                $order->getCustomerFirstname() ?: ($order->getBillingAddress()?->getFirstname() ?? ''),
+                            GuestCustomerInterface::LASTNAME  =>
+                                $order->getCustomerLastname() ?: ($order->getBillingAddress()?->getLastname() ?? ''),
+                            GuestCustomerInterface::EMAIL     => $order->getCustomerEmail()
                         ]
                     ]
                 )

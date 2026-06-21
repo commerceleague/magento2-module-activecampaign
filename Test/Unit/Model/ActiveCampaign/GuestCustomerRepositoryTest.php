@@ -254,6 +254,57 @@ class GuestCustomerRepositoryTest extends AbstractTestCase
         $this->assertSame($this->customer, $this->guestCustomerRepository->getOrCreate($customerData));
     }
 
+    public function testGetOrCreateCoalescesNullNamesToEmptyString()
+    {
+        $email = 'something@something.com';
+
+        $customerData = [
+            GuestCustomerInterface::FIRSTNAME => null,
+            GuestCustomerInterface::LASTNAME  => null,
+            GuestCustomerInterface::EMAIL     => $email
+        ];
+
+        $this->customerResource->expects($this->once())
+            ->method('load')
+            ->with($this->customer, $email, GuestCustomerInterface::EMAIL)
+            ->willReturn($this->customer);
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('get')
+            ->with($email)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->any())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->customer->expects($this->once())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->customer->expects($this->once())
+            ->method('setEmail')
+            ->with($email)
+            ->willReturnSelf();
+
+        $this->customer->expects($this->once())
+            ->method('setFirstname')
+            ->with('')
+            ->willReturnSelf();
+
+        $this->customer->expects($this->once())
+            ->method('setLastname')
+            ->with('')
+            ->willReturnSelf();
+
+        $this->customerResource->expects($this->once())
+            ->method('save')
+            ->with($this->customer)
+            ->willReturn($this->customer);
+
+        $this->assertSame($this->customer, $this->guestCustomerRepository->getOrCreate($customerData));
+    }
+
     protected function setUp(): void
     {
         $this->customerResource = $this->getMockBuilder(CustomerResource::class)

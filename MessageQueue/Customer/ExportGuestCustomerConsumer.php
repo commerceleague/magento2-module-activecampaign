@@ -48,94 +48,108 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
             return;
         }
 
-        $customerData = $message['customer_data'];
+        try {
+            $customerData = $message['customer_data'];
 
-        $guestCustomer = $this->customerRepository->getOrCreate($customerData);
-        $request       = $this->customerRequestBuilder->buildWithGuest($guestCustomer);
+            $guestCustomer = $this->customerRepository->getOrCreate($customerData);
+            $request       = $this->customerRequestBuilder->buildWithGuest($guestCustomer);
 
-        if (!$guestCustomer->getActiveCampaignId()) {
-            try {
-                $apiResponse = $this->performApiRequest($guestCustomer, $request);
-
-                $activeCampaignId = $this->extractActiveCampaignId(
-                    $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
-                );
-                if ($activeCampaignId === null) {
-                    $this->logFailure(
-                        'guest_customer',
-                        $this->castId($guestCustomer->getId()),
-                        null,
-                        null,
-                        'empty_response',
-                        sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CUSTOMER)
-                    );
-                    $this->failureRecorder->recordFailure($guestCustomer, 'empty_response', null);
-                    $this->customerRepository->save($guestCustomer);
-                    return;
-                }
-
-                $guestCustomer->setActiveCampaignId($activeCampaignId);
-                $this->backoffState->reset();
-                $this->failureRecorder->recordSuccess($guestCustomer);
-                $this->customerRepository->save($guestCustomer);
-            } catch (UnprocessableEntityHttpException $e) {
+            if (!$guestCustomer->getActiveCampaignId()) {
                 try {
-                    $outcome = $this->handleUnprocessableEntityHttpException(
-                        $e,
-                        $request,
-                        self::RESPONSE_KEY_CUSTOMER
-                    );
-                } catch (UnprocessableEntityHttpException $duplicateLookupException) {
-                    $this->logFailure(
-                        'guest_customer',
-                        $this->castId($guestCustomer->getId()),
-                        null,
-                        $duplicateLookupException->getCode(),
-                        'http_error',
-                        $duplicateLookupException->getMessage()
-                    );
-                    return;
-                }
+                    $apiResponse = $this->performApiRequest($guestCustomer, $request);
 
-                $duplicateId = $outcome->isDuplicate()
-                    ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null)
-                    : null;
-                if ($duplicateId !== null) {
-                    $guestCustomer->setActiveCampaignId($duplicateId);
+                    $activeCampaignId = $this->extractActiveCampaignId(
+                        $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
+                    );
+                    if ($activeCampaignId === null) {
+                        $this->logFailure(
+                            'guest_customer',
+                            $this->castId($guestCustomer->getId()),
+                            null,
+                            null,
+                            'empty_response',
+                            sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CUSTOMER)
+                        );
+                        $this->failureRecorder->recordFailure($guestCustomer, 'empty_response', null);
+                        $this->customerRepository->save($guestCustomer);
+                        return;
+                    }
+
+                    $guestCustomer->setActiveCampaignId($activeCampaignId);
                     $this->backoffState->reset();
                     $this->failureRecorder->recordSuccess($guestCustomer);
                     $this->customerRepository->save($guestCustomer);
+                } catch (UnprocessableEntityHttpException $e) {
+                    try {
+                        $outcome = $this->handleUnprocessableEntityHttpException(
+                            $e,
+                            $request,
+                            self::RESPONSE_KEY_CUSTOMER
+                        );
+                    } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                        $this->logFailure(
+                            'guest_customer',
+                            $this->castId($guestCustomer->getId()),
+                            null,
+                            $duplicateLookupException->getCode(),
+                            'http_error',
+                            $duplicateLookupException->getMessage()
+                        );
+                        return;
+                    }
+
+                    $duplicateId = $outcome->isDuplicate()
+                        ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null)
+                        : null;
+                    if ($duplicateId !== null) {
+                        $guestCustomer->setActiveCampaignId($duplicateId);
+                        $this->backoffState->reset();
+                        $this->failureRecorder->recordSuccess($guestCustomer);
+                        $this->customerRepository->save($guestCustomer);
+                        return;
+                    }
+
+                    $this->logFailure(
+                        'guest_customer',
+                        $this->castId($guestCustomer->getId()),
+                        null,
+                        $e->getCode() ?: 422,
+                        $outcome->code ?? 'unknown',
+                        $outcome->message
+                    );
+                    $this->failureRecorder->recordFailure(
+                        $guestCustomer,
+                        $outcome->code ?? 'unknown',
+                        $outcome->message
+                    );
+                    $this->customerRepository->save($guestCustomer);
+                    return;
+                } catch (HttpException $e) {
+                    if ($e->getCode() === 503) {
+                        $this->backoffState->record503();
+                    }
+                    $this->logFailure(
+                        'guest_customer',
+                        $this->castId($guestCustomer->getId()),
+                        null,
+                        $e->getCode(),
+                        'http_error',
+                        $e->getMessage()
+                    );
+                    $transient = $e->getCode() >= 500;
+                    $this->failureRecorder->recordFailure($guestCustomer, 'http_error', $e->getMessage(), $transient);
+                    $this->customerRepository->save($guestCustomer);
                     return;
                 }
-
-                $this->logFailure(
-                    'guest_customer',
-                    $this->castId($guestCustomer->getId()),
-                    null,
-                    $e->getCode() ?: 422,
-                    $outcome->code ?? 'unknown',
-                    $outcome->message
-                );
-                $this->failureRecorder->recordFailure($guestCustomer, $outcome->code ?? 'unknown', $outcome->message);
-                $this->customerRepository->save($guestCustomer);
-                return;
-            } catch (HttpException $e) {
-                if ($e->getCode() === 503) {
-                    $this->backoffState->record503();
-                }
-                $this->logFailure(
-                    'guest_customer',
-                    $this->castId($guestCustomer->getId()),
-                    null,
-                    $e->getCode(),
-                    'http_error',
-                    $e->getMessage()
-                );
-                $transient = $e->getCode() >= 500;
-                $this->failureRecorder->recordFailure($guestCustomer, 'http_error', $e->getMessage(), $transient);
-                $this->customerRepository->save($guestCustomer);
-                return;
             }
+        } catch (\Throwable $t) {
+            $localId = isset($guestCustomer) ? $this->castId($guestCustomer->getId()) : null;
+            $this->logFailure('guest_customer', $localId, null, null, 'unexpected_error', $t->getMessage());
+            if (isset($guestCustomer)) {
+                $this->failureRecorder->recordFailure($guestCustomer, 'unexpected_error', $t->getMessage());
+                $this->customerRepository->save($guestCustomer);
+            }
+            return;
         }
     }
 
