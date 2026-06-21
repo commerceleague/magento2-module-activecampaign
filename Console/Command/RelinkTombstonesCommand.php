@@ -145,8 +145,10 @@ class RelinkTombstonesCommand extends Command
             [$ecomCustomerId, $realEmail, $externalId, $type] = $resolved;
 
             // A registered mapping's real email is only known after repository
-            // resolution, so honour the --email selector here too.
-            if ($email !== null && $realEmail !== (string)$email) {
+            // resolution, so honour the --email selector here too. Emails are
+            // case-insensitive (the TombstoneRelinker compares with strtolower),
+            // so match case-insensitively.
+            if ($email !== null && strtolower($realEmail) !== strtolower((string)$email)) {
                 continue;
             }
 
@@ -216,11 +218,16 @@ class RelinkTombstonesCommand extends Command
             $collection->addFieldToFilter(self::FIELD_ACTIVE_CAMPAIGN_ID, ['notnull' => true]);
 
             if ($guestId !== null) {
-                $collection->addFieldToFilter('entity_id', (string)(int)$guestId);
+                // Explicitly qualified: sales_order is LEFT JOINed in the guest
+                // collection and also exposes entity_id, so a bare filter is
+                // ambiguous (SQLSTATE[23000]).
+                $collection->addEntityIdFilter((int)$guestId);
             }
 
             if ($email !== null) {
-                $collection->addFieldToFilter('email', (string)$email);
+                // Qualify as main_table.email; sales_order.customer_email in the
+                // join would otherwise make a bare email filter unsafe.
+                $collection->addEmailFilter((string)$email);
             }
 
             if ($limit > 0) {
@@ -233,7 +240,9 @@ class RelinkTombstonesCommand extends Command
                     continue;
                 }
 
-                if ($email !== null && (string)$model->getEmail() !== (string)$email) {
+                if ($email !== null
+                    && strtolower((string)$model->getEmail()) !== strtolower((string)$email)
+                ) {
                     continue;
                 }
 

@@ -78,8 +78,11 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
 
     protected function setUp(): void
     {
-        $this->customerCollection      = $this->createMock(CustomerCollection::class);
+        $this->customerCollection = $this->createMock(CustomerCollection::class);
         $this->guestCustomerCollection = $this->createMock(GuestCustomerCollection::class);
+        // Dedicated, explicitly-qualified guest filter methods (V1/V2 fix).
+        $this->guestCustomerCollection->method('addEntityIdFilter')->willReturnSelf();
+        $this->guestCustomerCollection->method('addEmailFilter')->willReturnSelf();
 
         $this->customerCollectionFactory      = $this->mockFactory(
             CustomerCollectionFactory::class,
@@ -303,6 +306,122 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
 
         $this->commandTester->execute(['--magento-customer-id' => 77]);
 
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
+    }
+
+    public function testEmailTargetsSingleGuestAndReportsIt(): void
+    {
+        // V2: a single guest selected by --email must be processed, produce a
+        // per-record line, and be tallied in the summary.
+        $this->items['guest'] = [
+            $this->createGuestMapping(60, 99, 'renate.ranegger@lep.ch'),
+        ];
+
+        $this->relinker->expects($this->once())
+            ->method('relink')
+            ->with(60, 'renate.ranegger@lep.ch', 'guest-99', false)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->commandTester->execute(['--email' => 'renate.ranegger@lep.ch']);
+
+        $display = $this->commandTester->getDisplay();
+        $this->assertStringContainsString('ecomId=60', $display);
+        $this->assertStringContainsString('type=' . 'guest', $display);
+        $this->assertStringContainsString('email=renate.ranegger@lep.ch', $display);
+        $this->assertStringContainsString('-> ' . TombstoneRelinker::RESULT_RELINKED, $display);
+        // Summary tallies the relink.
+        $this->assertMatchesRegularExpression('/relinked:\s*1/', $display);
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
+    }
+
+    public function testEmailMatchesGuestCaseInsensitively(): void
+    {
+        // V2 root cause: the stored guest email differs only in case from the
+        // operator's input. The per-record narrowing used a case-SENSITIVE !==
+        // which silently dropped the row. It must now match.
+        $this->items['guest'] = [
+            $this->createGuestMapping(60, 99, 'Renate.Ranegger@LEP.ch'),
+        ];
+
+        $this->relinker->expects($this->once())
+            ->method('relink')
+            ->with(60, 'Renate.Ranegger@LEP.ch', 'guest-99', false)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->commandTester->execute(['--email' => 'renate.ranegger@lep.ch']);
+
+        $display = $this->commandTester->getDisplay();
+        $this->assertStringContainsString('ecomId=60', $display);
+        $this->assertMatchesRegularExpression('/relinked:\s*1/', $display);
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
+    }
+
+    public function testEmailMatchesRegisteredCaseInsensitively(): void
+    {
+        // The registered real email (from the repository) differs only in case.
+        $this->stubMagentoCustomer(77, 'Reg@Example.com');
+        $this->items['customer'] = [$this->createCustomerMapping(42, 77)];
+
+        $this->relinker->expects($this->once())
+            ->method('relink')
+            ->with(42, 'Reg@Example.com', 77, false)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->commandTester->execute(['--email' => 'reg@example.com']);
+
+        $display = $this->commandTester->getDisplay();
+        $this->assertStringContainsString('ecomId=42', $display);
+        $this->assertMatchesRegularExpression('/relinked:\s*1/', $display);
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
+    }
+
+    public function testSingleGuestDryRunPrintsPerRecordLineAndSummary(): void
+    {
+        // V3: single-target guest dry-run -> per-record line + summary, relinker
+        // called with commit=false.
+        $this->items['guest'] = [
+            $this->createGuestMapping(60, 99, 'guest@example.com'),
+        ];
+
+        $this->relinker->expects($this->once())
+            ->method('relink')
+            ->with(60, 'guest@example.com', 'guest-99', false)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->commandTester->execute(['--guest-id' => 99]);
+
+        $display = $this->commandTester->getDisplay();
+        $this->assertStringContainsString(
+            'ecomId=60 type=guest email=guest@example.com -> ' . TombstoneRelinker::RESULT_RELINKED,
+            $display
+        );
+        $this->assertStringContainsStringIgnoringCase('dry-run', $display);
+        $this->assertStringContainsString('Summary', $display);
+        $this->assertMatchesRegularExpression('/relinked:\s*1/', $display);
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
+    }
+
+    public function testSingleRegisteredDryRunPrintsPerRecordLineAndSummary(): void
+    {
+        // V3: single-target registered dry-run -> per-record line + summary.
+        $this->stubMagentoCustomer(77, 'reg@example.com');
+        $this->items['customer'] = [$this->createCustomerMapping(42, 77)];
+
+        $this->relinker->expects($this->once())
+            ->method('relink')
+            ->with(42, 'reg@example.com', 77, false)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->commandTester->execute(['--magento-customer-id' => 77]);
+
+        $display = $this->commandTester->getDisplay();
+        $this->assertStringContainsString(
+            'ecomId=42 type=registered email=reg@example.com -> ' . TombstoneRelinker::RESULT_RELINKED,
+            $display
+        );
+        $this->assertStringContainsStringIgnoringCase('dry-run', $display);
+        $this->assertStringContainsString('Summary', $display);
+        $this->assertMatchesRegularExpression('/relinked:\s*1/', $display);
         $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
     }
 
