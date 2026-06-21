@@ -16,6 +16,7 @@
 				<backoff_threshold>5</backoff_threshold>
 				<retry_all_omitted>0</retry_all_omitted>
 				<tombstone_selfheal_enabled>0</tombstone_selfheal_enabled>
+				<relink_cron_enabled>0</relink_cron_enabled>
 			</export>
 		</activecampaign>
 	</default>

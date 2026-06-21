@@ -15,6 +15,7 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer\Co
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer\CollectionFactory as CustomerCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\Collection as GuestCustomerCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\CollectionFactory as GuestCustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneReconciler;
 use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneRelinker;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Customer\Api\CustomerRepositoryInterface;
@@ -108,12 +109,22 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
         $this->config             = $this->createMock(Config::class);
         $this->relinker           = $this->createMock(TombstoneRelinker::class);
 
-        $this->command = new RelinkTombstonesCommand(
+        // The command delegates its resolve rules to a real reconciler (single
+        // source of truth) wired with the same mock collaborators, so the V1-V3
+        // single-target / batch / unresolved behaviour is exercised end-to-end.
+        $reconciler = new TombstoneReconciler(
             $this->customerCollectionFactory,
             $this->guestCustomerCollectionFactory,
             $this->customerRepository,
-            $this->config,
             $this->relinker
+        );
+
+        $this->command = new RelinkTombstonesCommand(
+            $this->customerCollectionFactory,
+            $this->guestCustomerCollectionFactory,
+            $this->config,
+            $this->relinker,
+            $reconciler
         );
 
         $this->commandTester = new CommandTester($this->command);

@@ -93,6 +93,21 @@ behaviour; schema changes are additive and backward-compatible.
   exists, and skips email conflicts that need a manual merge. The new
   `activecampaign/export/tombstone_selfheal_enabled` flag (default off) makes the
   customer export path self-heal the same way before each update.
+- **Config-gated weekly tombstone-relink cron.** A new
+  `activecampaign/export/relink_cron_enabled` flag (default off) schedules a weekly
+  `activecampaign:relink:tombstones --commit` (cron `activecampaign_relink_tombstones`,
+  `0 3 * * 0`). This is the only path that keeps **guest** tombstones reconciled —
+  the guest export self-heal cannot, because a guest tombstone holds the dead AC id
+  so the guest consumer (which only runs for guests with no AC id) never touches it.
+  The cron and the command share one `Model\Tombstone\TombstoneReconciler` (single
+  source of truth for the resolve/relink loop); each per-candidate relink is isolated
+  in a `\Throwable` guard so one transient failure (e.g. a 503 from the relinker's
+  GET) is counted and logged and the run continues, and a per-run summary
+  (relinked / skipped / conflict / no-live-contact / not-found / unresolved / error)
+  is logged. **Operational ordering:** run the bulk relink once manually
+  (`--dry-run`, operator-reviewed, then `--commit`), THEN enable both
+  `relink_cron_enabled` (keeps guests reconciled) and `tombstone_selfheal_enabled`
+  (keeps the customer export path from re-accumulating).
 
 ### Changed
 - **Manual CLI exports are bounded to the cron scope by default.** The

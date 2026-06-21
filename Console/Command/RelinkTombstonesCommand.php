@@ -12,10 +12,9 @@ use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Customer;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomer;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer\CollectionFactory as CustomerCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\CollectionFactory as GuestCustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneReconciler;
 use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneRelinker;
-use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Console\Cli;
-use Magento\Framework\Exception\LocalizedException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -49,9 +48,9 @@ class RelinkTombstonesCommand extends Command
     public function __construct(
         private readonly CustomerCollectionFactory $customerCollectionFactory,
         private readonly GuestCustomerCollectionFactory $guestCustomerCollectionFactory,
-        private readonly CustomerRepositoryInterface $customerRepository,
         private readonly Config $config,
-        private readonly TombstoneRelinker $relinker
+        private readonly TombstoneRelinker $relinker,
+        private readonly TombstoneReconciler $reconciler
     ) {
         parent::__construct();
     }
@@ -265,35 +264,22 @@ class RelinkTombstonesCommand extends Command
      */
     private function resolveTarget(array $target, OutputInterface $output): ?array
     {
-        [$type, $model] = $target;
+        // Delegate the resolution rules to the shared reconciler so there is a
+        // single source of truth for (ecomCustomerId, realEmail, externalId,
+        // type). The command keeps its own per-record narrowing (--email) and
+        // operator output around this call.
+        $resolved = $this->reconciler->resolveCandidate($target);
 
-        if ($type === self::TYPE_GUEST) {
-            /** @var GuestCustomer $model */
-            $ecomCustomerId = (int)$model->getActiveCampaignId();
-            $realEmail      = (string)$model->getEmail();
-            $externalId     = 'guest-' . (int)$model->getId();
-
-            return [$ecomCustomerId, $realEmail, $externalId, self::TYPE_GUEST];
-        }
-
-        /** @var Customer $model */
-        $magentoCustomerId = (int)$model->getMagentoCustomerId();
-
-        try {
-            $realEmail = (string)$this->customerRepository->getById($magentoCustomerId)->getEmail();
-        } catch (LocalizedException $exception) {
+        if ($resolved === null) {
+            [, $model] = $target;
+            /** @var Customer $model */
             $output->writeln(sprintf(
-                '  <comment>skip unresolved registered mapping: magento_customer_id=%d (%s)</comment>',
-                $magentoCustomerId,
-                $exception->getMessage()
+                '  <comment>skip unresolved registered mapping: magento_customer_id=%d</comment>',
+                (int)$model->getMagentoCustomerId()
             ));
-
-            return null;
         }
 
-        $ecomCustomerId = (int)$model->getActiveCampaignId();
-
-        return [$ecomCustomerId, $realEmail, (string)$magentoCustomerId, self::TYPE_REGISTERED];
+        return $resolved;
     }
 
     private function writeHeader(OutputInterface $output, bool $commit): void

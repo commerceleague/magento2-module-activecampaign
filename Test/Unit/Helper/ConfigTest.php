@@ -196,6 +196,26 @@ class ConfigTest extends AbstractTestCase
         $this->assertTrue($this->config->isTombstoneSelfHealEnabled());
     }
 
+    public function testIsRelinkCronEnabledDefaultsToFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/relink_cron_enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isRelinkCronEnabled());
+    }
+
+    public function testIsRelinkCronEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/relink_cron_enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isRelinkCronEnabled());
+    }
+
     public function testIsWebhookEnabledTrue()
     {
         $this->scopeConfig->expects($this->once())

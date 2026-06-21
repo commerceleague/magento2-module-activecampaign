@@ -33,6 +33,7 @@ class Config extends AbstractHelper
     private const XML_PATH_EXPORT_BACKOFF_THRESHOLD   = 'activecampaign/export/backoff_threshold';
     private const XML_PATH_EXPORT_RETRY_ALL_OMITTED   = 'activecampaign/export/retry_all_omitted';
     private const XML_PATH_EXPORT_TOMBSTONE_SELFHEAL  = 'activecampaign/export/tombstone_selfheal_enabled';
+    private const XML_PATH_EXPORT_RELINK_CRON_ENABLED = 'activecampaign/export/relink_cron_enabled';
 
     private const DEFAULT_BACKOFF_THRESHOLD = 5;
 
@@ -151,6 +152,17 @@ class Config extends AbstractHelper
     public function isTombstoneSelfHealEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_TOMBSTONE_SELFHEAL);
+    }
+
+    /**
+     * Whether a scheduled cron should run the bulk tombstone relink weekly
+     * (activecampaign:relink:tombstones --commit). Defaults to false. Run the
+     * bulk relink once manually first, then enable this together with
+     * tombstone_selfheal_enabled.
+     */
+    public function isRelinkCronEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_RELINK_CRON_ENABLED);
     }
 
     public function isWebhookEnabled(): bool

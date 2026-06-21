@@ -119,6 +119,15 @@
                         <field id="activecampaign/export/customer_enabled">1</field>
                     </depends>
                 </field>
+                <field id="relink_cron_enabled" translate="label comment" type="select" sortOrder="120" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Scheduled Tombstone Relink</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, a weekly cron runs the bulk tombstone relink (activecampaign:relink:tombstones --commit). This is the only path that keeps GUEST tombstones reconciled (the guest export self-heal cannot, because a tombstone holds the dead AC id). Operational ordering: run the bulk relink once manually first (--dry-run, operator-reviewed, then --commit); THEN enable this together with tombstone_selfheal_enabled — the cron keeps guests reconciled, the self-heal keeps the customer export path from re-accumulating. Idempotent and safe to run repeatedly (one GET per candidate, a rate-limit cost).</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                        <field id="activecampaign/export/customer_enabled">1</field>
+                    </depends>
+                </field>
             </group>
             <group id="order_export" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Order Export Settings</label>
