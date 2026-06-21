@@ -53,6 +53,12 @@ behaviour; schema changes are additive and backward-compatible.
   syncs, the deferral cap records a `customer_unresolved` failure + saves (was a
   silent permanent `NULL`, invisible to `export:status`); the deferral bound was
   raised from 1 to 3 attempts.
+- **`relink:tombstones` single-target lookups fixed.** `--guest-id` no longer
+  crashes with an ambiguous `entity_id` (the guest collection qualifies
+  `main_table.*`); `--email` for a guest is matched case-insensitively (was
+  silently dropped); and `--email` for a registered customer resolves the email
+  to a `magento_customer_id` once and constrains the query at the DB level instead
+  of scanning the whole registered tombstone set (which appeared to hang).
 
 ### Added
 - **Diagnosable failure logging.** Every export failure now logs a single
