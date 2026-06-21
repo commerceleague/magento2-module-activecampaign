@@ -9,10 +9,12 @@ use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
+use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportCustomerConsumer;
 use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
+use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneRelinker;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -76,6 +78,16 @@ class ExportCustomerConsumerTest extends AbstractTestCase
     protected $backoffState;
 
     /**
+     * @var MockObject|Config
+     */
+    protected $config;
+
+    /**
+     * @var MockObject|TombstoneRelinker
+     */
+    protected $tombstoneRelinker;
+
+    /**
      * @var ExportCustomerConsumer
      */
     protected $exportCustomerConsumer;
@@ -92,6 +104,11 @@ class ExportCustomerConsumerTest extends AbstractTestCase
         $this->magentoCustomer = $this->createMock(MagentoCustomerInterface::class);
         $this->failureRecorder = $this->createMock(FailureRecorder::class);
         $this->backoffState = $this->createMock(BackoffState::class);
+        $this->config = $this->createMock(Config::class);
+        $this->tombstoneRelinker = $this->createMock(TombstoneRelinker::class);
+
+        // Default OFF: zero behaviour change for existing tests.
+        $this->config->method('isTombstoneSelfHealEnabled')->willReturn(false);
 
         $this->exportCustomerConsumer = new ExportCustomerConsumer(
             $this->magentoCustomerRepository,
@@ -100,7 +117,9 @@ class ExportCustomerConsumerTest extends AbstractTestCase
             $this->customerRequestBuilder,
             $this->client,
             $this->failureRecorder,
-            $this->backoffState
+            $this->backoffState,
+            $this->config,
+            $this->tombstoneRelinker
         );
     }
 
@@ -552,6 +571,10 @@ class ExportCustomerConsumerTest extends AbstractTestCase
             ->with($activeCampaignId, ['ecomCustomer' => $request])
             ->willReturn($response);
 
+        // Self-heal default OFF -> relinker must never be touched.
+        $this->tombstoneRelinker->expects($this->never())
+            ->method('relink');
+
         $this->customer->expects($this->once())
             ->method('setActiveCampaignId')
             ->with($activeCampaignId)
@@ -566,6 +589,246 @@ class ExportCustomerConsumerTest extends AbstractTestCase
             ->with($this->customer);
 
         $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
+    /**
+     * Self-heal ON + RELINKED: the relinker runs once (id/email/externalid),
+     * then the normal update still happens.
+     */
+    public function testConsumeUpdateSelfHealRelinkedThenUpdates()
+    {
+        $magentoCustomerId = 123;
+        $request = ['email' => 'real@example.com', 'externalid' => '123', 'connectionid' => 7];
+        $activeCampaignId = 456;
+        $response = ['ecomCustomer' => ['id' => $activeCampaignId]];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreateByMagentoCustomerId')
+            ->willReturn($this->customer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->customer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn($activeCampaignId);
+
+        $this->config = $this->createMock(Config::class);
+        $this->config->method('isTombstoneSelfHealEnabled')->willReturn(true);
+
+        $this->tombstoneRelinker->expects($this->once())
+            ->method('relink')
+            ->with($activeCampaignId, 'real@example.com', '123', true)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->once())
+            ->method('update')
+            ->with($activeCampaignId, ['ecomCustomer' => $request])
+            ->willReturn($response);
+
+        $this->customerApi->expects($this->never())
+            ->method('create');
+
+        $this->customer->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($activeCampaignId)
+            ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->customer);
+
+        $this->customerRepository->expects($this->once())
+            ->method('save')
+            ->with($this->customer);
+
+        $consumer = new ExportCustomerConsumer(
+            $this->magentoCustomerRepository,
+            $this->logger,
+            $this->customerRepository,
+            $this->customerRequestBuilder,
+            $this->client,
+            $this->failureRecorder,
+            $this->backoffState,
+            $this->config,
+            $this->tombstoneRelinker
+        );
+
+        $consumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
+    /**
+     * Self-heal ON + SKIPPED_NOT_TOMBSTONE (healthy record): normal update happens,
+     * idempotent (no create).
+     */
+    public function testConsumeUpdateSelfHealSkippedNotTombstoneThenUpdates()
+    {
+        $magentoCustomerId = 123;
+        $request = ['email' => 'real@example.com', 'externalid' => '123', 'connectionid' => 7];
+        $activeCampaignId = 456;
+        $response = ['ecomCustomer' => ['id' => $activeCampaignId]];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreateByMagentoCustomerId')
+            ->willReturn($this->customer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->customer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn($activeCampaignId);
+
+        $this->config = $this->createMock(Config::class);
+        $this->config->method('isTombstoneSelfHealEnabled')->willReturn(true);
+
+        $this->tombstoneRelinker->expects($this->once())
+            ->method('relink')
+            ->with($activeCampaignId, 'real@example.com', '123', true)
+            ->willReturn(TombstoneRelinker::RESULT_SKIPPED_NOT_TOMBSTONE);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->once())
+            ->method('update')
+            ->with($activeCampaignId, ['ecomCustomer' => $request])
+            ->willReturn($response);
+
+        $this->customerApi->expects($this->never())
+            ->method('create');
+
+        $this->customer->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($activeCampaignId)
+            ->willReturnSelf();
+
+        $this->customerRepository->expects($this->once())
+            ->method('save')
+            ->with($this->customer);
+
+        $consumer = new ExportCustomerConsumer(
+            $this->magentoCustomerRepository,
+            $this->logger,
+            $this->customerRepository,
+            $this->customerRequestBuilder,
+            $this->client,
+            $this->failureRecorder,
+            $this->backoffState,
+            $this->config,
+            $this->tombstoneRelinker
+        );
+
+        $consumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
+    /**
+     * Self-heal ON + NOT_FOUND (record truly gone): create() is called instead of
+     * update(), and the consumer persists the new id from the create response.
+     */
+    public function testConsumeUpdateSelfHealNotFoundCreatesAndPersistsNewId()
+    {
+        $magentoCustomerId = 123;
+        $request = ['email' => 'real@example.com', 'externalid' => '123', 'connectionid' => 7];
+        $deadId = 456;
+        $newId = 999;
+        $response = ['ecomCustomer' => ['id' => $newId]];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreateByMagentoCustomerId')
+            ->willReturn($this->customer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->customer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn($deadId);
+
+        $this->config = $this->createMock(Config::class);
+        $this->config->method('isTombstoneSelfHealEnabled')->willReturn(true);
+
+        $this->tombstoneRelinker->expects($this->once())
+            ->method('relink')
+            ->with($deadId, 'real@example.com', '123', true)
+            ->willReturn(TombstoneRelinker::RESULT_NOT_FOUND);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->never())
+            ->method('update');
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willReturn($response);
+
+        $this->customer->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($newId)
+            ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->customer);
+
+        $this->customerRepository->expects($this->once())
+            ->method('save')
+            ->with($this->customer);
+
+        $consumer = new ExportCustomerConsumer(
+            $this->magentoCustomerRepository,
+            $this->logger,
+            $this->customerRepository,
+            $this->customerRequestBuilder,
+            $this->client,
+            $this->failureRecorder,
+            $this->backoffState,
+            $this->config,
+            $this->tombstoneRelinker
+        );
+
+        $consumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
     }
 
     public function testConsumeCreate()

@@ -110,6 +110,15 @@
                         <field id="activecampaign/general/enabled">1</field>
                     </depends>
                 </field>
+                <field id="tombstone_selfheal_enabled" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Tombstone Self-Heal</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, each ecomCustomer update first issues a GET to detect and repair a tombstoned (deleted-contact) record before updating, preserving order history. This adds one GET per ecomCustomer update (a rate-limit cost). Recommended after running activecampaign:relink:tombstones.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                        <field id="activecampaign/export/customer_enabled">1</field>
+                    </depends>
+                </field>
             </group>
             <group id="order_export" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Order Export Settings</label>

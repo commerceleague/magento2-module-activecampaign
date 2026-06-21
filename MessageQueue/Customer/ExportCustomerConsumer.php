@@ -9,12 +9,14 @@ use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
+use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
 use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
+use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneRelinker;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
@@ -35,7 +37,9 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
         private readonly CustomerRequestBuilder $customerRequestBuilder,
         private readonly Client $client,
         private readonly FailureRecorder $failureRecorder,
-        private readonly BackoffState $backoffState
+        private readonly BackoffState $backoffState,
+        private readonly Config $config,
+        private readonly TombstoneRelinker $tombstoneRelinker
     ) {
         parent::__construct($logger);
     }
@@ -167,10 +171,22 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
     private function performApiRequest(CustomerInterface $customer, array $request): array
     {
         if ($activeCampaignId = $customer->getActiveCampaignId()) {
+            if ($this->config->isTombstoneSelfHealEnabled()) {
+                $result = $this->tombstoneRelinker->relink(
+                    (int)$activeCampaignId,
+                    (string)($request['email'] ?? ''),
+                    (string)($request['externalid'] ?? ''),
+                    true
+                );
+                if ($result === TombstoneRelinker::RESULT_NOT_FOUND) {
+                    // record truly gone — create a fresh ecomCustomer (the consumer will persist the new id)
+                    return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
+                }
+                // RELINKED (history-preserving restore done) / SKIPPED_* / NO_LIVE_CONTACT -> fall through to update
+            }
             return $this->client->getCustomerApi()->update((int)$activeCampaignId, ['ecomCustomer' => $request]);
-        } else {
-            return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
         }
+        return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
     }
 
     /**

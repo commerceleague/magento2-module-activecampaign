@@ -32,6 +32,7 @@ class Config extends AbstractHelper
     private const XML_PATH_EXPORT_BACKOFF_ENABLED     = 'activecampaign/export/backoff_enabled';
     private const XML_PATH_EXPORT_BACKOFF_THRESHOLD   = 'activecampaign/export/backoff_threshold';
     private const XML_PATH_EXPORT_RETRY_ALL_OMITTED   = 'activecampaign/export/retry_all_omitted';
+    private const XML_PATH_EXPORT_TOMBSTONE_SELFHEAL  = 'activecampaign/export/tombstone_selfheal_enabled';
 
     private const DEFAULT_BACKOFF_THRESHOLD = 5;
 
@@ -141,6 +142,15 @@ class Config extends AbstractHelper
     public function isRetryAllOmittedEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_RETRY_ALL_OMITTED);
+    }
+
+    /**
+     * Whether the export path should self-heal tombstoned ecomCustomers by issuing a
+     * GET (then an id-preserving relink) before each update (defaults to false)
+     */
+    public function isTombstoneSelfHealEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_TOMBSTONE_SELFHEAL);
     }
 
     public function isWebhookEnabled(): bool

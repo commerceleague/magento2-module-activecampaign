@@ -176,6 +176,26 @@ class ConfigTest extends AbstractTestCase
         $this->assertTrue($this->config->isAbandonedCartExportEnabled());
     }
 
+    public function testIsTombstoneSelfHealEnabledDefaultsToFalse()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/tombstone_selfheal_enabled')
+            ->willReturn(false);
+
+        $this->assertFalse($this->config->isTombstoneSelfHealEnabled());
+    }
+
+    public function testIsTombstoneSelfHealEnabledTrue()
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('isSetFlag')
+            ->with('activecampaign/export/tombstone_selfheal_enabled')
+            ->willReturn(true);
+
+        $this->assertTrue($this->config->isTombstoneSelfHealEnabled());
+    }
+
     public function testIsWebhookEnabledTrue()
     {
         $this->scopeConfig->expects($this->once())

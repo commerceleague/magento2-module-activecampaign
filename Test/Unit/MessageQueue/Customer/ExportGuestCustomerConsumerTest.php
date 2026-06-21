@@ -8,11 +8,13 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\MessageQueue\Customer;
 use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
+use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportGuestCustomerConsumer;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomerRepository;
 use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
+use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneRelinker;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\CustomerApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -63,6 +65,16 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
     protected $backoffState;
 
     /**
+     * @var MockObject|Config
+     */
+    protected $config;
+
+    /**
+     * @var MockObject|TombstoneRelinker
+     */
+    protected $tombstoneRelinker;
+
+    /**
      * @var ExportGuestCustomerConsumer
      */
     protected $exportGuestCustomerConsumer;
@@ -77,6 +89,11 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
         $this->guestCustomer = $this->createMock(GuestCustomerInterface::class);
         $this->failureRecorder = $this->createMock(FailureRecorder::class);
         $this->backoffState = $this->createMock(BackoffState::class);
+        $this->config = $this->createMock(Config::class);
+        $this->tombstoneRelinker = $this->createMock(TombstoneRelinker::class);
+
+        // Default OFF: zero behaviour change for existing tests.
+        $this->config->method('isTombstoneSelfHealEnabled')->willReturn(false);
 
         $this->exportGuestCustomerConsumer = new ExportGuestCustomerConsumer(
             $this->logger,
@@ -84,8 +101,184 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
             $this->customerRequestBuilder,
             $this->client,
             $this->failureRecorder,
-            $this->backoffState
+            $this->backoffState,
+            $this->config,
+            $this->tombstoneRelinker
         );
+    }
+
+    /**
+     * Invoke the private performApiRequest() with the given relink result wired in.
+     * The guest consume() only reaches the create branch, so the self-heal update
+     * branch is exercised directly here.
+     *
+     * @return array<string, mixed>
+     */
+    private function invokePerformApiRequest(
+        ExportGuestCustomerConsumer $consumer,
+        GuestCustomerInterface $guestCustomer,
+        array $request
+    ): array {
+        $method = new \ReflectionMethod(ExportGuestCustomerConsumer::class, 'performApiRequest');
+        $method->setAccessible(true);
+
+        /** @var array<string, mixed> $result */
+        $result = $method->invoke($consumer, $guestCustomer, $request);
+
+        return $result;
+    }
+
+    private function buildConsumerWithSelfHeal(bool $enabled): ExportGuestCustomerConsumer
+    {
+        $this->config = $this->createMock(Config::class);
+        $this->config->method('isTombstoneSelfHealEnabled')->willReturn($enabled);
+
+        return new ExportGuestCustomerConsumer(
+            $this->logger,
+            $this->customerRepository,
+            $this->customerRequestBuilder,
+            $this->client,
+            $this->failureRecorder,
+            $this->backoffState,
+            $this->config,
+            $this->tombstoneRelinker
+        );
+    }
+
+    /**
+     * Self-heal default OFF: the relinker is never called; a normal update happens.
+     */
+    public function testPerformApiRequestSelfHealDisabledUpdatesWithoutRelinker()
+    {
+        $request = ['email' => 'guest@example.com', 'externalid' => 'guest-5', 'connectionid' => 7];
+        $activeCampaignId = 456;
+        $response = ['ecomCustomer' => ['id' => $activeCampaignId]];
+
+        $this->guestCustomer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn($activeCampaignId);
+
+        $this->tombstoneRelinker->expects($this->never())
+            ->method('relink');
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->once())
+            ->method('update')
+            ->with($activeCampaignId, ['ecomCustomer' => $request])
+            ->willReturn($response);
+
+        $consumer = $this->buildConsumerWithSelfHeal(false);
+
+        $this->assertSame($response, $this->invokePerformApiRequest($consumer, $this->guestCustomer, $request));
+    }
+
+    /**
+     * Self-heal ON + RELINKED: relinker runs once, then the normal update happens.
+     */
+    public function testPerformApiRequestSelfHealRelinkedThenUpdates()
+    {
+        $request = ['email' => 'guest@example.com', 'externalid' => 'guest-5', 'connectionid' => 7];
+        $activeCampaignId = 456;
+        $response = ['ecomCustomer' => ['id' => $activeCampaignId]];
+
+        $this->guestCustomer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn($activeCampaignId);
+
+        $this->tombstoneRelinker->expects($this->once())
+            ->method('relink')
+            ->with($activeCampaignId, 'guest@example.com', 'guest-5', true)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->once())
+            ->method('update')
+            ->with($activeCampaignId, ['ecomCustomer' => $request])
+            ->willReturn($response);
+
+        $this->customerApi->expects($this->never())
+            ->method('create');
+
+        $consumer = $this->buildConsumerWithSelfHeal(true);
+
+        $this->assertSame($response, $this->invokePerformApiRequest($consumer, $this->guestCustomer, $request));
+    }
+
+    /**
+     * Self-heal ON + SKIPPED_NOT_TOMBSTONE (healthy record): normal update, no create.
+     */
+    public function testPerformApiRequestSelfHealSkippedNotTombstoneThenUpdates()
+    {
+        $request = ['email' => 'guest@example.com', 'externalid' => 'guest-5', 'connectionid' => 7];
+        $activeCampaignId = 456;
+        $response = ['ecomCustomer' => ['id' => $activeCampaignId]];
+
+        $this->guestCustomer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn($activeCampaignId);
+
+        $this->tombstoneRelinker->expects($this->once())
+            ->method('relink')
+            ->with($activeCampaignId, 'guest@example.com', 'guest-5', true)
+            ->willReturn(TombstoneRelinker::RESULT_SKIPPED_NOT_TOMBSTONE);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->once())
+            ->method('update')
+            ->with($activeCampaignId, ['ecomCustomer' => $request])
+            ->willReturn($response);
+
+        $this->customerApi->expects($this->never())
+            ->method('create');
+
+        $consumer = $this->buildConsumerWithSelfHeal(true);
+
+        $this->assertSame($response, $this->invokePerformApiRequest($consumer, $this->guestCustomer, $request));
+    }
+
+    /**
+     * Self-heal ON + NOT_FOUND (record truly gone): create() is called instead of update().
+     */
+    public function testPerformApiRequestSelfHealNotFoundCreates()
+    {
+        $request = ['email' => 'guest@example.com', 'externalid' => 'guest-5', 'connectionid' => 7];
+        $deadId = 456;
+        $newId = 999;
+        $response = ['ecomCustomer' => ['id' => $newId]];
+
+        $this->guestCustomer->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn($deadId);
+
+        $this->tombstoneRelinker->expects($this->once())
+            ->method('relink')
+            ->with($deadId, 'guest@example.com', 'guest-5', true)
+            ->willReturn(TombstoneRelinker::RESULT_NOT_FOUND);
+
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        $this->customerApi->expects($this->never())
+            ->method('update');
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willReturn($response);
+
+        $consumer = $this->buildConsumerWithSelfHeal(true);
+
+        $this->assertSame($response, $this->invokePerformApiRequest($consumer, $this->guestCustomer, $request));
     }
 
     public function testConsumeCreate()
