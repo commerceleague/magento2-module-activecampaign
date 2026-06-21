@@ -38,6 +38,21 @@ behaviour; schema changes are additive and backward-compatible.
   an implicit `null` that callers silently dropped.
 - Renamed the misspelled `Helper\Contants` to `Helper\Constants`; removed a
   redundant shadowed logger property; standardised consumer return types.
+- **Guest export no longer crashes on a null name (poison message).** A guest
+  whose order has a null `customer_firstname` (the name lives on the order
+  address) threw a `TypeError` before any catch, nacking and re-crashing the
+  message. The guest command now reads the name from the billing address, the
+  guest repository coalesces null names to `''`, and every export consumer wraps
+  `consume()` in a `\Throwable` backstop that records a structured failure instead
+  of poisoning the queue.
+- **Duplicate-recovery now verifies the resolved record matches.** The guest
+  (email + connectionid + email check), order (`externalid`) and abandoned-cart
+  (`externalcheckoutid`) duplicate paths reject a non-matching `listPerPage` hit
+  (mirroring the customer guard) so an entity can't be linked to the wrong AC id.
+- **Order deferral-cap failures are now visible.** When an order's customer never
+  syncs, the deferral cap records a `customer_unresolved` failure + saves (was a
+  silent permanent `NULL`, invisible to `export:status`); the deferral bound was
+  raised from 1 to 3 attempts.
 
 ### Added
 - **Diagnosable failure logging.** Every export failure now logs a single
@@ -67,6 +82,17 @@ behaviour; schema changes are additive and backward-compatible.
   order. The intentional `magento_quote_id` cart→order lifecycle key is preserved.
 - `renovate.json` for ongoing dependency maintenance; `rector.php` targeted at
   PHP 8.4.
+- **`activecampaign:relink:tombstones`** operator command + config-gated export
+  self-heal for tombstoned ecomCustomers. When an AC contact is deleted, AC
+  anonymizes its ecomCustomer (`email` → `deleted+…`, `subscriberid` null) but
+  keeps the record and its orders, so the local mapping calls `update(<dead id>)`
+  forever and the order history is orphaned. The command does an id-preserving
+  relink (restores the real email via PUT — history kept, contact re-linked),
+  single or batch, `--dry-run` by default / `--commit`; it is idempotent (skips
+  non-tombstones, never re-fixing corrected records), skips when no live contact
+  exists, and skips email conflicts that need a manual merge. The new
+  `activecampaign/export/tombstone_selfheal_enabled` flag (default off) makes the
+  customer export path self-heal the same way before each update.
 
 ### Changed
 - **Manual CLI exports are bounded to the cron scope by default.** The
