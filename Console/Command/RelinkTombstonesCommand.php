@@ -14,7 +14,9 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer\Co
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\CollectionFactory as GuestCustomerCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneReconciler;
 use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneRelinker;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Console\Cli;
+use Magento\Framework\Exception\LocalizedException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -50,7 +52,8 @@ class RelinkTombstonesCommand extends Command
         private readonly GuestCustomerCollectionFactory $guestCustomerCollectionFactory,
         private readonly Config $config,
         private readonly TombstoneRelinker $relinker,
-        private readonly TombstoneReconciler $reconciler
+        private readonly TombstoneReconciler $reconciler,
+        private readonly CustomerRepositoryInterface $magentoCustomerRepository
     ) {
         parent::__construct();
     }
@@ -182,15 +185,34 @@ class RelinkTombstonesCommand extends Command
     ): array {
         $targets = [];
 
-        $wantRegistered = $all || $magentoCustomerId !== null || $email !== null;
+        // For a targeted --email lookup the registered AC mapping table has no
+        // email column, so it must be constrained via the magento_customer_id
+        // resolved from the email. Resolve it ONCE here (not per-record): a
+        // bare --email would otherwise load every registered mapping and resolve
+        // them one-by-one (V2b: ~1,672 rows, appears to hang).
+        $registeredCustomerId = $magentoCustomerId;
+        $emailHasRegistered   = true;
+
+        if ($email !== null && $magentoCustomerId === null) {
+            try {
+                $registeredCustomerId = (int)$this->magentoCustomerRepository->get((string)$email)->getId();
+            } catch (LocalizedException) {
+                // The email belongs to no registered customer (e.g. a guest-only
+                // email): there is no registered target, so do not scan the
+                // registered collection at all. The guest branch still runs.
+                $emailHasRegistered = false;
+            }
+        }
+
+        $wantRegistered = ($all || $magentoCustomerId !== null || $email !== null) && $emailHasRegistered;
         $wantGuest      = $all || $guestId !== null || $email !== null;
 
         if ($wantRegistered) {
             $collection = $this->customerCollectionFactory->create();
             $collection->addFieldToFilter(self::FIELD_ACTIVE_CAMPAIGN_ID, ['notnull' => true]);
 
-            if ($magentoCustomerId !== null) {
-                $collection->addFieldToFilter('magento_customer_id', (string)(int)$magentoCustomerId);
+            if ($registeredCustomerId !== null) {
+                $collection->addFieldToFilter('magento_customer_id', (string)(int)$registeredCustomerId);
             }
 
             if ($limit > 0) {

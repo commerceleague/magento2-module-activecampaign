@@ -68,6 +68,16 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
     private $items = [];
 
     /**
+     * Records every addFieldToFilter() call on the registered (customer)
+     * collection as [field, condition] so tests can assert the collection was
+     * constrained at the DB level (e.g. by magento_customer_id) rather than
+     * loaded unfiltered.
+     *
+     * @var array<int, array{0:string,1:mixed}>
+     */
+    private $customerCollectionFilters = [];
+
+    /**
      * @var RelinkTombstonesCommand
      */
     private $command;
@@ -98,12 +108,22 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
             'customer' => $this->customerCollection,
             'guest'    => $this->guestCustomerCollection,
         ] as $key => $collection) {
-            $collection->method('addFieldToFilter')->willReturnSelf();
             $collection->method('setPageSize')->willReturnSelf();
             $collection->method('getItems')->willReturnCallback(
                 fn () => $this->items[$key] ?? []
             );
         }
+
+        // Record the registered collection's addFieldToFilter() calls so tests
+        // can assert it is constrained (e.g. magento_customer_id) at the DB
+        // level. A pure willReturnSelf() stub would silently swallow the filter
+        // and let an unfiltered full-scan pass.
+        $this->customerCollection->method('addFieldToFilter')
+            ->willReturnCallback(function ($field, $condition = null) {
+                $this->customerCollectionFilters[] = [$field, $condition];
+                return $this->customerCollection;
+            });
+        $this->guestCustomerCollection->method('addFieldToFilter')->willReturnSelf();
 
         $this->customerRepository = $this->createMock(CustomerRepositoryInterface::class);
         $this->config             = $this->createMock(Config::class);
@@ -124,7 +144,8 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
             $this->guestCustomerCollectionFactory,
             $this->config,
             $this->relinker,
-            $reconciler
+            $reconciler,
+            $this->customerRepository
         );
 
         $this->commandTester = new CommandTester($this->command);
@@ -169,6 +190,20 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
         $magentoCustomer->method('getEmail')->willReturn($email);
         $this->customerRepository->method('getById')
             ->with($magentoCustomerId)
+            ->willReturn($magentoCustomer);
+    }
+
+    /**
+     * Stub the email -> registered magento customer id resolution
+     * (CustomerRepositoryInterface::get(email) -> getId()).
+     */
+    private function stubRegisteredCustomerByEmail(string $email, int $magentoCustomerId): void
+    {
+        $magentoCustomer = $this->createMock(MagentoCustomerInterface::class);
+        $magentoCustomer->method('getId')->willReturn($magentoCustomerId);
+        $magentoCustomer->method('getEmail')->willReturn($email);
+        $this->customerRepository->method('get')
+            ->with($email)
             ->willReturn($magentoCustomer);
     }
 
@@ -229,6 +264,11 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
 
     public function testEmailTargetsByEmailAcrossGuest(): void
     {
+        // Guest-only email: no registered customer resolves from it.
+        $this->customerRepository->method('get')
+            ->with('guest@example.com')
+            ->willThrowException(new NoSuchEntityException(__('No such entity')));
+
         $this->items['guest'] = [
             $this->createGuestMapping(60, 99, 'guest@example.com'),
             $this->createGuestMapping(61, 100, 'other@example.com'),
@@ -324,6 +364,10 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
     {
         // V2: a single guest selected by --email must be processed, produce a
         // per-record line, and be tallied in the summary.
+        $this->customerRepository->method('get')
+            ->with('renate.ranegger@lep.ch')
+            ->willThrowException(new NoSuchEntityException(__('No such entity')));
+
         $this->items['guest'] = [
             $this->createGuestMapping(60, 99, 'renate.ranegger@lep.ch'),
         ];
@@ -350,6 +394,10 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
         // V2 root cause: the stored guest email differs only in case from the
         // operator's input. The per-record narrowing used a case-SENSITIVE !==
         // which silently dropped the row. It must now match.
+        $this->customerRepository->method('get')
+            ->with('renate.ranegger@lep.ch')
+            ->willThrowException(new NoSuchEntityException(__('No such entity')));
+
         $this->items['guest'] = [
             $this->createGuestMapping(60, 99, 'Renate.Ranegger@LEP.ch'),
         ];
@@ -370,6 +418,7 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
     public function testEmailMatchesRegisteredCaseInsensitively(): void
     {
         // The registered real email (from the repository) differs only in case.
+        $this->stubRegisteredCustomerByEmail('reg@example.com', 77);
         $this->stubMagentoCustomer(77, 'Reg@Example.com');
         $this->items['customer'] = [$this->createCustomerMapping(42, 77)];
 
@@ -444,6 +493,94 @@ class RelinkTombstonesCommandTest extends AbstractTestCase
             ->willReturnSelf();
 
         $this->commandTester->execute(['--all' => true, '--limit' => 5]);
+
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
+    }
+
+    public function testEmailForRegisteredCustomerConstrainsRegisteredCollection(): void
+    {
+        // V2b: --email for an email that IS a registered customer must resolve
+        // the email to its magento_customer_id ONCE and constrain the registered
+        // collection at the DB level (NOT load all ~1,672 mappings unfiltered).
+        $this->stubRegisteredCustomerByEmail('reg@example.com', 77);
+        // Resolution of the constrained mapping back to its real email.
+        $this->stubMagentoCustomer(77, 'reg@example.com');
+        $this->items['customer'] = [$this->createCustomerMapping(42, 77)];
+
+        $this->relinker->expects($this->once())
+            ->method('relink')
+            ->with(42, 'reg@example.com', 77, false)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->commandTester->execute(['--email' => 'reg@example.com']);
+
+        // The registered collection MUST have been constrained by the resolved
+        // magento_customer_id. A full-scan (only the activecampaign_id notnull
+        // filter) must not pass.
+        $this->assertContains(
+            ['magento_customer_id', '77'],
+            $this->customerCollectionFilters,
+            'Registered collection must be constrained by the resolved magento_customer_id.'
+        );
+
+        $display = $this->commandTester->getDisplay();
+        $this->assertStringContainsString('ecomId=42', $display);
+        $this->assertStringContainsString('type=registered', $display);
+        $this->assertMatchesRegularExpression('/relinked:\s*1/', $display);
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
+    }
+
+    public function testEmailForGuestOnlyDoesNotScanRegisteredCollection(): void
+    {
+        // V2b: --email for an email that is ONLY a guest (no registered
+        // customer) must NOT load/scan the registered collection at all, yet the
+        // guest must still be found and reported.
+        $this->customerRepository->method('get')
+            ->with('guest@example.com')
+            ->willThrowException(new NoSuchEntityException(__('No such entity')));
+
+        // The registered collection must never be created/scanned.
+        $this->customerCollectionFactory->expects($this->never())->method('create');
+
+        $this->items['guest'] = [
+            $this->createGuestMapping(60, 99, 'guest@example.com'),
+        ];
+
+        $this->relinker->expects($this->once())
+            ->method('relink')
+            ->with(60, 'guest@example.com', 'guest-99', false)
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->commandTester->execute(['--email' => 'guest@example.com']);
+
+        $display = $this->commandTester->getDisplay();
+        $this->assertStringContainsString('ecomId=60', $display);
+        $this->assertStringContainsString('type=guest', $display);
+        $this->assertMatchesRegularExpression('/relinked:\s*1/', $display);
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
+    }
+
+    public function testAllDoesNotResolveEmailAndLoadsFullRegisteredSet(): void
+    {
+        // --all must NOT call the email resolver and must load the full
+        // registered set (only the activecampaign_id notnull filter, no
+        // magento_customer_id constraint).
+        $this->customerRepository->expects($this->never())->method('get');
+
+        $this->stubMagentoCustomer(77, 'reg@example.com');
+        $this->items['customer'] = [$this->createCustomerMapping(42, 77)];
+        $this->items['guest']    = [$this->createGuestMapping(60, 99, 'guest@example.com')];
+
+        $this->relinker->expects($this->exactly(2))
+            ->method('relink')
+            ->willReturn(TombstoneRelinker::RESULT_RELINKED);
+
+        $this->commandTester->execute(['--all' => true]);
+
+        // No magento_customer_id constraint was applied for --all.
+        foreach ($this->customerCollectionFilters as $filter) {
+            $this->assertNotEquals('magento_customer_id', $filter[0]);
+        }
 
         $this->assertEquals(Cli::RETURN_SUCCESS, $this->commandTester->getStatusCode());
     }
