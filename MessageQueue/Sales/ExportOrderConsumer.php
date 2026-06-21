@@ -74,145 +74,163 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             return;
         }
 
-        $order = $this->orderRepository->getOrCreateByMagentoQuoteId($magentoOrder->getQuoteId());
-
         try {
-            $request = $this->orderRequestBuilder->build($magentoOrder);
-        } catch (\Throwable $e) {
-            $this->logFailure(
-                'order',
-                $this->castId($order->getId()),
-                $this->castId($message['magento_order_id']),
-                null,
-                'builder_error',
-                $e->getMessage()
-            );
-            $this->failureRecorder->recordFailure($order, 'builder_error', $e->getMessage());
-            $this->orderRepository->save($order);
-            return;
-        }
+            $order = $this->orderRepository->getOrCreateByMagentoQuoteId($magentoOrder->getQuoteId());
 
-        if (empty($request['customerid'])) {
-            $deferredCount = (int)($message['deferred_count'] ?? 0);
-            if ($deferredCount < self::MAX_DEFERRALS) {
-                // Publish the dependency export first so the customer/guest gets an AC id.
-                if ($magentoOrder->getCustomerIsGuest()) {
-                    $this->publisher->publish(Topics::GUEST_CUSTOMER_EXPORT, json_encode([
-                        'magento_customer_id' => null,
-                        'customer_is_guest'   => true,
-                        'customer_data'       => [
-                            GuestCustomerInterface::FIRSTNAME => $magentoOrder->getCustomerFirstname(),
-                            GuestCustomerInterface::LASTNAME  => $magentoOrder->getCustomerLastname(),
-                            GuestCustomerInterface::EMAIL     => $magentoOrder->getCustomerEmail(),
-                        ],
-                    ], JSON_THROW_ON_ERROR));
-                } else {
-                    $this->publisher->publish(Topics::CUSTOMER_CUSTOMER_EXPORT, json_encode([
-                        'magento_customer_id' => $magentoOrder->getCustomerId(),
-                    ], JSON_THROW_ON_ERROR));
-                }
-
-                // Re-queue the order with an incremented deferral counter.
-                $this->publisher->publish(Topics::SALES_ORDER_EXPORT, json_encode([
-                    'magento_order_id' => $message['magento_order_id'],
-                    'deferred_count'   => $deferredCount + 1,
-                ], JSON_THROW_ON_ERROR));
-
-                $this->getLogger()->info(sprintf(
-                    'Order %s deferred: customer not yet exported to ActiveCampaign',
-                    $message['magento_order_id']
-                ));
-                return;
-            }
-
-            // Deferral cap reached: do NOT send customerid:null; log and stop (Phase 5 will track this).
-            $this->getLogger()->error(sprintf(
-                'Order %s still has no ActiveCampaign customer id after deferral; skipping to avoid field_missing',
-                $message['magento_order_id']
-            ));
-            return;
-        }
-
-        try {
-            $apiResponse = $this->performApiRequest($order, $request);
-
-            $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null);
-            if ($activeCampaignId === null) {
+            try {
+                $request = $this->orderRequestBuilder->build($magentoOrder);
+            } catch (\Throwable $e) {
                 $this->logFailure(
                     'order',
                     $this->castId($order->getId()),
                     $this->castId($message['magento_order_id']),
                     null,
-                    'empty_response',
-                    sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_ORDER)
+                    'builder_error',
+                    $e->getMessage()
                 );
-                $this->failureRecorder->recordFailure($order, 'empty_response', null);
+                $this->failureRecorder->recordFailure($order, 'builder_error', $e->getMessage());
                 $this->orderRepository->save($order);
                 return;
             }
 
-            $order->setActiveCampaignId($activeCampaignId);
-            $order->setMagentoOrderId($magentoOrder->getEntityId());
+            if (empty($request['customerid'])) {
+                $deferredCount = (int)($message['deferred_count'] ?? 0);
+                if ($deferredCount < self::MAX_DEFERRALS) {
+                    // Publish the dependency export first so the customer/guest gets an AC id.
+                    if ($magentoOrder->getCustomerIsGuest()) {
+                        $this->publisher->publish(Topics::GUEST_CUSTOMER_EXPORT, json_encode([
+                            'magento_customer_id' => null,
+                            'customer_is_guest'   => true,
+                            'customer_data'       => [
+                                GuestCustomerInterface::FIRSTNAME => $magentoOrder->getCustomerFirstname(),
+                                GuestCustomerInterface::LASTNAME  => $magentoOrder->getCustomerLastname(),
+                                GuestCustomerInterface::EMAIL     => $magentoOrder->getCustomerEmail(),
+                            ],
+                        ], JSON_THROW_ON_ERROR));
+                    } else {
+                        $this->publisher->publish(Topics::CUSTOMER_CUSTOMER_EXPORT, json_encode([
+                            'magento_customer_id' => $magentoOrder->getCustomerId(),
+                        ], JSON_THROW_ON_ERROR));
+                    }
 
-            $this->backoffState->reset();
-            $this->failureRecorder->recordSuccess($order);
-            $this->orderRepository->save($order);
-        } catch (UnprocessableEntityHttpException $e) {
+                    // Re-queue the order with an incremented deferral counter.
+                    $this->publisher->publish(Topics::SALES_ORDER_EXPORT, json_encode([
+                        'magento_order_id' => $message['magento_order_id'],
+                        'deferred_count'   => $deferredCount + 1,
+                    ], JSON_THROW_ON_ERROR));
+
+                    $this->getLogger()->info(sprintf(
+                        'Order %s deferred: customer not yet exported to ActiveCampaign',
+                        $message['magento_order_id']
+                    ));
+                    return;
+                }
+
+                // Deferral cap reached: do NOT send customerid:null; log and stop (Phase 5 will track this).
+                $this->getLogger()->error(sprintf(
+                    'Order %s still has no ActiveCampaign customer id after deferral; skipping to avoid field_missing',
+                    $message['magento_order_id']
+                ));
+                return;
+            }
+
             try {
-                $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
-            } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                $apiResponse = $this->performApiRequest($order, $request);
+
+                $activeCampaignId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null
+                );
+                if ($activeCampaignId === null) {
+                    $this->logFailure(
+                        'order',
+                        $this->castId($order->getId()),
+                        $this->castId($message['magento_order_id']),
+                        null,
+                        'empty_response',
+                        sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_ORDER)
+                    );
+                    $this->failureRecorder->recordFailure($order, 'empty_response', null);
+                    $this->orderRepository->save($order);
+                    return;
+                }
+
+                $order->setActiveCampaignId($activeCampaignId);
+                $order->setMagentoOrderId($magentoOrder->getEntityId());
+
+                $this->backoffState->reset();
+                $this->failureRecorder->recordSuccess($order);
+                $this->orderRepository->save($order);
+            } catch (UnprocessableEntityHttpException $e) {
+                try {
+                    $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
+                } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                    $this->logFailure(
+                        'order',
+                        $this->castId($order->getId()),
+                        $this->castId($message['magento_order_id']),
+                        $duplicateLookupException->getCode(),
+                        'http_error',
+                        $duplicateLookupException->getMessage()
+                    );
+                    return;
+                }
+
+                $duplicateId = $outcome->isDuplicate()
+                    ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_ORDER]['id'] ?? null)
+                    : null;
+                if ($duplicateId !== null) {
+                    $order->setActiveCampaignId($duplicateId);
+                    $order->setMagentoOrderId($magentoOrder->getEntityId());
+                    $this->backoffState->reset();
+                    $this->failureRecorder->recordSuccess($order);
+                    $this->orderRepository->save($order);
+                    return;
+                }
+
                 $this->logFailure(
                     'order',
                     $this->castId($order->getId()),
                     $this->castId($message['magento_order_id']),
-                    $duplicateLookupException->getCode(),
-                    'http_error',
-                    $duplicateLookupException->getMessage()
+                    $e->getCode() ?: 422,
+                    $outcome->code ?? 'unknown',
+                    $outcome->message
                 );
+                $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
+                $this->orderRepository->save($order);
                 return;
-            }
-
-            $duplicateId = $outcome->isDuplicate()
-                ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_ORDER]['id'] ?? null)
-                : null;
-            if ($duplicateId !== null) {
-                $order->setActiveCampaignId($duplicateId);
-                $order->setMagentoOrderId($magentoOrder->getEntityId());
-                $this->backoffState->reset();
-                $this->failureRecorder->recordSuccess($order);
+            } catch (HttpException $e) {
+                if ($e->getCode() === 503) {
+                    $this->backoffState->record503();
+                }
+                $this->logFailure(
+                    'order',
+                    $this->castId($order->getId()),
+                    $this->castId($message['magento_order_id']),
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
+                $transient = $e->getCode() >= 500;
+                $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage(), $transient);
                 $this->orderRepository->save($order);
                 return;
             }
-
+        } catch (\Throwable $t) {
+            $localId = isset($order) ? $this->castId($order->getId()) : null;
             $this->logFailure(
                 'order',
-                $this->castId($order->getId()),
-                $this->castId($message['magento_order_id']),
-                $e->getCode() ?: 422,
-                $outcome->code ?? 'unknown',
-                $outcome->message
+                $localId,
+                $this->castId($message['magento_order_id'] ?? null),
+                null,
+                'unexpected_error',
+                $t->getMessage()
             );
-            $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
-            $this->orderRepository->save($order);
-            return;
-        } catch (HttpException $e) {
-            if ($e->getCode() === 503) {
-                $this->backoffState->record503();
+            if (isset($order)) {
+                $this->failureRecorder->recordFailure($order, 'unexpected_error', $t->getMessage());
+                $this->orderRepository->save($order);
             }
-            $this->logFailure(
-                'order',
-                $this->castId($order->getId()),
-                $this->castId($message['magento_order_id']),
-                $e->getCode(),
-                'http_error',
-                $e->getMessage()
-            );
-            $transient = $e->getCode() >= 500;
-            $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage(), $transient);
-            $this->orderRepository->save($order);
             return;
         }
-
     }
 
     /**

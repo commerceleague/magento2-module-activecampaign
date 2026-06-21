@@ -297,6 +297,62 @@ class ExportContactConsumerTest extends AbstractTestCase
         $this->exportContactConsumer->consume(json_encode(['email' => $email]));
     }
 
+    public function testConsumeSwallowsUnexpectedThrowableAndRecordsFailure()
+    {
+        $email = 'example@example.com';
+        $request = ['request'];
+
+        $this->subscriber->expects($this->once())
+            ->method('load')
+            ->with($email, 'subscriber_email')
+            ->willReturnSelf();
+
+        $this->subscriber->expects($this->once())
+            ->method('getId')
+            ->willReturn(123);
+
+        $this->subscriber->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactRepository->expects($this->once())
+            ->method('getOrCreateByEmail')
+            ->with($email)
+            ->willReturn($this->contact);
+
+        $this->contactRequestBuilder->expects($this->once())
+            ->method('buildWithSubscriber')
+            ->willReturn($request);
+
+        $this->contact->expects($this->atLeastOnce())
+            ->method('getId')
+            ->willReturn(88);
+
+        // An unexpected, non-Http throwable from a body dependency.
+        $this->client->expects($this->once())
+            ->method('getContactApi')
+            ->willThrowException(new \RuntimeException('boom'));
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->contact, 'unexpected_error', 'boom');
+
+        $this->contactRepository->expects($this->once())
+            ->method('save')
+            ->with($this->contact);
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=contact'),
+                $this->stringContains('local_id=88'),
+                $this->stringContains('code=unexpected_error')
+            ));
+
+        // Must NOT propagate.
+        $this->exportContactConsumer->consume(json_encode(['email' => $email]));
+    }
+
     public function testConsume()
     {
         $email = 'example@example.com';

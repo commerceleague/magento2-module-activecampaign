@@ -1041,6 +1041,61 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
+    public function testConsumeSwallowsUnexpectedThrowableAndRecordsFailure()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request', 'customerid' => 999];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->atLeastOnce())
+            ->method('getId')
+            ->willReturn(77);
+
+        // An unexpected, non-Http throwable from a body dependency.
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willThrowException(new \RuntimeException('boom'));
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'unexpected_error', 'boom');
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=order'),
+                $this->stringContains('local_id=77'),
+                $this->stringContains('magento_id=' . $magentoOrderId),
+                $this->stringContains('code=unexpected_error')
+            ));
+
+        // Must NOT propagate.
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
     public function testConsume4xxIsPermanent()
     {
         $magentoOrderId = 123;

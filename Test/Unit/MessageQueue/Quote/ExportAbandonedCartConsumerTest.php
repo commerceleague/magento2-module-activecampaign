@@ -373,6 +373,60 @@ class ExportAbandonedCartConsumerTest extends AbstractTestCase
         $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
     }
 
+    public function testConsumeSwallowsUnexpectedThrowableAndRecordsFailure()
+    {
+        $quoteId = 123;
+        $request = ['request'];
+
+        $this->quote->expects($this->once())
+            ->method('loadByIdWithoutStore')
+            ->with(123)
+            ->willReturn($this->quote);
+
+        $this->quote->expects($this->any())
+            ->method('getId')
+            ->willReturn($quoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($quoteId)
+            ->willReturn($this->order);
+
+        $this->abandonedCartRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->quote)
+            ->willReturn($request);
+
+        $this->order->expects($this->atLeastOnce())
+            ->method('getId')
+            ->willReturn(88);
+
+        // An unexpected, non-Http throwable from a body dependency.
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willThrowException(new \RuntimeException('boom'));
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'unexpected_error', 'boom');
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=abandoned_cart'),
+                $this->stringContains('local_id=88'),
+                $this->stringContains('magento_id=' . $quoteId),
+                $this->stringContains('code=unexpected_error')
+            ));
+
+        // Must NOT propagate.
+        $this->exportAbandonedCartConsumer->consume(json_encode(['quote_id' => $quoteId]));
+    }
+
     public function testConsumeDuplicateResolvesAndSaves()
     {
         $quoteId = 123;

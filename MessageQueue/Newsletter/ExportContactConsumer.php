@@ -69,68 +69,78 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             return;
         }
 
-        $contact = $this->contactRepository->getOrCreateByEmail($subscriber->getEmail());
-        $request = $this->contactRequestBuilder->buildWithSubscriber($subscriber);
-
         try {
-            $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
+            $contact = $this->contactRepository->getOrCreateByEmail($subscriber->getEmail());
+            $request = $this->contactRequestBuilder->buildWithSubscriber($subscriber);
 
-            $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_CONTACT]['id'] ?? null);
-            if ($activeCampaignId === null) {
+            try {
+                $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
+
+                $activeCampaignId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_CONTACT]['id'] ?? null
+                );
+                if ($activeCampaignId === null) {
+                    $this->logFailure(
+                        'contact',
+                        $this->castId($contact->getId()),
+                        null,
+                        null,
+                        'empty_response',
+                        sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CONTACT)
+                    );
+                    $this->failureRecorder->recordFailure($contact, 'empty_response', null);
+                    $this->contactRepository->save($contact);
+                    return;
+                }
+
+                $contact->setActiveCampaignId($activeCampaignId);
+                $this->backoffState->reset();
+                $this->failureRecorder->recordSuccess($contact);
+                $this->contactRepository->save($contact);
+
+                // trigger event after contact has been saved
+                $this->eventManager->dispatch(
+                    'commmerceleague_activecampaign_export_newsletter_subscriber_success',
+                    ['contact' => $contact]
+                );
+            } catch (UnprocessableEntityHttpException $e) {
                 $this->logFailure(
                     'contact',
                     $this->castId($contact->getId()),
                     null,
-                    null,
-                    'empty_response',
-                    sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CONTACT)
+                    $e->getCode() ?: 422,
+                    'unknown',
+                    $e->getMessage()
                 );
-                $this->failureRecorder->recordFailure($contact, 'empty_response', null);
+                $this->failureRecorder->recordFailure($contact, 'unknown', $e->getMessage());
+                $this->contactRepository->save($contact);
+                return;
+            } catch (HttpException $e) {
+                if ($e->getCode() === 503) {
+                    $this->backoffState->record503();
+                }
+                $this->logFailure(
+                    'contact',
+                    $this->castId($contact->getId()),
+                    null,
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
+                $transient = $e->getCode() >= 500;
+                $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage(), $transient);
                 $this->contactRepository->save($contact);
                 return;
             }
-
-            $contact->setActiveCampaignId($activeCampaignId);
-            $this->backoffState->reset();
-            $this->failureRecorder->recordSuccess($contact);
-            $this->contactRepository->save($contact);
-
-            // trigger event after contact has been saved
-            $this->eventManager->dispatch(
-                'commmerceleague_activecampaign_export_newsletter_subscriber_success',
-                ['contact' => $contact]
-            );
-        } catch (UnprocessableEntityHttpException $e) {
-            $this->logFailure(
-                'contact',
-                $this->castId($contact->getId()),
-                null,
-                $e->getCode() ?: 422,
-                'unknown',
-                $e->getMessage()
-            );
-            $this->failureRecorder->recordFailure($contact, 'unknown', $e->getMessage());
-            $this->contactRepository->save($contact);
-            return;
-        } catch (HttpException $e) {
-            if ($e->getCode() === 503) {
-                $this->backoffState->record503();
+        } catch (\Throwable $t) {
+            $localId = isset($contact) ? $this->castId($contact->getId()) : null;
+            $this->logFailure('contact', $localId, null, null, 'unexpected_error', $t->getMessage());
+            if (isset($contact)) {
+                $this->failureRecorder->recordFailure($contact, 'unexpected_error', $t->getMessage());
+                $this->contactRepository->save($contact);
             }
-            $this->logFailure(
-                'contact',
-                $this->castId($contact->getId()),
-                null,
-                $e->getCode(),
-                'http_error',
-                $e->getMessage()
-            );
-            $transient = $e->getCode() >= 500;
-            $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage(), $transient);
-            $this->contactRepository->save($contact);
             return;
         }
-
-
     }
 
     /**

@@ -461,6 +461,59 @@ class ExportCustomerConsumerTest extends AbstractTestCase
         $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
     }
 
+    public function testConsumeSwallowsUnexpectedThrowableAndRecordsFailure()
+    {
+        $magentoCustomerId = 123;
+        $request = ['request'];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoCustomerId);
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreateByMagentoCustomerId')
+            ->willReturn($this->customer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->customer->expects($this->atLeastOnce())
+            ->method('getId')
+            ->willReturn(88);
+
+        // An unexpected, non-Http throwable from a body dependency.
+        $this->client->expects($this->once())
+            ->method('getCustomerApi')
+            ->willThrowException(new \RuntimeException('boom'));
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->customer, 'unexpected_error', 'boom');
+
+        $this->customerRepository->expects($this->once())
+            ->method('save')
+            ->with($this->customer);
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=customer'),
+                $this->stringContains('local_id=88'),
+                $this->stringContains('magento_id=' . $magentoCustomerId),
+                $this->stringContains('code=unexpected_error')
+            ));
+
+        // Must NOT propagate.
+        $this->exportCustomerConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
     public function testConsumeUpdate()
     {
         $magentoCustomerId = 123;

@@ -71,102 +71,119 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
             return;
         }
 
-        $order = $this->orderRepository->getOrCreateByMagentoQuoteId($quote->getId());
-
         try {
-            $request = $this->abandonedCartRequestBuilder->build($quote);
-        } catch (\Throwable $e) {
-            $this->logFailure(
-                'abandoned_cart',
-                $this->castId($order->getId()),
-                $this->castId($message['quote_id']),
-                null,
-                'builder_error',
-                $e->getMessage()
-            );
-            $this->failureRecorder->recordFailure($order, 'builder_error', $e->getMessage());
-            $this->orderRepository->save($order);
-            return;
-        }
+            $order = $this->orderRepository->getOrCreateByMagentoQuoteId($quote->getId());
 
-        try {
-            $apiResponse = $this->client->getOrderApi()->create(['ecomOrder' => $request]);
-
-            $activeCampaignId = $this->extractActiveCampaignId($apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null);
-            if ($activeCampaignId === null) {
+            try {
+                $request = $this->abandonedCartRequestBuilder->build($quote);
+            } catch (\Throwable $e) {
                 $this->logFailure(
                     'abandoned_cart',
                     $this->castId($order->getId()),
                     $this->castId($message['quote_id']),
                     null,
-                    'empty_response',
-                    sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_ORDER)
+                    'builder_error',
+                    $e->getMessage()
                 );
-                $this->failureRecorder->recordFailure($order, 'empty_response', null);
+                $this->failureRecorder->recordFailure($order, 'builder_error', $e->getMessage());
                 $this->orderRepository->save($order);
                 return;
             }
 
-            $order->setActiveCampaignId($activeCampaignId);
-            $this->backoffState->reset();
-            $this->failureRecorder->recordSuccess($order);
-            $this->orderRepository->save($order);
-        } catch (UnprocessableEntityHttpException $e) {
             try {
-                $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
-            } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                $apiResponse = $this->client->getOrderApi()->create(['ecomOrder' => $request]);
+
+                $activeCampaignId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null
+                );
+                if ($activeCampaignId === null) {
+                    $this->logFailure(
+                        'abandoned_cart',
+                        $this->castId($order->getId()),
+                        $this->castId($message['quote_id']),
+                        null,
+                        'empty_response',
+                        sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_ORDER)
+                    );
+                    $this->failureRecorder->recordFailure($order, 'empty_response', null);
+                    $this->orderRepository->save($order);
+                    return;
+                }
+
+                $order->setActiveCampaignId($activeCampaignId);
+                $this->backoffState->reset();
+                $this->failureRecorder->recordSuccess($order);
+                $this->orderRepository->save($order);
+            } catch (UnprocessableEntityHttpException $e) {
+                try {
+                    $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
+                } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                    $this->logFailure(
+                        'abandoned_cart',
+                        $this->castId($order->getId()),
+                        $this->castId($message['quote_id']),
+                        $duplicateLookupException->getCode(),
+                        'http_error',
+                        $duplicateLookupException->getMessage()
+                    );
+                    return;
+                }
+
+                $duplicateId = $outcome->isDuplicate()
+                    ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_ORDER]['id'] ?? null)
+                    : null;
+                if ($duplicateId !== null) {
+                    $order->setActiveCampaignId($duplicateId);
+                    $this->backoffState->reset();
+                    $this->failureRecorder->recordSuccess($order);
+                    $this->orderRepository->save($order);
+                    return;
+                }
+
                 $this->logFailure(
                     'abandoned_cart',
                     $this->castId($order->getId()),
                     $this->castId($message['quote_id']),
-                    $duplicateLookupException->getCode(),
-                    'http_error',
-                    $duplicateLookupException->getMessage()
+                    $e->getCode() ?: 422,
+                    $outcome->code ?? 'unknown',
+                    $outcome->message
                 );
+                $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
+                $this->orderRepository->save($order);
                 return;
-            }
-
-            $duplicateId = $outcome->isDuplicate()
-                ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_ORDER]['id'] ?? null)
-                : null;
-            if ($duplicateId !== null) {
-                $order->setActiveCampaignId($duplicateId);
-                $this->backoffState->reset();
-                $this->failureRecorder->recordSuccess($order);
+            } catch (HttpException $e) {
+                if ($e->getCode() === 503) {
+                    $this->backoffState->record503();
+                }
+                $this->logFailure(
+                    'abandoned_cart',
+                    $this->castId($order->getId()),
+                    $this->castId($message['quote_id']),
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
+                $transient = $e->getCode() >= 500;
+                $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage(), $transient);
                 $this->orderRepository->save($order);
                 return;
             }
-
+        } catch (\Throwable $t) {
+            $localId = isset($order) ? $this->castId($order->getId()) : null;
             $this->logFailure(
                 'abandoned_cart',
-                $this->castId($order->getId()),
-                $this->castId($message['quote_id']),
-                $e->getCode() ?: 422,
-                $outcome->code ?? 'unknown',
-                $outcome->message
+                $localId,
+                $this->castId($message['quote_id'] ?? null),
+                null,
+                'unexpected_error',
+                $t->getMessage()
             );
-            $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
-            $this->orderRepository->save($order);
-            return;
-        } catch (HttpException $e) {
-            if ($e->getCode() === 503) {
-                $this->backoffState->record503();
+            if (isset($order)) {
+                $this->failureRecorder->recordFailure($order, 'unexpected_error', $t->getMessage());
+                $this->orderRepository->save($order);
             }
-            $this->logFailure(
-                'abandoned_cart',
-                $this->castId($order->getId()),
-                $this->castId($message['quote_id']),
-                $e->getCode(),
-                'http_error',
-                $e->getMessage()
-            );
-            $transient = $e->getCode() >= 500;
-            $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage(), $transient);
-            $this->orderRepository->save($order);
             return;
         }
-
-
     }
 
     /**

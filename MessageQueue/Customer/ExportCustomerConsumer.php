@@ -59,85 +59,102 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             return;
         }
 
-        $customer = $this->customerRepository->getOrCreateByMagentoCustomerId($magentoCustomer->getId());
-        $request  = $this->customerRequestBuilder->build($magentoCustomer);
-
         try {
-            $apiResponse = $this->performApiRequest($customer, $request);
+            $customer = $this->customerRepository->getOrCreateByMagentoCustomerId($magentoCustomer->getId());
+            $request  = $this->customerRequestBuilder->build($magentoCustomer);
 
-            $activeCampaignEcomCustomerId = $this->extractActiveCampaignId(
-                $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
-            );
-            if ($activeCampaignEcomCustomerId === null) {
-                $this->logFailure(
-                    'customer',
-                    $this->castId($customer->getId()),
-                    $this->castId($message['magento_customer_id']),
-                    null,
-                    'empty_response',
-                    sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CUSTOMER)
-                );
-                $this->failureRecorder->recordFailure($customer, 'empty_response', null);
-                $this->customerRepository->save($customer);
-                return;
-            }
-
-            $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
-            $this->backoffState->reset();
-            $this->failureRecorder->recordSuccess($customer);
-            $this->customerRepository->save($customer);
-        } catch (UnprocessableEntityHttpException $e) {
             try {
-                $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_CUSTOMER);
-            } catch (UnprocessableEntityHttpException $duplicateLookupException) {
-                $this->logFailure(
-                    'customer',
-                    $this->castId($customer->getId()),
-                    $this->castId($message['magento_customer_id']),
-                    $duplicateLookupException->getCode(),
-                    'http_error',
-                    $duplicateLookupException->getMessage()
-                );
-                return;
-            }
+                $apiResponse = $this->performApiRequest($customer, $request);
 
-            $duplicateId = $outcome->isDuplicate()
-                ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null)
-                : null;
-            if ($duplicateId !== null) {
-                $customer->setActiveCampaignId($duplicateId);
+                $activeCampaignEcomCustomerId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
+                );
+                if ($activeCampaignEcomCustomerId === null) {
+                    $this->logFailure(
+                        'customer',
+                        $this->castId($customer->getId()),
+                        $this->castId($message['magento_customer_id']),
+                        null,
+                        'empty_response',
+                        sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CUSTOMER)
+                    );
+                    $this->failureRecorder->recordFailure($customer, 'empty_response', null);
+                    $this->customerRepository->save($customer);
+                    return;
+                }
+
+                $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
                 $this->backoffState->reset();
                 $this->failureRecorder->recordSuccess($customer);
                 $this->customerRepository->save($customer);
+            } catch (UnprocessableEntityHttpException $e) {
+                try {
+                    $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_CUSTOMER);
+                } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                    $this->logFailure(
+                        'customer',
+                        $this->castId($customer->getId()),
+                        $this->castId($message['magento_customer_id']),
+                        $duplicateLookupException->getCode(),
+                        'http_error',
+                        $duplicateLookupException->getMessage()
+                    );
+                    return;
+                }
+
+                $duplicateId = $outcome->isDuplicate()
+                    ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null)
+                    : null;
+                if ($duplicateId !== null) {
+                    $customer->setActiveCampaignId($duplicateId);
+                    $this->backoffState->reset();
+                    $this->failureRecorder->recordSuccess($customer);
+                    $this->customerRepository->save($customer);
+                    return;
+                }
+
+                $this->logFailure(
+                    'customer',
+                    $this->castId($customer->getId()),
+                    $this->castId($message['magento_customer_id']),
+                    $e->getCode() ?: 422,
+                    $outcome->code ?? 'unknown',
+                    $outcome->message
+                );
+                $this->failureRecorder->recordFailure($customer, $outcome->code ?? 'unknown', $outcome->message);
+                $this->customerRepository->save($customer);
+                return;
+            } catch (HttpException $e) {
+                if ($e->getCode() === 503) {
+                    $this->backoffState->record503();
+                }
+                $this->logFailure(
+                    'customer',
+                    $this->castId($customer->getId()),
+                    $this->castId($message['magento_customer_id']),
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
+                $transient = $e->getCode() >= 500;
+                $this->failureRecorder->recordFailure($customer, 'http_error', $e->getMessage(), $transient);
+                $this->customerRepository->save($customer);
                 return;
             }
-
+        } catch (\Throwable $t) {
+            $localId = isset($customer) ? $this->castId($customer->getId()) : null;
             $this->logFailure(
                 'customer',
-                $this->castId($customer->getId()),
-                $this->castId($message['magento_customer_id']),
-                $e->getCode() ?: 422,
-                $outcome->code ?? 'unknown',
-                $outcome->message
+                $localId,
+                $this->castId($message['magento_customer_id'] ?? null),
+                null,
+                'unexpected_error',
+                $t->getMessage()
             );
-            $this->failureRecorder->recordFailure($customer, $outcome->code ?? 'unknown', $outcome->message);
-            $this->customerRepository->save($customer);
-            return;
-        } catch (HttpException $e) {
-            if ($e->getCode() === 503) {
-                $this->backoffState->record503();
+            if (isset($customer)) {
+                $this->failureRecorder->recordFailure($customer, 'unexpected_error', $t->getMessage());
+                $this->customerRepository->save($customer);
             }
-            $this->logFailure(
-                'customer',
-                $this->castId($customer->getId()),
-                $this->castId($message['magento_customer_id']),
-                $e->getCode(),
-                'http_error',
-                $e->getMessage()
-            );
-            $transient = $e->getCode() >= 500;
-            $this->failureRecorder->recordFailure($customer, 'http_error', $e->getMessage(), $transient);
-            $this->customerRepository->save($customer);
             return;
         }
     }
