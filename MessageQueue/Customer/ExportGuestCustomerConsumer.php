@@ -177,7 +177,8 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
             0,
             [
                 'filters' => [
-                    'email' => $request['email']
+                    'email'        => $request['email'],
+                    'connectionid' => $request['connectionid']
                 ]
             ]
         );
@@ -187,6 +188,11 @@ class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerIn
             throw new DuplicateNotFoundException();
         }
 
-        return [$key => $items[0]];
+        $item = $items[0];
+        if (strtolower((string)$item['email']) !== strtolower((string)$request['email'])) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $item];
     }
 }

@@ -206,6 +206,11 @@ class ExportAbandonedCartConsumer extends AbstractConsumer implements ConsumerIn
             throw new DuplicateNotFoundException();
         }
 
-        return [$key => $items[0]];
+        $item = $items[0];
+        if ((string)$item['externalcheckoutid'] !== (string)$request['externalcheckoutid']) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $item];
     }
 }

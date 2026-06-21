@@ -253,7 +253,12 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
             throw new DuplicateNotFoundException();
         }
 
-        return [$key => $items[0]];
+        $item = $items[0];
+        if ((string)$item['externalid'] !== (string)$request['externalid']) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $item];
     }
 
     /**

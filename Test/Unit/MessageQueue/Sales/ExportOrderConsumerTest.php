@@ -261,7 +261,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $page = $this->createMock(PageInterface::class);
         $page->expects($this->atLeastOnce())
             ->method('getItems')
-            ->willReturn([['id' => $resolvedId]]);
+            ->willReturn([['id' => $resolvedId, 'externalid' => 'EXT-1']]);
 
         $this->orderApi->expects($this->once())
             ->method('listPerPage')
@@ -352,6 +352,80 @@ class ExportOrderConsumerTest extends AbstractTestCase
         // Empty duplicate lookup throws DuplicateNotFoundException, caught by the
         // inner catch which logs and returns BEFORE an outcome is computed; this is
         // not treated as a recordable failure.
+        $this->failureRecorder->expects($this->never())
+            ->method('recordFailure');
+
+        $this->orderRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testConsumeDuplicateExternalIdMismatchDoesNotSave()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['externalid' => 'EXT-1', 'customerid' => 999];
+        $responseErrors = [['code' => 'duplicate']];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->atLeastOnce())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->atLeastOnce())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        /** @var MockObject|PageInterface $page */
+        $page = $this->createMock(PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([['id' => 555, 'externalid' => 'EXT-OTHER']]);
+
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => 'EXT-1']])
+            ->willReturn($page);
+
+        $this->order->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        // Mismatched duplicate lookup throws DuplicateNotFoundException, caught by the
+        // inner catch which logs and returns BEFORE an outcome is computed.
         $this->failureRecorder->expects($this->never())
             ->method('recordFailure');
 
@@ -655,7 +729,7 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $page = $this->createMock(PageInterface::class);
         $page->expects($this->atLeastOnce())
             ->method('getItems')
-            ->willReturn([['id' => 0]]);
+            ->willReturn([['id' => 0, 'externalid' => 'EXT-1']]);
 
         $this->orderApi->expects($this->once())
             ->method('listPerPage')

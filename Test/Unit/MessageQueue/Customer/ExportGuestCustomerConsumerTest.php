@@ -228,7 +228,7 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
     public function testConsumeDuplicateResolvesAndSaves()
     {
         $customerData = ['email' => 'guest@example.com'];
-        $request = ['email' => 'guest@example.com'];
+        $request = ['email' => 'guest@example.com', 'connectionid' => 7];
         $resolvedId = 777;
         $responseErrors = [['code' => 'duplicate']];
 
@@ -266,11 +266,11 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
         $page = $this->createMock(PageInterface::class);
         $page->expects($this->atLeastOnce())
             ->method('getItems')
-            ->willReturn([['id' => $resolvedId]]);
+            ->willReturn([['id' => $resolvedId, 'email' => 'guest@example.com']]);
 
         $this->customerApi->expects($this->once())
             ->method('listPerPage')
-            ->with(1, 0, ['filters' => ['email' => 'guest@example.com']])
+            ->with(1, 0, ['filters' => ['email' => 'guest@example.com', 'connectionid' => 7]])
             ->willReturn($page);
 
         $this->guestCustomer->expects($this->once())
@@ -362,7 +362,7 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
     public function testConsumeDuplicateLookupEmptyDoesNotFatal()
     {
         $customerData = ['email' => 'guest@example.com'];
-        $request = ['email' => 'guest@example.com'];
+        $request = ['email' => 'guest@example.com', 'connectionid' => 7];
         $responseErrors = [['code' => 'duplicate']];
 
         $this->customerRepository->expects($this->once())
@@ -403,7 +403,66 @@ class ExportGuestCustomerConsumerTest extends AbstractTestCase
 
         $this->customerApi->expects($this->once())
             ->method('listPerPage')
-            ->with(1, 0, ['filters' => ['email' => 'guest@example.com']])
+            ->with(1, 0, ['filters' => ['email' => 'guest@example.com', 'connectionid' => 7]])
+            ->willReturn($page);
+
+        $this->guestCustomer->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->customerRepository->expects($this->never())
+            ->method('save');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportGuestCustomerConsumer->consume(json_encode(['customer_data' => $customerData]));
+    }
+
+    public function testConsumeDuplicateEmailMismatchDoesNotSave()
+    {
+        $customerData = ['email' => 'guest@example.com'];
+        $request = ['email' => 'guest@example.com', 'connectionid' => 7];
+        $responseErrors = [['code' => 'duplicate']];
+
+        $this->customerRepository->expects($this->once())
+            ->method('getOrCreate')
+            ->with($customerData)
+            ->willReturn($this->guestCustomer);
+
+        $this->customerRequestBuilder->expects($this->once())
+            ->method('buildWithGuest')
+            ->with($this->guestCustomer)
+            ->willReturn($request);
+
+        $this->guestCustomer->expects($this->atLeastOnce())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->atLeastOnce())
+            ->method('getCustomerApi')
+            ->willReturn($this->customerApi);
+
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->customerApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomCustomer' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        $unprocessableEntityHttpException->expects($this->atLeastOnce())
+            ->method('getResponseErrors')
+            ->willReturn($responseErrors);
+
+        /** @var MockObject|PageInterface $page */
+        $page = $this->createMock(PageInterface::class);
+        $page->expects($this->atLeastOnce())
+            ->method('getItems')
+            ->willReturn([['id' => 777, 'email' => 'someone-else@example.com']]);
+
+        $this->customerApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['email' => 'guest@example.com', 'connectionid' => 7]])
             ->willReturn($page);
 
         $this->guestCustomer->expects($this->never())
