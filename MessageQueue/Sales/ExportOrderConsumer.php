@@ -37,7 +37,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
      * Maximum number of times an order export may be deferred while waiting for
      * its customer/guest to be exported to ActiveCampaign first.
      */
-    private const MAX_DEFERRALS = 1;
+    private const MAX_DEFERRALS = 3;
 
     public function __construct(
         private readonly MagentoOrderRepositoryInterface $magentoOrderRepository,
@@ -126,11 +126,23 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     return;
                 }
 
-                // Deferral cap reached: do NOT send customerid:null; log and stop (Phase 5 will track this).
-                $this->getLogger()->error(sprintf(
-                    'Order %s still has no ActiveCampaign customer id after deferral; skipping to avoid field_missing',
-                    $message['magento_order_id']
-                ));
+                // Deferral cap reached: do NOT send customerid:null. Track the order as a
+                // recorded failure so it becomes visible in activecampaign:export:status
+                // instead of remaining a permanent NULL (Issue D1).
+                $failureMessage = sprintf(
+                    'customer/guest never synced to AC after %d deferrals',
+                    self::MAX_DEFERRALS
+                );
+                $this->logFailure(
+                    'order',
+                    $this->castId($order->getId()),
+                    $this->castId($message['magento_order_id']),
+                    null,
+                    'customer_unresolved',
+                    $failureMessage
+                );
+                $this->failureRecorder->recordFailure($order, 'customer_unresolved', $failureMessage);
+                $this->orderRepository->save($order);
                 return;
             }
 

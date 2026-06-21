@@ -942,7 +942,13 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
-    public function testOrderDeferralCapReachedSkips()
+    /**
+     * Issue D1/D3: the deferral cap is now MAX_DEFERRALS = 3. When it is reached
+     * (deferred_count = 3) the order must no longer silently skip; instead it
+     * records a 'customer_unresolved' failure and saves so it becomes visible in
+     * activecampaign:export:status (never re-publishing the dependency/order).
+     */
+    public function testOrderDeferralCapReachedRecordsFailureAndSaves()
     {
         $magentoOrderId = 123;
         $magentoQuoteId = 456;
@@ -977,15 +983,179 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->order->expects($this->never())
             ->method('setActiveCampaignId');
 
+        // The order is now tracked as a recorded failure (visible in export:status).
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'customer_unresolved', $this->anything());
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportOrderConsumer->consume(
+            json_encode(['magento_order_id' => $magentoOrderId, 'deferred_count' => 3])
+        );
+    }
+
+    /**
+     * Issue D3: a single deferral loses the race with the async dependency export,
+     * so the cap is 3. deferred_count = 1 and = 2 must still DEFER (re-publish the
+     * dependency + re-queue the order with an incremented count, no failure recorded).
+     *
+     * @dataProvider belowCapDeferralCountProvider
+     */
+    public function testOrderBelowDeferralCapStillDefers(int $deferredCount)
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $magentoCustomerId = 42;
+        $request = ['request', 'customerid' => null];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getCustomerIsGuest')
+            ->willReturn(false);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getCustomerId')
+            ->willReturn($magentoCustomerId);
+
+        $publishedTopics = [];
+        $this->publisher->expects($this->exactly(2))
+            ->method('publish')
+            ->willReturnCallback(function (string $topic, string $body) use (&$publishedTopics) {
+                $publishedTopics[$topic] = json_decode($body, true);
+            });
+
+        $this->client->expects($this->never())
+            ->method('getOrderApi');
+
+        // Below the cap is a deferral, not a failure.
+        $this->failureRecorder->expects($this->never())
+            ->method('recordFailure');
+
         $this->orderRepository->expects($this->never())
             ->method('save');
 
         $this->logger->expects($this->once())
-            ->method('error');
+            ->method('info');
 
         $this->exportOrderConsumer->consume(
-            json_encode(['magento_order_id' => $magentoOrderId, 'deferred_count' => 1])
+            json_encode(['magento_order_id' => $magentoOrderId, 'deferred_count' => $deferredCount])
         );
+
+        $this->assertArrayHasKey(Topics::SALES_ORDER_EXPORT, $publishedTopics);
+        $this->assertSame(
+            ['magento_order_id' => $magentoOrderId, 'deferred_count' => $deferredCount + 1],
+            $publishedTopics[Topics::SALES_ORDER_EXPORT]
+        );
+    }
+
+    /**
+     * @return array<string, array{int}>
+     */
+    public static function belowCapDeferralCountProvider(): array
+    {
+        return [
+            'first deferral'  => [1],
+            'second deferral' => [2],
+        ];
+    }
+
+    /**
+     * Issue D2: end-to-end guest-order path after Issue A. Once the guest/customer
+     * dependency has synced, request['customerid'] is present, so the deferral
+     * branch is skipped entirely and the order proceeds to the normal create + save
+     * path (it is NOT re-queued).
+     */
+    public function testPresentCustomerIdSkipsDeferralAndExports()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $activeCampaignId = 789;
+        $request = ['request', 'customerid' => 999];
+        $response = ['ecomOrder' => ['id' => $activeCampaignId]];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getEntityId')
+            ->willReturn($magentoOrderId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        // The deferral branch must be skipped: no dependency/order re-publish.
+        $this->publisher->expects($this->never())
+            ->method('publish');
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willReturn($response);
+
+        $this->order->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($activeCampaignId)
+            ->willReturnSelf();
+
+        $this->order->expects($this->once())
+            ->method('setMagentoOrderId')
+            ->with($magentoOrderId)
+            ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->order);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
     public function testConsumeHaltsWhenBackoffShouldHalt()
