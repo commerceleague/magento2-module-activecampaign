@@ -398,6 +398,114 @@ class ExportContactCommandTest extends AbstractTestCase
     }
 
 
+    public function testOmittedAppliesGroupFilterByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactOmittedFilter')
+            ->with(true)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('getAllEmails')
+            ->willReturn([]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportContactCommandTester->execute(['--omitted' => true]);
+
+        $this->assertStringNotContainsString(
+            'ignore-date-filter set',
+            $this->exportContactCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportContactCommandTester->getStatusCode());
+    }
+
+    public function testOmittedIgnoreDateFilterSkipsGroupFilterAndWarns()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactOmittedFilter')
+            ->with(false)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('getAllEmails')
+            ->willReturn([]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportContactCommandTester->execute(
+            ['--omitted' => true, '--ignore-date-filter' => true]
+        );
+
+        $this->assertStringContainsString(
+            'Warning: --ignore-date-filter set — exporting 1 record(s)',
+            $this->exportContactCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportContactCommandTester->getStatusCode());
+    }
+
+    public function testAllAppliesGroupFilterByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addAllowedCustomerGroupFilter')
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('getAllEmails')
+            ->willReturn([]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportContactCommandTester->execute(['--all' => true]);
+
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportContactCommandTester->getStatusCode());
+    }
+
     public function testExecuteWithAllOption()
     {
         $customerIds = [123, 456];

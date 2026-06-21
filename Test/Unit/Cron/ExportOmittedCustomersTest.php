@@ -13,6 +13,7 @@ use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 
 class ExportOmittedCustomersTest extends AbstractTestCase
 {
@@ -38,6 +39,11 @@ class ExportOmittedCustomersTest extends AbstractTestCase
     protected $publisher;
 
     /**
+     * @var MockObject|LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * @var PublishOmittedCustomers
      */
     protected $exportOmittedCustomers;
@@ -45,6 +51,7 @@ class ExportOmittedCustomersTest extends AbstractTestCase
     protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
@@ -62,7 +69,8 @@ class ExportOmittedCustomersTest extends AbstractTestCase
         $this->exportOmittedCustomers = new PublishOmittedCustomers(
             $this->configHelper,
             $this->customerCollectionFactory,
-            $this->publisher
+            $this->publisher,
+            $this->logger
         );
     }
 
@@ -106,9 +114,12 @@ class ExportOmittedCustomersTest extends AbstractTestCase
             ->method('isCustomerExportEnabled')
             ->willReturn(true);
 
-        $this->configHelper->expects($this->once())
+        $this->configHelper->expects($this->exactly(2))
             ->method('isRetryAllOmittedEnabled')
             ->willReturn(false);
+
+        $this->logger->expects($this->never())
+            ->method('warning');
 
         $this->customerCollection->expects($this->once())
             ->method('addCustomerOmittedFilter')
@@ -151,9 +162,13 @@ class ExportOmittedCustomersTest extends AbstractTestCase
             ->method('isCustomerExportEnabled')
             ->willReturn(true);
 
-        $this->configHelper->expects($this->once())
+        $this->configHelper->expects($this->exactly(2))
             ->method('isRetryAllOmittedEnabled')
             ->willReturn(true);
+
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('retry_all_omitted is ON'));
 
         $this->customerCollection->expects($this->once())
             ->method('addCustomerOmittedFilter')

@@ -291,6 +291,82 @@ class ExportOrderCommandTest extends AbstractTestCase
         $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
     }
 
+    public function testOmittedAppliesScopeBoundByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
+        $this->orderCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterOrderStatus')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterStartDate')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportOrderCommandTester->execute(['--omitted' => true]);
+
+        $this->assertStringNotContainsString(
+            'ignore-date-filter set',
+            $this->exportOrderCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
+    }
+
+    public function testIgnoreDateFilterSkipsScopeBoundAndWarns()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterOrderStatus');
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterStartDate');
+
+        $this->orderCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123, 456]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportOrderCommandTester->execute(
+            ['--all' => true, '--ignore-date-filter' => true]
+        );
+
+        $this->assertStringContainsString(
+            'Warning: --ignore-date-filter set — exporting 2 record(s)',
+            $this->exportOrderCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
+    }
+
     public function testExecuteWithAllOption()
     {
         $orderIds = [123, 456, 789];

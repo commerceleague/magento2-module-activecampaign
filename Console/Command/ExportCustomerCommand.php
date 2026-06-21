@@ -23,6 +23,7 @@ class ExportCustomerCommand extends AbstractExportCommand
     private const OPTION_EMAIL = 'email';
     private const OPTION_OMITTED = 'omitted';
     private const OPTION_ALL = 'all';
+    private const OPTION_IGNORE_DATE_FILTER = 'ignore-date-filter';
 
     /**
      * @param ProgressBarFactory $progressBarFactory
@@ -60,6 +61,13 @@ class ExportCustomerCommand extends AbstractExportCommand
                 null,
                 InputOption::VALUE_NONE,
                 'Export all customers'
+            )
+            ->addOption(
+                self::OPTION_IGNORE_DATE_FILTER,
+                null,
+                InputOption::VALUE_NONE,
+                'Bypass the default cron scope filter (date/status/customer-group) '
+                . 'and export pre-cutoff historical records too'
             );
     }
 
@@ -102,6 +110,16 @@ class ExportCustomerCommand extends AbstractExportCommand
             return Cli::RETURN_FAILURE;
         }
 
+        if ($input->getOption(self::OPTION_EMAIL) === null
+            && $input->getOption(self::OPTION_IGNORE_DATE_FILTER)
+        ) {
+            $output->writeln(sprintf(
+                '<comment>Warning: --ignore-date-filter set — exporting %s record(s) without the '
+                . 'cron scope bound (includes pre-cutoff historical data).</comment>',
+                $customerIdsCount
+            ));
+        }
+
         $progressBar = $this->createProgressBar(
             $output,
             $customerIdsCount,
@@ -136,10 +154,16 @@ class ExportCustomerCommand extends AbstractExportCommand
 
         if (($email = $input->getOption(self::OPTION_EMAIL)) !== null) {
             $customerCollection->addEmailFilter($email);
+
+            return $customerCollection->getAllIds();
         }
 
+        $applyCustomerGroupFilter = !$input->getOption(self::OPTION_IGNORE_DATE_FILTER);
+
         if ($input->getOption(self::OPTION_OMITTED)) {
-            $customerCollection->addCustomerOmittedFilter();
+            $customerCollection->addCustomerOmittedFilter($applyCustomerGroupFilter);
+        } elseif ($applyCustomerGroupFilter) {
+            $customerCollection->addAllowedCustomerGroupFilter();
         }
 
         return $customerCollection->getAllIds();

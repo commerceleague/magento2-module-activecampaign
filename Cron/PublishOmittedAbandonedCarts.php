@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\CollectionFactory as
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\Collection as QuoteCollection;
 use Exception;
 use Magento\Framework\MessageQueue\PublisherInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class PublishOmittedAbandonedCarts
@@ -21,7 +22,8 @@ class PublishOmittedAbandonedCarts implements CronInterface
 
     public function __construct(private readonly ConfigHelper           $configHelper,
                                 private readonly QuoteCollectionFactory $quoteCollectionFactory,
-                                private readonly PublisherInterface     $publisher
+                                private readonly PublisherInterface     $publisher,
+                                private readonly LoggerInterface        $logger
     ) {
     }
 
@@ -35,6 +37,14 @@ class PublishOmittedAbandonedCarts implements CronInterface
         }
 
         $quoteIds = $this->getQuoteIds();
+
+        if ($this->configHelper->isRetryAllOmittedEnabled()) {
+            $this->logger->warning(sprintf(
+                'ActiveCampaign retry_all_omitted is ON — re-publishing %d omitted abandoned cart '
+                . 'record(s) without the scope bound',
+                count($quoteIds)
+            ));
+        }
 
         foreach ($quoteIds as $quoteId) {
             $this->publisher->publish(

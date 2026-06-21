@@ -69,6 +69,16 @@ behaviour; schema changes are additive and backward-compatible.
   PHP 8.4.
 
 ### Changed
+- **Manual CLI exports are bounded to the cron scope by default.** The
+  `--all` / `--omitted` paths of the order, guest-customer, customer, contact and
+  abandoned-cart export commands now apply the same date/status/customer-group
+  window filter the omitted crons apply (instead of running unbounded), so a
+  manual run can no longer silently re-export pre-cutoff historical data. A new
+  `--ignore-date-filter` flag opts out for deliberate full historical re-exports;
+  when set, the command prints a visible warning with the record count. The
+  targeted `--email` / `--order-id` / `--quote-id` paths are unchanged. The
+  `retry_all_omitted` crons now also log a warning with the affected record count
+  whenever they run unbounded.
 - Static analysis raised to **PHPStan level 6** (precise array generics added
   throughout; inline ignores reduced); the test suite was migrated to run green
   standalone on PHPUnit 9.6 with a Magento test-framework bootstrap, and the

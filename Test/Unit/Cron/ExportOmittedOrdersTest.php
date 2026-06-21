@@ -13,6 +13,7 @@ use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 
 class ExportOmittedOrdersTest extends AbstractTestCase
 {
@@ -38,6 +39,11 @@ class ExportOmittedOrdersTest extends AbstractTestCase
     protected $publisher;
 
     /**
+     * @var MockObject|LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * @var PublishOmittedOrders
      */
     protected $exportOmittedOrders;
@@ -45,6 +51,7 @@ class ExportOmittedOrdersTest extends AbstractTestCase
     protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->orderCollectionFactory = $this->getMockBuilder(OrderCollectionFactory::class)
             ->disableOriginalConstructor()
@@ -62,7 +69,8 @@ class ExportOmittedOrdersTest extends AbstractTestCase
         $this->exportOmittedOrders = new PublishOmittedOrders(
             $this->configHelper,
             $this->orderCollectionFactory,
-            $this->publisher
+            $this->publisher,
+            $this->logger
         );
     }
 
@@ -100,9 +108,12 @@ class ExportOmittedOrdersTest extends AbstractTestCase
             ->method('isOrderExportEnabled')
             ->willReturn(true);
 
-        $this->configHelper->expects($this->once())
+        $this->configHelper->expects($this->exactly(2))
             ->method('isRetryAllOmittedEnabled')
             ->willReturn(false);
+
+        $this->logger->expects($this->never())
+            ->method('warning');
 
         $this->orderCollection->expects($this->once())
             ->method('addExportFilterOrderStatus')
@@ -152,9 +163,13 @@ class ExportOmittedOrdersTest extends AbstractTestCase
             ->method('isOrderExportEnabled')
             ->willReturn(true);
 
-        $this->configHelper->expects($this->once())
+        $this->configHelper->expects($this->exactly(2))
             ->method('isRetryAllOmittedEnabled')
             ->willReturn(true);
+
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('retry_all_omitted is ON'));
 
         $this->orderCollection->expects($this->never())
             ->method('addExportFilterOrderStatus');

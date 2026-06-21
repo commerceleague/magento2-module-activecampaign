@@ -15,6 +15,7 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as Cus
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 
 class ExportOmittedContactsTest extends AbstractTestCase
 {
@@ -50,6 +51,11 @@ class ExportOmittedContactsTest extends AbstractTestCase
     protected $publisher;
 
     /**
+     * @var MockObject|LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * @var PublishOmittedContacts
      */
     protected $exportOmittedContacts;
@@ -57,6 +63,7 @@ class ExportOmittedContactsTest extends AbstractTestCase
     protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
@@ -86,7 +93,8 @@ class ExportOmittedContactsTest extends AbstractTestCase
             $this->configHelper,
             $this->customerCollectionFactory,
             $this->subscriberCollectionFactory,
-            $this->publisher
+            $this->publisher,
+            $this->logger
         );
     }
 
@@ -131,9 +139,12 @@ class ExportOmittedContactsTest extends AbstractTestCase
             ->method('isContactExportEnabled')
             ->willReturn(true);
 
-        $this->configHelper->expects($this->once())
+        $this->configHelper->expects($this->exactly(2))
             ->method('isRetryAllOmittedEnabled')
             ->willReturn(false);
+
+        $this->logger->expects($this->never())
+            ->method('warning');
 
         $this->customerCollection->expects($this->once())
             ->method('addContactOmittedFilter')
@@ -195,9 +206,13 @@ class ExportOmittedContactsTest extends AbstractTestCase
             ->method('isContactExportEnabled')
             ->willReturn(true);
 
-        $this->configHelper->expects($this->once())
+        $this->configHelper->expects($this->exactly(2))
             ->method('isRetryAllOmittedEnabled')
             ->willReturn(true);
+
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('retry_all_omitted is ON'));
 
         $this->customerCollection->expects($this->once())
             ->method('addContactOmittedFilter')

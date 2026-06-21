@@ -155,6 +155,18 @@ class Collection extends ExtendCustomerCollection
         return $this;
     }
 
+    /**
+     * Public entry point for the allowed-customer-group window filter, mirroring the scope
+     * bound the omitted crons apply. Used by the CLI --all path (which has no omitted filter
+     * to piggy-back the group filter on).
+     *
+     * @return Collection
+     */
+    public function addAllowedCustomerGroupFilter(): self
+    {
+        return $this->addAllowedCustomerGroupsFilter();
+    }
+
     private function addAllowedCustomerGroupsFilter(): self
     {
         // get array of allowed customer groups

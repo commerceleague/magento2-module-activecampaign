@@ -105,7 +105,7 @@
                 <field id="retry_all_omitted" translate="label comment" type="select" sortOrder="100" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Retry All Omitted</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>When enabled, the omitted crons ignore the date/status/customer-group window filters and retry every non-dead-lettered row that has no ActiveCampaign id yet. Use to recover rows that fell outside the original export window.</comment>
+                    <comment>When enabled, the omitted crons ignore the date/status/customer-group window filters and retry every non-dead-lettered row that has no ActiveCampaign id yet. Use to recover rows that fell outside the original export window. Each unbounded run logs a warning with the affected record count. The manual CLI export commands stay bounded to this same window by default and only remove the scope bound when run with --ignore-date-filter.</comment>
                     <depends>
                         <field id="activecampaign/general/enabled">1</field>
                     </depends>

@@ -13,6 +13,7 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFacto
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class ExportOmittedContacts
@@ -23,7 +24,8 @@ class PublishOmittedContacts implements CronInterface
     public function __construct(private readonly ConfigHelper                $configHelper,
                                 private readonly CustomerCollectionFactory   $customerCollectionFactory,
                                 private readonly SubscriberCollectionFactory $subscriberCollectionFactory,
-                                private readonly PublisherInterface          $publisher
+                                private readonly PublisherInterface          $publisher,
+                                private readonly LoggerInterface             $logger
     ) {
     }
 
@@ -38,6 +40,15 @@ class PublishOmittedContacts implements CronInterface
         }
 
         $customerIds = $this->getCustomerIds();
+        $subscriberEmails = $this->getSubscriberEmails();
+
+        if ($this->configHelper->isRetryAllOmittedEnabled()) {
+            $this->logger->warning(sprintf(
+                'ActiveCampaign retry_all_omitted is ON — re-publishing %d omitted contact record(s) '
+                . 'without the scope bound',
+                count($customerIds) + count($subscriberEmails)
+            ));
+        }
 
         foreach ($customerIds as $customerId) {
             $this->publisher->publish(
@@ -45,8 +56,6 @@ class PublishOmittedContacts implements CronInterface
                 json_encode(['magento_customer_id' => $customerId], JSON_THROW_ON_ERROR)
             );
         }
-
-        $subscriberEmails = $this->getSubscriberEmails();
 
         foreach ($subscriberEmails as $subscriberEmail) {
             $this->publisher->publish(

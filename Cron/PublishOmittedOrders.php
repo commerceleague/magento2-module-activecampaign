@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class PublishOmittedOrders
@@ -20,7 +21,8 @@ class PublishOmittedOrders implements CronInterface
 
     public function __construct(private readonly ConfigHelper           $configHelper,
                                 private readonly OrderCollectionFactory $orderCollectionFactory,
-                                private readonly PublisherInterface     $publisher
+                                private readonly PublisherInterface     $publisher,
+                                private readonly LoggerInterface        $logger
     ) {
     }
 
@@ -53,6 +55,14 @@ class PublishOmittedOrders implements CronInterface
         }
 
         $orderIds = $this->getOrderIds();
+
+        if ($this->configHelper->isRetryAllOmittedEnabled()) {
+            $this->logger->warning(sprintf(
+                'ActiveCampaign retry_all_omitted is ON — re-publishing %d omitted order record(s) '
+                . 'without the scope bound',
+                count($orderIds)
+            ));
+        }
 
         foreach ($orderIds as $orderId) {
             $this->publisher->publish(

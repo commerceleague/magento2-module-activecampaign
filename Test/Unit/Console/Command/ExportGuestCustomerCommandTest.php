@@ -206,6 +206,92 @@ class ExportGuestCustomerCommandTest extends AbstractTestCase
         );
     }
 
+    public function testOmittedAppliesScopeBoundByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isCustomerExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('addExportFilterOrderStatus')
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('addExportFilterStartDate')
+            ->willReturnSelf();
+
+        $order = $this->createMock(OrderInterface::class);
+        $order->method('getCustomerFirstname')->willReturn('John');
+        $order->method('getCustomerLastname')->willReturn('Doe');
+        $order->method('getCustomerEmail')->willReturn('john@example.com');
+
+        $this->customerCollection->expects($this->once())
+            ->method('getItems')
+            ->willReturn([$order]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportGuestCustomerCommandTester->execute(['--omitted' => true]);
+
+        $this->assertStringNotContainsString(
+            'ignore-date-filter set',
+            $this->exportGuestCustomerCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportGuestCustomerCommandTester->getStatusCode());
+    }
+
+    public function testIgnoreDateFilterSkipsScopeBoundAndWarns()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isCustomerExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->never())
+            ->method('addExportFilterOrderStatus');
+
+        $this->customerCollection->expects($this->never())
+            ->method('addExportFilterStartDate');
+
+        $order = $this->createMock(OrderInterface::class);
+        $order->method('getCustomerFirstname')->willReturn('John');
+        $order->method('getCustomerLastname')->willReturn('Doe');
+        $order->method('getCustomerEmail')->willReturn('john@example.com');
+
+        $this->customerCollection->expects($this->once())
+            ->method('getItems')
+            ->willReturn([$order]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportGuestCustomerCommandTester->execute(
+            ['--all' => true, '--ignore-date-filter' => true]
+        );
+
+        $this->assertStringContainsString(
+            'Warning: --ignore-date-filter set — exporting 1 record(s)',
+            $this->exportGuestCustomerCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportGuestCustomerCommandTester->getStatusCode());
+    }
+
     public function testExecuteKeepsOrderFirstnameWhenPresent()
     {
         $email = 'john@example.com';
