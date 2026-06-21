@@ -64,6 +64,7 @@
                 <item name="activecampaign_export_abandoned_cart" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportAbandonedCartCommand</item>
                 <item name="activecampaign_export_backfill" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\BackfillMissingIdsCommand</item>
                 <item name="activecampaign_export_status" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\ExportStatusCommand</item>
+                <item name="activecampaign_relink_tombstones" xsi:type="object">CommerceLeague\ActiveCampaign\Console\Command\RelinkTombstonesCommand</item>
             </argument>
         </arguments>
     </type>
