@@ -114,6 +114,13 @@ behaviour; schema changes are additive and backward-compatible.
   (`--dry-run`, operator-reviewed, then `--commit`), THEN enable both
   `relink_cron_enabled` (keeps guests reconciled) and `tombstone_selfheal_enabled`
   (keeps the customer export path from re-accumulating).
+- **Sync-health columns on the admin grids.** The Contacts, Customers and Orders
+  listings now show `export_status` (with a Pending/Synced/Failed select filter —
+  i.e. a "failed only" view), `export_attempts`, `last_error_code` and
+  `last_attempted_at`, surfacing the failure-tracking data in the admin instead of
+  only via the `activecampaign:export:status` CLI. (Note: `export_status` is set by
+  exports from this release on; rows synced before it default to "Pending" until
+  re-exported.)
 
 ### Changed
 - **Manual CLI exports are bounded to the cron scope by default.** The
@@ -134,6 +141,9 @@ behaviour; schema changes are additive and backward-compatible.
 ### Removed
 - Dead `Abandoned` resource model + `AbandonedInterface` and the
   `SchemaInterface::ABANDONED_CART_TABLE` constant (the table never existed).
+- The non-functional **Abandoned Carts admin page** (controller, menu entry and
+  ACL resource that rendered an empty grid — it had no UI component). Abandoned
+  carts are already the Orders-grid rows without a `magento_order_id`.
 
 ### Notes
 - The full PHP 8.4 / PHPUnit 10.5 / Magento 2.4.8 dependency bump (and the Rector
