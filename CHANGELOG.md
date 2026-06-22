@@ -118,9 +118,10 @@ behaviour; schema changes are additive and backward-compatible.
   listings now show `export_status` (with a Pending/Synced/Failed select filter —
   i.e. a "failed only" view), `export_attempts`, `last_error_code` and
   `last_attempted_at`, surfacing the failure-tracking data in the admin instead of
-  only via the `activecampaign:export:status` CLI. (Note: `export_status` is set by
-  exports from this release on; rows synced before it default to "Pending" until
-  re-exported.)
+  only via the `activecampaign:export:status` CLI. A one-time data patch
+  (`setup:upgrade`) backfills `export_status` = synced for pre-existing rows that
+  already have an `activecampaign_id` (idempotent — only rows still at the pending
+  default are touched), so the grid is accurate for legacy data too.
 
 ### Changed
 - **Manual CLI exports are bounded to the cron scope by default.** The
