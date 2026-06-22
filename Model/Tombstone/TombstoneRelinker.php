@@ -76,7 +76,7 @@ class TombstoneRelinker
             return self::RESULT_NOT_FOUND;
         }
 
-        $currentEmail = (string)($record['email'] ?? '');
+        $currentEmail = (string)($record['ecomCustomer']['email'] ?? '');
         if (!str_starts_with($currentEmail, self::TOMBSTONE_EMAIL_PREFIX)) {
             return self::RESULT_SKIPPED_NOT_TOMBSTONE;
         }
