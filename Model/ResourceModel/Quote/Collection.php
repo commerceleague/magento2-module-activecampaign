@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote;
 
+use CommerceLeague\ActiveCampaign\Api\Data\FailureTrackableInterface;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
 use DateInterval;
 use Exception;
@@ -91,6 +92,20 @@ class Collection extends ExtendCollection
     public function addOmittedFilter(): self
     {
         $this->getSelect()->where('ac_order.activecampaign_id IS NULL');
+        return $this;
+    }
+
+    /**
+     * Exclude dead-lettered rows while keeping null (no AC row yet), pending and synced rows.
+     *
+     * @return Collection
+     */
+    public function addNotDeadLetteredFilter(): self
+    {
+        $this->getSelect()->where(
+            'ac_order.export_status != ? OR ac_order.export_status IS NULL',
+            FailureTrackableInterface::EXPORT_STATUS_FAILED
+        );
         return $this;
     }
 

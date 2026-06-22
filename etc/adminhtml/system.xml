@@ -71,6 +71,63 @@
                         <field id="activecampaign/export/customer_enabled">1</field>
                     </depends>
                 </field>
+                <field id="max_attempts" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Max Export Attempts</label>
+                    <comment>Maximum number of times a failed export message is retried. 0 means unlimited (retry forever).</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                    </depends>
+                </field>
+                <field id="dead_letter_enabled" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Dead Lettering</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, messages that exhaust their retry ceiling are dead-lettered instead of retried forever.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                    </depends>
+                </field>
+                <field id="backoff_enabled" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Backoff</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, a cron run early-exits after repeated 503 responses from the API.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                    </depends>
+                </field>
+                <field id="backoff_threshold" translate="label comment" type="text" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Backoff Threshold</label>
+                    <comment>Number of consecutive 503 responses before a cron run early-exits. Only used when backoff is enabled.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                        <field id="activecampaign/export/backoff_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="retry_all_omitted" translate="label comment" type="select" sortOrder="100" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Retry All Omitted</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, the omitted crons ignore the date/status/customer-group window filters and retry every non-dead-lettered row that has no ActiveCampaign id yet. Use to recover rows that fell outside the original export window. Each unbounded run logs a warning with the affected record count. The manual CLI export commands stay bounded to this same window by default and only remove the scope bound when run with --ignore-date-filter.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                    </depends>
+                </field>
+                <field id="tombstone_selfheal_enabled" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Tombstone Self-Heal</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, each ecomCustomer update first issues a GET to detect and repair a tombstoned (deleted-contact) record before updating, preserving order history. This adds one GET per ecomCustomer update (a rate-limit cost). Recommended after running activecampaign:relink:tombstones.</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                        <field id="activecampaign/export/customer_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="relink_cron_enabled" translate="label comment" type="select" sortOrder="120" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable Scheduled Tombstone Relink</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When enabled, a weekly cron runs the bulk tombstone relink (activecampaign:relink:tombstones --commit). This is the only path that keeps GUEST tombstones reconciled (the guest export self-heal cannot, because a tombstone holds the dead AC id). Operational ordering: run the bulk relink once manually first (--dry-run, operator-reviewed, then --commit); THEN enable this together with tombstone_selfheal_enabled — the cron keeps guests reconciled, the self-heal keeps the customer export path from re-accumulating. Idempotent and safe to run repeatedly (one GET per candidate, a rate-limit cost).</comment>
+                    <depends>
+                        <field id="activecampaign/general/enabled">1</field>
+                        <field id="activecampaign/export/customer_enabled">1</field>
+                    </depends>
+                </field>
             </group>
             <group id="order_export" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Order Export Settings</label>

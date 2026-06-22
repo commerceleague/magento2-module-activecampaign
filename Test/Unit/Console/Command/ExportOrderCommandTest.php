@@ -57,13 +57,13 @@ class ExportOrderCommandTest extends AbstractTestCase
      */
     protected $exportOrderCommandTester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->orderCollectionFactory = $this->getMockBuilder(OrderCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->orderCollection = $this->createMock(OrderCollection::class);
@@ -74,7 +74,7 @@ class ExportOrderCommandTest extends AbstractTestCase
 
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->publisher = $this->createMock(PublisherInterface::class);
@@ -187,7 +187,7 @@ class ExportOrderCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             'No order(s) found matching your criteria',
             $this->exportOrderCommandTester->getDisplay()
         );
@@ -239,7 +239,7 @@ class ExportOrderCommandTest extends AbstractTestCase
             ['--order-id' => $orderId]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );
@@ -283,11 +283,87 @@ class ExportOrderCommandTest extends AbstractTestCase
             ['--omitted' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '2 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );
 
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
+    }
+
+    public function testOmittedAppliesScopeBoundByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
+        $this->orderCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterOrderStatus')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterStartDate')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportOrderCommandTester->execute(['--omitted' => true]);
+
+        $this->assertStringNotContainsString(
+            'ignore-date-filter set',
+            $this->exportOrderCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
+    }
+
+    public function testIgnoreDateFilterSkipsScopeBoundAndWarns()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterOrderStatus');
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterStartDate');
+
+        $this->orderCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123, 456]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportOrderCommandTester->execute(
+            ['--all' => true, '--ignore-date-filter' => true]
+        );
+
+        $this->assertStringContainsString(
+            'Warning: --ignore-date-filter set — exporting 2 record(s)',
+            $this->exportOrderCommandTester->getDisplay()
+        );
         $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
     }
 
@@ -327,7 +403,7 @@ class ExportOrderCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '3 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );

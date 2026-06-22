@@ -7,7 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\Helper\Contants;
+use CommerceLeague\ActiveCampaign\Helper\Constants;
 use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 
 /**
@@ -20,23 +20,29 @@ class CustomerBuilder
     {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function build(MagentoCustomerInterface $magentoCustomer): array
     {
         return [
             'connectionid'     => $this->configHelper->getConnectionId(),
             'externalid'       => $magentoCustomer->getId(),
             'email'            => $magentoCustomer->getEmail(),
-            'acceptsMarketing' => Contants::CONTACT_STATUS_ACTIVE
+            'acceptsMarketing' => Constants::CONTACT_STATUS_ACTIVE
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function buildWithGuest(GuestCustomerInterface $guestCustomer): array
     {
         return [
             'connectionid'     => $this->configHelper->getConnectionId(),
             'externalid'       => 'guest-' . $guestCustomer->getId(),
             'email'            => $guestCustomer->getEmail(),
-            'acceptsMarketing' => Contants::CONTACT_STATUS_ACTIVE
+            'acceptsMarketing' => Constants::CONTACT_STATUS_ACTIVE
         ];
     }
 }

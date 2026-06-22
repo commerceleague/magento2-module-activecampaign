@@ -27,6 +27,16 @@ class Config extends AbstractHelper
     private const XML_PATH_EXPORT_ORDER_ENABLED          = 'activecampaign/export/order_enabled';
     private const XML_PATH_EXPORT_ABANDONED_CART_ENABLED = 'activecampaign/export/abandoned_cart_enabled';
 
+    private const XML_PATH_EXPORT_MAX_ATTEMPTS        = 'activecampaign/export/max_attempts';
+    private const XML_PATH_EXPORT_DEAD_LETTER_ENABLED = 'activecampaign/export/dead_letter_enabled';
+    private const XML_PATH_EXPORT_BACKOFF_ENABLED     = 'activecampaign/export/backoff_enabled';
+    private const XML_PATH_EXPORT_BACKOFF_THRESHOLD   = 'activecampaign/export/backoff_threshold';
+    private const XML_PATH_EXPORT_RETRY_ALL_OMITTED   = 'activecampaign/export/retry_all_omitted';
+    private const XML_PATH_EXPORT_TOMBSTONE_SELFHEAL  = 'activecampaign/export/tombstone_selfheal_enabled';
+    private const XML_PATH_EXPORT_RELINK_CRON_ENABLED = 'activecampaign/export/relink_cron_enabled';
+
+    private const DEFAULT_BACKOFF_THRESHOLD = 5;
+
     private const XML_PATH_EXPORT_ORDER_STATUSES   = 'activecampaign/order_export/filter_order_statuses';
     private const XML_PATH_EXPORT_ORDER_START_DATE = 'activecampaign/order_export/filter_date_from';
 
@@ -90,6 +100,71 @@ class Config extends AbstractHelper
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_ABANDONED_CART_ENABLED);
     }
 
+    /**
+     * Maximum export attempts before giving up (0 = unlimited, today's behavior)
+     */
+    public function getMaxExportAttempts(): int
+    {
+        return (int)$this->scopeConfig->getValue(self::XML_PATH_EXPORT_MAX_ATTEMPTS);
+    }
+
+    /**
+     * Whether exhausted messages should be dead-lettered instead of retried forever
+     */
+    public function isDeadLetterEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_DEAD_LETTER_ENABLED);
+    }
+
+    /**
+     * Whether a cron run should early-exit after repeated 503 responses
+     */
+    public function isBackoffEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_BACKOFF_ENABLED);
+    }
+
+    /**
+     * Number of consecutive 503s before a cron run early-exits (defaults to 5)
+     */
+    public function getBackoffThreshold(): int
+    {
+        $threshold = (int)$this->scopeConfig->getValue(self::XML_PATH_EXPORT_BACKOFF_THRESHOLD);
+        if ($threshold < 1) {
+            return self::DEFAULT_BACKOFF_THRESHOLD;
+        }
+        return $threshold;
+    }
+
+    /**
+     * Whether the omitted crons should ignore the date/status/customer-group window
+     * filters and retry ALL non-dead-lettered rows (defaults to false / today's behavior)
+     */
+    public function isRetryAllOmittedEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_RETRY_ALL_OMITTED);
+    }
+
+    /**
+     * Whether the export path should self-heal tombstoned ecomCustomers by issuing a
+     * GET (then an id-preserving relink) before each update (defaults to false)
+     */
+    public function isTombstoneSelfHealEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_TOMBSTONE_SELFHEAL);
+    }
+
+    /**
+     * Whether a scheduled cron should run the bulk tombstone relink weekly
+     * (activecampaign:relink:tombstones --commit). Defaults to false. Run the
+     * bulk relink once manually first, then enable this together with
+     * tombstone_selfheal_enabled.
+     */
+    public function isRelinkCronEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_RELINK_CRON_ENABLED);
+    }
+
     public function isWebhookEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_WEBHOOK_ENABLED);
@@ -126,6 +201,8 @@ class Config extends AbstractHelper
 
     /**
      * Get the tags selected to be added to the Newsletter subscriber
+     *
+     * @return array<int, string>|null
      */
     public function getNewsletterSubscriberTags(): ?array
     {
@@ -155,6 +232,8 @@ class Config extends AbstractHelper
 
     /**
      * Get the set order status filters
+     *
+     * @return array<int, string>|null
      */
     public function getOrderExportStatuses(): ?array
     {
@@ -173,6 +252,11 @@ class Config extends AbstractHelper
         return $this->scopeConfig->getValue(self::XML_PATH_EXPORT_ORDER_START_DATE);
     }
 
+    /**
+     * Get the allowed customer group ids
+     *
+     * @return array<int, string>
+     */
     public function getAllowedCustomerGroupIds(): array
     {
         $list = $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST);

@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\MessageQueue;
 
 use CommerceLeague\ActiveCampaign\Logger\Logger;
+use CommerceLeague\ActiveCampaign\Model\Export\UnprocessableOutcome;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
 
@@ -42,44 +43,102 @@ abstract class AbstractConsumer
     }
 
     /**
-     * @param array<mixed>                     $request
-     * @return void
+     * Returns the ActiveCampaign id as a positive int, or null when the value is
+     * missing, non-numeric or not greater than zero. AC ids are always positive,
+     * so a sentinel like 0/"0" must never be persisted.
      */
-    public function logUnprocessableEntityHttpException(
-        UnprocessableEntityHttpException $unprocessableEntityHttpException,
-        array                            $request
-    ): mixed {
-        $this->getLogger()->error(static::class);
-        $this->getLogger()->error($unprocessableEntityHttpException->getMessage());
-        $this->getLogger()->error(print_r($unprocessableEntityHttpException->getResponseErrors(), true));
-        $this->getLogger()->error(print_r($request, true));
-        return '';
+    protected function extractActiveCampaignId(mixed $value): ?int
+    {
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $id = (int)$value;
+
+        return $id > 0 ? $id : null;
     }
+
+    /**
+     * Coerces an id-ish value (string/int from a model getter or message payload)
+     * into a positive int for structured logging, or null when absent/invalid.
+     */
+    protected function castId(mixed $value): ?int
+    {
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $id = (int)$value;
+
+        return $id > 0 ? $id : null;
+    }
+
+    /**
+     * Structured, diagnosable failure log: entity type + ids + HTTP status + AC code/message.
+     *
+     * Replaces the old print_r dump that produced undiagnosable
+     * "Unprocessable Entity [] []" lines with no entity id and no AC error code.
+     */
+    protected function logFailure(
+        string $entityType,
+        ?int $localId,
+        ?int $magentoId,
+        ?int $httpStatus,
+        ?string $errorCode,
+        ?string $errorMessage
+    ): void {
+        $this->getLogger()->error(sprintf(
+            'ActiveCampaign export failed [entity=%s local_id=%s magento_id=%s http_status=%s code=%s]: %s',
+            $entityType,
+            $localId ?? 'null',
+            $magentoId ?? 'null',
+            $httpStatus ?? 'null',
+            $errorCode ?? 'null',
+            $errorMessage ?? ''
+        ));
+    }
+
+    /**
+     * Resolves the existing ActiveCampaign entity behind a 422 "duplicate" error.
+     *
+     * Implementations that recover a duplicate return `[$key => $resolvedItem]`
+     * (where `$resolvedItem` is the AC entity array containing an `'id'`); stub
+     * implementations that do not recover return `[]`. The return value is
+     * passed through to UnprocessableOutcome::$payload, so an empty array simply
+     * yields an empty payload and is treated as "not resolved".
+     *
+     * @param array<mixed> $request
+     *
+     * @return array<string,mixed>
+     */
+    abstract function processDuplicateEntity(array $request, string $key): array;
 
     /**
      *
      * @param array<mixed> $request
-     *
-     * @return mixed
-     */
-    abstract function processDuplicateEntity(array $request, string $key);
-
-    /**
-     *
-     * @param array<mixed>                     $request
-     *
      */
     protected function handleUnprocessableEntityHttpException(
         UnprocessableEntityHttpException $e,
         array                            $request,
         string                           $key
-    ) {
-        $errors    = $e->getResponseErrors();
-        $errors    = array_shift($errors);
-        $errorCode = $errors['code'];
+    ): UnprocessableOutcome {
+        $errors  = $e->getResponseErrors();
+        $first   = array_shift($errors);
+        $code    = is_array($first) ? ($first['code'] ?? null) : null;
+        $message = is_array($first) ? ($first['title'] ?? $first['message'] ?? null) : null;
 
-        if ($errorCode == self::ERROR_CODE_DUPLICATE) {
-            return $this->processDuplicateEntity($request, $key);
+        if ($code === self::ERROR_CODE_DUPLICATE) {
+            $resolved = $this->processDuplicateEntity($request, $key);
+            return new UnprocessableOutcome(
+                UnprocessableOutcome::TYPE_DUPLICATE,
+                $code,
+                $message,
+                $resolved
+            );
         }
+        if ($code !== null) {
+            return new UnprocessableOutcome(UnprocessableOutcome::TYPE_VALIDATION, $code, $message);
+        }
+        return new UnprocessableOutcome(UnprocessableOutcome::TYPE_UNKNOWN, null, $message);
     }
 }

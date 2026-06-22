@@ -57,13 +57,13 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
      */
     protected $exportAbandonedCartCommandTester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->quoteCollectionFactory = $this->getMockBuilder(QuoteCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->quoteCollection = $this->createMock(QuoteCollection::class);
@@ -74,7 +74,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
 
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->publisher = $this->createMock(PublisherInterface::class);
@@ -187,7 +187,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             'No abandoned cart(s) found matching your criteria',
             $this->exportAbandonedCartCommandTester->getDisplay()
         );
@@ -239,7 +239,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
             ['--quote-id' => $quoteId]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 abandoned cart(s) have been scheduled for export.',
             $this->exportAbandonedCartCommandTester->getDisplay()
         );
@@ -283,11 +283,80 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
             ['--omitted' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '2 abandoned cart(s) have been scheduled for export.',
             $this->exportAbandonedCartCommandTester->getDisplay()
         );
 
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportAbandonedCartCommandTester->getStatusCode());
+    }
+
+    public function testOmittedAppliesScopeBoundByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
+        $this->quoteCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->quoteCollection->expects($this->once())
+            ->method('addAbandonedFilter')
+            ->willReturnSelf();
+
+        $this->quoteCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportAbandonedCartCommandTester->execute(['--omitted' => true]);
+
+        $this->assertStringNotContainsString(
+            'ignore-date-filter set',
+            $this->exportAbandonedCartCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportAbandonedCartCommandTester->getStatusCode());
+    }
+
+    public function testIgnoreDateFilterSkipsScopeBoundAndWarns()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
+        $this->quoteCollection->expects($this->never())
+            ->method('addAbandonedFilter');
+
+        $this->quoteCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123, 456]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportAbandonedCartCommandTester->execute(
+            ['--all' => true, '--ignore-date-filter' => true]
+        );
+
+        $this->assertStringContainsString(
+            'Warning: --ignore-date-filter set — exporting 2 record(s)',
+            $this->exportAbandonedCartCommandTester->getDisplay()
+        );
         $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportAbandonedCartCommandTester->getStatusCode());
     }
 
@@ -326,7 +395,7 @@ class ExportAbandonedCartCommandTest extends AbstractTestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '3 abandoned cart(s) have been scheduled for export.',
             $this->exportAbandonedCartCommandTester->getDisplay()
         );

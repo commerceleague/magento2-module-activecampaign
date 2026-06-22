@@ -29,6 +29,12 @@ interface OrderRepositoryInterface
     public function getByMagentoQuoteId($magentoQuoteId): Data\OrderInterface;
 
     /**
+     * @param int $magentoOrderId
+     * @throws NoSuchEntityException
+     */
+    public function getByMagentoOrderId($magentoOrderId): Data\OrderInterface;
+
+    /**
      * @param int $magentoQuoteId
      * @throws CouldNotSaveException
      */

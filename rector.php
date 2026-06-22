@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Rector configuration for the 2.0.0 modernization target (PHP 8.4).
+ *
+ * Requires rector/rector ^2.0 and a PHP 8.4 toolchain. The repository's locked
+ * tooling (rector 0.17 on PHP 8.3) cannot apply the UP_TO_PHP_84 set; run this
+ * in the PHP 8.4 CI environment after the dependency bump (see RELEASE-READINESS.md).
+ */
+
 declare(strict_types=1);
 
 use Rector\CodeQuality\Rector\Class_\InlineConstructorDefaultToPropertyRector;
@@ -28,7 +36,7 @@ return static function (RectorConfig $rectorConfig): void {
 
     // define sets of rules
     $rectorConfig->sets([
-        LevelSetList::UP_TO_PHP_82,
+        LevelSetList::UP_TO_PHP_84,
         SetList::CODE_QUALITY,
         SetList::TYPE_DECLARATION,
         SetList::DEAD_CODE

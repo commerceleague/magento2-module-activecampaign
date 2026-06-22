@@ -105,7 +105,7 @@ use CommerceLeague\ActiveCampaign\Block\Adminhtml\System\Config\Connection;
 
             $.ajax({
                 type: 'GET',
-                url: '<?php echo $block->getAjaxConnectionUrl() ?>',
+                url: '<?= $block->escapeUrl($block->getAjaxConnectionUrl()) ?>',
                 dataType: 'json',
             }).fail(function (data, textStatus, jqXHR) {
                 const status = data.status;

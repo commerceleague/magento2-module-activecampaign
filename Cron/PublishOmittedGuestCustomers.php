@@ -12,6 +12,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\CollectionFactory as CustomerCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\Collection as CustomerCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class PublishOmittedGuestCustomers
@@ -21,7 +22,8 @@ class PublishOmittedGuestCustomers implements CronInterface
 
     public function __construct(private readonly ConfigHelper              $configHelper,
                                 private readonly CustomerCollectionFactory $customerCollectionFactory,
-                                private readonly PublisherInterface        $publisher
+                                private readonly PublisherInterface        $publisher,
+                                private readonly LoggerInterface           $logger
     ) {
     }
 
@@ -35,6 +37,14 @@ class PublishOmittedGuestCustomers implements CronInterface
         }
 
         $guestCustomers = $this->getCustomers();
+
+        if ($this->configHelper->isRetryAllOmittedEnabled()) {
+            $this->logger->warning(sprintf(
+                'ActiveCampaign retry_all_omitted is ON — re-publishing %d omitted guest customer '
+                . 'record(s) without the scope bound',
+                count($guestCustomers)
+            ));
+        }
 
         /** @var GuestCustomerInterface $customer */
         foreach ($guestCustomers as $customer) {
@@ -55,14 +65,23 @@ class PublishOmittedGuestCustomers implements CronInterface
         }
     }
 
+    /**
+     * @return array<int, GuestCustomerInterface>
+     */
     private function getCustomers(): array
     {
         /** @var CustomerCollection $customerCollection */
         $customerCollection = $this->customerCollectionFactory->create();
         $customerCollection->addOmittedFilter();
-        $customerCollection->addExportFilterOrderStatus();
-        $customerCollection->addExportFilterStartDate();
+        $customerCollection->addNotDeadLetteredFilter();
+        if (!$this->configHelper->isRetryAllOmittedEnabled()) {
+            $customerCollection->addExportFilterOrderStatus();
+            $customerCollection->addExportFilterStartDate();
+        }
 
-        return $customerCollection->getItems();
+        /** @var array<int, GuestCustomerInterface> $items */
+        $items = $customerCollection->getItems();
+
+        return $items;
     }
 }

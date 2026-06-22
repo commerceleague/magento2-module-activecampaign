@@ -18,7 +18,7 @@ abstract class AbstractBuilder
     /**
      * @throws \Exception
      */
-    protected  function formatDateTime(string $date): string
+    protected function formatDateTime(string $date): string
     {
         return (new \DateTime($date))->format(\DateTime::W3C);
     }

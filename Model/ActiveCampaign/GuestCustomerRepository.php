@@ -130,8 +130,8 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
         if (array_key_exists(Data\GuestCustomerInterface::EMAIL, $customerData)) {
 
             $customerEmail = $customerData[Data\GuestCustomerInterface::EMAIL];
-            $firstname     = $customerData[Data\GuestCustomerInterface::FIRSTNAME];
-            $lastname      = $customerData[Data\GuestCustomerInterface::LASTNAME];
+            $firstname     = $customerData[Data\GuestCustomerInterface::FIRSTNAME] ?? '';
+            $lastname      = $customerData[Data\GuestCustomerInterface::LASTNAME] ?? '';
 
             $guestCustomer = $this->getByEmail($customerEmail);
 

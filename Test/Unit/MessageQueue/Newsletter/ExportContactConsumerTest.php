@@ -11,6 +11,8 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Newsletter\ExportContactConsumer;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
@@ -74,11 +76,21 @@ class ExportContactConsumerTest extends AbstractTestCase
      */
     protected $eventManager;
 
-    protected function setUp()
+    /**
+     * @var MockObject|FailureRecorder
+     */
+    protected $failureRecorder;
+
+    /**
+     * @var MockObject|BackoffState
+     */
+    protected $backoffState;
+
+    protected function setUp(): void
     {
         $this->subscriberFactory = $this->getMockBuilder(SubscriberFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->subscriber = $this->createMock(Subscriber::class);
@@ -94,10 +106,12 @@ class ExportContactConsumerTest extends AbstractTestCase
         $this->contact               = $this->createMock(ContactInterface::class);
         $this->contactApi            = $this->createMock(ContactApiResourceInterface::class);
         $this->eventManager          = $this->createMock(ManagerInterface::class);
+        $this->failureRecorder       = $this->createMock(FailureRecorder::class);
+        $this->backoffState          = $this->createMock(BackoffState::class);
 
         $this->exportContactConsumer = new ExportContactConsumer(
             $this->subscriberFactory, $this->contactRepository, $this->contactRequestBuilder, $this->client,
-            $this->eventManager, $this->logger
+            $this->eventManager, $this->logger, $this->failureRecorder, $this->backoffState
         );
     }
 
@@ -106,13 +120,13 @@ class ExportContactConsumerTest extends AbstractTestCase
         $email = 'example@example.com';
 
         $this->subscriber->expects($this->once())
-            ->method('loadByEmail')
-            ->with($email)
+            ->method('load')
+            ->with($email, 'subscriber_email')
             ->willReturnSelf();
 
         $this->subscriber->expects($this->once())
             ->method('getId')
-            ->willReturn(null);
+            ->willReturn(0);
 
         $this->logger->expects($this->once())
             ->method('error')
@@ -130,8 +144,8 @@ class ExportContactConsumerTest extends AbstractTestCase
         $request = ['request'];
 
         $this->subscriber->expects($this->once())
-            ->method('loadByEmail')
-            ->with($email)
+            ->method('load')
+            ->with($email, 'subscriber_email')
             ->willReturnSelf();
 
         $this->subscriber->expects($this->once())
@@ -179,8 +193,8 @@ class ExportContactConsumerTest extends AbstractTestCase
         $responseErrors = ['first error', 'second error'];
 
         $this->subscriber->expects($this->once())
-            ->method('loadByEmail')
-            ->with($email)
+            ->method('load')
+            ->with($email, 'subscriber_email')
             ->willReturnSelf();
 
         $this->subscriber->expects($this->once())
@@ -204,14 +218,138 @@ class ExportContactConsumerTest extends AbstractTestCase
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 
-        $apiResponseKey = 'contact';
-        $apiMethod = 'upsert';
-        $this->unprocessableEntityHttpException(
-            $this->contactApi, $this->logger, $request, $responseErrors, $apiResponseKey, $apiMethod);
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->contactApi->expects($this->once())
+            ->method('upsert')
+            ->with(['contact' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        // Task 6.1: single structured failure line carrying the entity + AC code.
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('export failed'),
+                $this->stringContains('entity=contact'),
+                $this->stringContains('code=unknown')
+            ));
 
         $this->contact->expects($this->never())
             ->method('setActiveCampaignId');
 
+        $this->exportContactConsumer->consume(json_encode(['email' => $email]));
+    }
+
+    public function testEmptyBodyDoesNotStrand()
+    {
+        $email = 'example@example.com';
+        $request = ['request'];
+
+        $this->subscriber->expects($this->once())
+            ->method('load')
+            ->with($email, 'subscriber_email')
+            ->willReturnSelf();
+
+        $this->subscriber->expects($this->once())
+            ->method('getId')
+            ->willReturn(123);
+
+        $this->subscriber->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactRepository->expects($this->once())
+            ->method('getOrCreateByEmail')
+            ->with($email)
+            ->willReturn($this->contact);
+
+        $this->contactRequestBuilder->expects($this->once())
+            ->method('buildWithSubscriber')
+            ->willReturn($request);
+
+        $this->client->expects($this->once())
+            ->method('getContactApi')
+            ->willReturn($this->contactApi);
+
+        $this->contactApi->expects($this->once())
+            ->method('upsert')
+            ->with(['contact' => $request])
+            ->willReturn(['contact' => []]);
+
+        $this->contact->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->contact, 'empty_response', null);
+
+        $this->contactRepository->expects($this->once())
+            ->method('save')
+            ->with($this->contact);
+
+        $this->eventManager->expects($this->never())
+            ->method('dispatch');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportContactConsumer->consume(json_encode(['email' => $email]));
+    }
+
+    public function testConsumeSwallowsUnexpectedThrowableAndRecordsFailure()
+    {
+        $email = 'example@example.com';
+        $request = ['request'];
+
+        $this->subscriber->expects($this->once())
+            ->method('load')
+            ->with($email, 'subscriber_email')
+            ->willReturnSelf();
+
+        $this->subscriber->expects($this->once())
+            ->method('getId')
+            ->willReturn(123);
+
+        $this->subscriber->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactRepository->expects($this->once())
+            ->method('getOrCreateByEmail')
+            ->with($email)
+            ->willReturn($this->contact);
+
+        $this->contactRequestBuilder->expects($this->once())
+            ->method('buildWithSubscriber')
+            ->willReturn($request);
+
+        $this->contact->expects($this->atLeastOnce())
+            ->method('getId')
+            ->willReturn(88);
+
+        // An unexpected, non-Http throwable from a body dependency.
+        $this->client->expects($this->once())
+            ->method('getContactApi')
+            ->willThrowException(new \RuntimeException('boom'));
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->contact, 'unexpected_error', 'boom');
+
+        $this->contactRepository->expects($this->once())
+            ->method('save')
+            ->with($this->contact);
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=contact'),
+                $this->stringContains('local_id=88'),
+                $this->stringContains('code=unexpected_error')
+            ));
+
+        // Must NOT propagate.
         $this->exportContactConsumer->consume(json_encode(['email' => $email]));
     }
 
@@ -223,8 +361,8 @@ class ExportContactConsumerTest extends AbstractTestCase
         $response = ['contact' => ['id' => $activeCampaignId]];
 
         $this->subscriber->expects($this->once())
-            ->method('loadByEmail')
-            ->with($email)
+            ->method('load')
+            ->with($email, 'subscriber_email')
             ->willReturnSelf();
 
         $this->subscriber->expects($this->once())
@@ -258,6 +396,10 @@ class ExportContactConsumerTest extends AbstractTestCase
             ->method('setActiveCampaignId')
             ->with($activeCampaignId)
             ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->contact);
 
         $this->contactRepository->expects($this->once())
             ->method('save')

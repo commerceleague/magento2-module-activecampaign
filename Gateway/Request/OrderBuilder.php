@@ -25,6 +25,7 @@ class OrderBuilder extends AbstractBuilder
     /**
      * @param MagentoOrderInterface|MagentoOrder $magentoOrder
      *
+     * @return array<string, mixed>
      * @throws Exception
      */
     public function build(MagentoOrderInterface $magentoOrder): array
@@ -51,12 +52,14 @@ class OrderBuilder extends AbstractBuilder
 
         /** @var MagentoOrder\Item $magentoOrderItem */
         foreach ($magentoOrder->getAllVisibleItems() as $magentoOrderItem) {
+            $product = $magentoOrderItem->getProduct();
+
             $request['orderProducts'][] = [
                 'externalid' => $magentoOrderItem->getSku(),
                 'name'       => $magentoOrderItem->getName(),
                 'price'      => $this->convertToCent((float)$magentoOrderItem->getPriceInclTax()),
                 'quantity'   => (int)$magentoOrderItem->getQtyOrdered(),
-                'productUrl' => $magentoOrderItem->getProduct()->getProductUrl(),
+                'productUrl' => $product !== null ? $product->getProductUrl() : '',
             ];
         }
 

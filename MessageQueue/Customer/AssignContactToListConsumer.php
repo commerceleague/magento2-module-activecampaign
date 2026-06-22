@@ -46,10 +46,24 @@ class AssignContactToListConsumer extends AbstractConsumer implements ConsumerIn
         try {
             $apiResponse = $this->client->getContactApi()->updateListStatus(['contactList' => $request]);
         } catch (UnprocessableEntityHttpException $e) {
-            $this->logUnprocessableEntityHttpException($e, $request);
+            $this->logFailure(
+                'contact',
+                $this->castId($contact->getId()),
+                null,
+                $e->getCode() ?: 422,
+                'unknown',
+                $e->getMessage()
+            );
             return;
         } catch (HttpException $e) {
-            $this->logException($e);
+            $this->logFailure(
+                'contact',
+                $this->castId($contact->getId()),
+                null,
+                $e->getCode(),
+                'http_error',
+                $e->getMessage()
+            );
             return;
         }
     }
@@ -57,7 +71,8 @@ class AssignContactToListConsumer extends AbstractConsumer implements ConsumerIn
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key): void
+    function processDuplicateEntity(array $request, string $key): array
     {
+        return [];
     }
 }

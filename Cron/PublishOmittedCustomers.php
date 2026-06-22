@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class PublishOmittedCustomers
@@ -20,7 +21,8 @@ class PublishOmittedCustomers implements CronInterface
 
     public function __construct(private readonly ConfigHelper              $configHelper,
                                 private readonly CustomerCollectionFactory $customerCollectionFactory,
-                                private readonly PublisherInterface        $publisher
+                                private readonly PublisherInterface        $publisher,
+                                private readonly LoggerInterface           $logger
     ) {
     }
 
@@ -35,6 +37,14 @@ class PublishOmittedCustomers implements CronInterface
 
         $customerIds = $this->getCustomerIds();
 
+        if ($this->configHelper->isRetryAllOmittedEnabled()) {
+            $this->logger->warning(sprintf(
+                'ActiveCampaign retry_all_omitted is ON — re-publishing %d omitted customer record(s) '
+                . 'without the scope bound',
+                count($customerIds)
+            ));
+        }
+
         foreach ($customerIds as $customerId) {
             $this->publisher->publish(
                 Topics::CUSTOMER_CUSTOMER_EXPORT,
@@ -43,11 +53,16 @@ class PublishOmittedCustomers implements CronInterface
         }
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function getCustomerIds(): array
     {
         /** @var CustomerCollection $customerCollection */
         $customerCollection = $this->customerCollectionFactory->create();
-        $customerCollection->addCustomerOmittedFilter();
+        $applyCustomerGroupFilter = !$this->configHelper->isRetryAllOmittedEnabled();
+        $customerCollection->addCustomerOmittedFilter($applyCustomerGroupFilter);
+        $customerCollection->addCustomerNotDeadLetteredFilter();
 
         return $customerCollection->getAllIds();
     }

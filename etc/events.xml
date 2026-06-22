@@ -10,6 +10,9 @@
 	<event name="sales_order_save_after">
 		<observer name="activecampaign_export_order" instance="CommerceLeague\ActiveCampaign\Observer\Sales\ExportOrderObserver" />
 	</event>
+	<event name="sales_quote_delete_after">
+		<observer name="activecampaign_cleanup_abandoned_cart" instance="CommerceLeague\ActiveCampaign\Observer\Quote\CleanupAbandonedCartObserver" />
+	</event>
 	<event name="commmerceleague_activecampaign_export_contact_success">
 		<observer name="activecampaign_assign_contact_to_list" instance="CommerceLeague\ActiveCampaign\Observer\Customer\AssignContactToListObserver"/>
 	</event>

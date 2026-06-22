@@ -52,6 +52,33 @@
 				<label translate="true">ActiveCampaign ID</label>
 			</settings>
 		</column>
+		<column name="export_status" component="Magento_Ui/js/grid/columns/select" sortOrder="31">
+			<settings>
+				<options class="CommerceLeague\ActiveCampaign\Model\Source\ExportStatus"/>
+				<filter>select</filter>
+				<dataType>select</dataType>
+				<label translate="true">Export Status</label>
+			</settings>
+		</column>
+		<column name="export_attempts" sortOrder="32">
+			<settings>
+				<filter>textRange</filter>
+				<label translate="true">Attempts</label>
+			</settings>
+		</column>
+		<column name="last_error_code" sortOrder="33">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Last Error Code</label>
+			</settings>
+		</column>
+		<column name="last_attempted_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date" sortOrder="34">
+			<settings>
+				<filter>dateRange</filter>
+				<dataType>date</dataType>
+				<label translate="true">Last Attempted</label>
+			</settings>
+		</column>
 		<column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date" sortOrder="40">
 			<settings>
 				<filter>dateRange</filter>

@@ -26,6 +26,7 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     private const QUOTE_ID = 'quote-id';
     private const OPTION_OMITTED = 'omitted';
     private const OPTION_ALL = 'all';
+    private const OPTION_IGNORE_DATE_FILTER = 'ignore-date-filter';
 
     /**
      * @param ProgressBarFactory $progressBarFactory
@@ -42,7 +43,7 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Export abandoned carts')
@@ -63,13 +64,20 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
                 null,
                 InputOption::VALUE_NONE,
                 'Export all abandoned carts'
+            )
+            ->addOption(
+                self::OPTION_IGNORE_DATE_FILTER,
+                null,
+                InputOption::VALUE_NONE,
+                'Bypass the default cron scope filter (date/status/customer-group) '
+                . 'and export pre-cutoff historical records too'
             );
     }
 
     /**
      * @inheritDoc
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isAbandonedCartExportEnabled()) {
             throw new RuntimeException('Export disabled by system configuration');
@@ -106,6 +114,16 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
             return Cli::RETURN_FAILURE;
         }
 
+        if ($input->getOption(self::QUOTE_ID) === null
+            && $input->getOption(self::OPTION_IGNORE_DATE_FILTER)
+        ) {
+            $output->writeln(sprintf(
+                '<comment>Warning: --ignore-date-filter set — exporting %s record(s) without the '
+                . 'cron scope bound (includes pre-cutoff historical data).</comment>',
+                $quoteIdsCount
+            ));
+        }
+
         $progressBar = $this->createProgressBar(
             $output,
             $quoteIdsCount,
@@ -133,18 +151,26 @@ class ExportAbandonedCartCommand extends AbstractExportCommand
     /**
      * @throws \Exception
      */
+    /**
+     * @return array<int, string>
+     */
     private function getQuoteIds(InputInterface $input): array
     {
         /** @var QuoteCollection $quoteCollection */
         $quoteCollection = $this->quoteCollectionFactory->create();
-        $quoteCollection->addAbandonedFilter();
 
         if (($quoteId = $input->getOption(self::QUOTE_ID))) {
             $quoteCollection->addIdFilter((int)$quoteId);
+
+            return $quoteCollection->getAllIds();
         }
 
         if ($input->getOption(self::OPTION_OMITTED)) {
             $quoteCollection->addOmittedFilter();
+        }
+
+        if (!$input->getOption(self::OPTION_IGNORE_DATE_FILTER)) {
+            $quoteCollection->addAbandonedFilter();
         }
 
         return $quoteCollection->getAllIds();

@@ -11,9 +11,12 @@ use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\Customer\ExportContactConsumer;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
+use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
 use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 use Magento\Framework\Event\ManagerInterface;
@@ -74,7 +77,17 @@ class ExportContactConsumerTest extends AbstractTestCase
      */
     protected $eventManager;
 
-    protected function setUp()
+    /**
+     * @var MockObject|FailureRecorder
+     */
+    protected $failureRecorder;
+
+    /**
+     * @var MockObject|BackoffState
+     */
+    protected $backoffState;
+
+    protected function setUp(): void
     {
         $this->magentoCustomerRepository = $this->createMock(MagentoCustomerRepositoryInterface::class);
         $this->logger                    = $this->createMock(Logger::class);
@@ -85,6 +98,8 @@ class ExportContactConsumerTest extends AbstractTestCase
         $this->contactApi                = $this->createMock(ContactApiResourceInterface::class);
         $this->magentoCustomer           = $this->createMock(MagentoCustomerInterface::class);
         $this->eventManager              = $this->createMock(ManagerInterface::class);
+        $this->failureRecorder           = $this->createMock(FailureRecorder::class);
+        $this->backoffState              = $this->createMock(BackoffState::class);
 
         $this->exportContactConsumer = new ExportContactConsumer(
             $this->magentoCustomerRepository,
@@ -92,7 +107,9 @@ class ExportContactConsumerTest extends AbstractTestCase
             $this->contactRepository,
             $this->contactRequestBuilder,
             $this->client,
-            $this->eventManager
+            $this->eventManager,
+            $this->failureRecorder,
+            $this->backoffState
         );
     }
 
@@ -192,11 +209,134 @@ class ExportContactConsumerTest extends AbstractTestCase
             ->method('getContactApi')
             ->willReturn($this->contactApi);
 
-        $this->unprocessableEntityHttpException($this->contactApi, $this->logger, $request, $responseErrors, 'contact', 'upsert');
+        /** @var MockObject|UnprocessableEntityHttpException $unprocessableEntityHttpException */
+        $unprocessableEntityHttpException = $this->createMock(UnprocessableEntityHttpException::class);
+
+        $this->contactApi->expects($this->once())
+            ->method('upsert')
+            ->with(['contact' => $request])
+            ->willThrowException($unprocessableEntityHttpException);
+
+        // Task 6.1: single structured failure line carrying the entity + AC code.
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('export failed'),
+                $this->stringContains('entity=contact'),
+                $this->stringContains('code=unknown')
+            ));
 
         $this->contact->expects($this->never())
             ->method('setActiveCampaignId');
 
+        $this->exportContactConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
+    public function testEmptyBodyDoesNotStrand()
+    {
+        $magentoCustomerId = 123;
+        $email             = 'example@example.com';
+        $request           = ['request'];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactRepository->expects($this->once())
+            ->method('getOrCreateByEmail')
+            ->with($email)
+            ->willReturn($this->contact);
+
+        $this->contactRequestBuilder->expects($this->once())
+            ->method('buildWithMagentoCustomer')
+            ->with($this->magentoCustomer)
+            ->willReturn($request);
+
+        $this->client->expects($this->once())
+            ->method('getContactApi')
+            ->willReturn($this->contactApi);
+
+        $this->contactApi->expects($this->once())
+            ->method('upsert')
+            ->with(['contact' => $request])
+            ->willReturn(['contact' => []]);
+
+        $this->contact->expects($this->never())
+            ->method('setActiveCampaignId');
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->contact, 'empty_response', null);
+
+        $this->contactRepository->expects($this->once())
+            ->method('save')
+            ->with($this->contact);
+
+        $this->eventManager->expects($this->never())
+            ->method('dispatch');
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error');
+
+        $this->exportContactConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
+    }
+
+    public function testConsumeSwallowsUnexpectedThrowableAndRecordsFailure()
+    {
+        $magentoCustomerId = 123;
+        $email             = 'example@example.com';
+        $request           = ['request'];
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('getById')
+            ->with($magentoCustomerId)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->once())
+            ->method('getEmail')
+            ->willReturn($email);
+
+        $this->contactRepository->expects($this->once())
+            ->method('getOrCreateByEmail')
+            ->with($email)
+            ->willReturn($this->contact);
+
+        $this->contactRequestBuilder->expects($this->once())
+            ->method('buildWithMagentoCustomer')
+            ->willReturn($request);
+
+        $this->contact->expects($this->atLeastOnce())
+            ->method('getId')
+            ->willReturn(88);
+
+        // An unexpected, non-Http throwable from a body dependency.
+        $this->client->expects($this->once())
+            ->method('getContactApi')
+            ->willThrowException(new \RuntimeException('boom'));
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->contact, 'unexpected_error', 'boom');
+
+        $this->contactRepository->expects($this->once())
+            ->method('save')
+            ->with($this->contact);
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->logicalAnd(
+                $this->stringContains('entity=contact'),
+                $this->stringContains('local_id=88'),
+                $this->stringContains('magento_id=' . $magentoCustomerId),
+                $this->stringContains('code=unexpected_error')
+            ));
+
+        // Must NOT propagate.
         $this->exportContactConsumer->consume(json_encode(['magento_customer_id' => $magentoCustomerId]));
     }
 
@@ -240,6 +380,10 @@ class ExportContactConsumerTest extends AbstractTestCase
             ->method('setActiveCampaignId')
             ->with($activeCampaignId)
             ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->contact);
 
         $this->contactRepository->expects($this->once())
             ->method('save')

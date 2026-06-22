@@ -48,7 +48,7 @@ class ExportOrderObserverTest extends AbstractTestCase
      */
     protected $exportOrderObserver;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->publisher = $this->createMock(PublisherInterface::class);

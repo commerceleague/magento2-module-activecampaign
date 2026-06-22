@@ -26,6 +26,7 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
     private const OPTION_EMAIL   = 'email';
     private const OPTION_OMITTED = 'omitted';
     private const OPTION_ALL     = 'all';
+    private const OPTION_IGNORE_DATE_FILTER = 'ignore-date-filter';
 
     /**
      * @param ProgressBarFactory        $progressBarFactory
@@ -42,7 +43,7 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Export Guest customers')
@@ -63,13 +64,20 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
                 null,
                 InputOption::VALUE_NONE,
                 'Export all customers'
+            )
+            ->addOption(
+                self::OPTION_IGNORE_DATE_FILTER,
+                null,
+                InputOption::VALUE_NONE,
+                'Bypass the default cron scope filter (date/status/customer-group) '
+                . 'and export pre-cutoff historical records too'
             );
     }
 
     /**
      * @inheritDoc
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isCustomerExportEnabled()) {
             throw new RuntimeException('Export disabled by system configuration');
@@ -105,14 +113,24 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
             return Cli::RETURN_FAILURE;
         }
 
+        if ($input->getOption(self::OPTION_EMAIL) === null
+            && $input->getOption(self::OPTION_IGNORE_DATE_FILTER)
+        ) {
+            $output->writeln(sprintf(
+                '<comment>Warning: --ignore-date-filter set — exporting %s record(s) without the '
+                . 'cron scope bound (includes pre-cutoff historical data).</comment>',
+                $customerIdsCount
+            ));
+        }
+
         $progressBar = $this->createProgressBar(
             $output,
             $customerIdsCount,
             'Guest Customer(s)'
         );
 
-        /** @var OrderInterface $customer */
-        foreach ($customers as $customer) {
+        /** @var OrderInterface $order */
+        foreach ($customers as $order) {
 
             $this->publisher->publish(
                 Topics::GUEST_CUSTOMER_EXPORT,
@@ -121,9 +139,11 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
                         'magento_customer_id' => null,
                         'customer_is_guest'   => true,
                         'customer_data'       => [
-                            GuestCustomerInterface::FIRSTNAME => $customer->getCustomerFirstname(),
-                            GuestCustomerInterface::LASTNAME  => $customer->getCustomerLastname(),
-                            GuestCustomerInterface::EMAIL     => $customer->getCustomerEmail()
+                            GuestCustomerInterface::FIRSTNAME =>
+                                $order->getCustomerFirstname() ?: ($order->getBillingAddress()?->getFirstname() ?? ''),
+                            GuestCustomerInterface::LASTNAME  =>
+                                $order->getCustomerLastname() ?: ($order->getBillingAddress()?->getLastname() ?? ''),
+                            GuestCustomerInterface::EMAIL     => $order->getCustomerEmail()
                         ]
                     ]
                 )
@@ -143,6 +163,9 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
         return Cli::RETURN_SUCCESS;
     }
 
+    /**
+     * @return array<int, GuestCustomerInterface>
+     */
     private function getGuestCustomers(InputInterface $input): array
     {
         /** @var CustomerCollection $customerCollection */
@@ -150,12 +173,25 @@ class ExportGuestCustomerCommand extends AbstractExportCommand
 
         if (($email = $input->getOption(self::OPTION_EMAIL)) !== null) {
             $customerCollection->addEmailFilter($email);
+
+            /** @var array<int, GuestCustomerInterface> $emailItems */
+            $emailItems = $customerCollection->getItems();
+
+            return $emailItems;
         }
 
         if ($input->getOption(self::OPTION_OMITTED)) {
             $customerCollection->addOmittedFilter();
         }
 
-        return $customerCollection->getItems();
+        if (!$input->getOption(self::OPTION_IGNORE_DATE_FILTER)) {
+            $customerCollection->addExportFilterOrderStatus();
+            $customerCollection->addExportFilterStartDate();
+        }
+
+        /** @var array<int, GuestCustomerInterface> $items */
+        $items = $customerCollection->getItems();
+
+        return $items;
     }
 }

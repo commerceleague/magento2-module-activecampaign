@@ -26,7 +26,7 @@ class Connection extends Field
 
     /**
      * @param Context $context
-     * @param array   $data
+     * @param array<string, mixed> $data
      */
     public function __construct(
         Context $context,

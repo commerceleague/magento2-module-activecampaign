@@ -24,7 +24,7 @@ class AbandonedCartBuilder extends AbstractBuilder
      */
     public function build(Quote $quote): array
     {
-        $customer = $this->customerRepository->getByMagentoCustomerId($quote->getData('customer_id'));
+        $customerId = $quote->getData('customer_id');
 
         $request = [
             'externalcheckoutid' => $quote->getId(),
@@ -36,17 +36,29 @@ class AbandonedCartBuilder extends AbstractBuilder
             'totalPrice' => $this->convertToCent((float)$quote->getData('grand_total')),
             'currency' => $quote->getData('base_currency_code'),
             'connectionid' => $this->configHelper->getConnectionId(),
-            'customerid' => $customer->getActiveCampaignId(),
+            'customerid' => null,
             'orderProducts' => []
         ];
 
+        // A guest abandoned cart has no customer_id and therefore no registered
+        // ActiveCampaign customer; skip the lookup and leave customerid null.
+        if (!empty($customerId)) {
+            $customer = $this->customerRepository->getByMagentoCustomerId($customerId);
+            $request['customerid'] = $customer->getActiveCampaignId();
+        }
+
         foreach ($quote->getAllVisibleItems() as $quoteItem) {
+            // Quote\Item::getProduct() is documented as non-null, but a deleted
+            // product yields null at runtime; treat it defensively.
+            /** @var \Magento\Catalog\Model\Product|null $product */
+            $product = $quoteItem->getProduct();
+
             $request['orderProducts'][] = [
                 'externalid' => $quoteItem->getSku(),
                 'name' => $quoteItem->getName(),
                 'price' => $this->convertToCent((float)$quoteItem->getPriceInclTax()),
                 'quantity' => (int)$quoteItem->getQty(),
-                'productUrl' => $quoteItem->getProduct()->getProductUrl(),
+                'productUrl' => $product !== null ? $product->getProductUrl() : '',
             ];
         }
 

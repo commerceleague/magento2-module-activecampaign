@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer;
 
+use CommerceLeague\ActiveCampaign\Api\Data\FailureTrackableInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomer;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer as CustomerResource;
@@ -41,6 +42,46 @@ class Collection extends AbstractCollection
     public function addOmittedFilter(): self
     {
         $this->getSelect()->where('main_table.activecampaign_id IS NULL');
+        return $this;
+    }
+
+    /**
+     * Filter by the guest mapping entity id, explicitly qualified.
+     *
+     * _initSelect() LEFT JOINs sales_order (which also exposes entity_id), so an
+     * unqualified entity_id in the WHERE is ambiguous (SQLSTATE[23000]).
+     */
+    public function addEntityIdFilter(int $entityId): self
+    {
+        $this->getSelect()->where('main_table.entity_id = ?', $entityId);
+        return $this;
+    }
+
+    /**
+     * Filter by the guest mapping email, explicitly qualified.
+     *
+     * sales_order is LEFT JOINed exposing customer_email; qualifying as
+     * main_table.email keeps the filter unambiguous and on the AC table column.
+     */
+    public function addEmailFilter(string $email): self
+    {
+        $this->getSelect()->where('main_table.email = ?', $email);
+        return $this;
+    }
+
+    /**
+     * Exclude dead-lettered rows while keeping pending and synced rows.
+     *
+     * The guest customer AC table is the main_table here, so export_status is never null.
+     *
+     * @return Collection
+     */
+    public function addNotDeadLetteredFilter(): self
+    {
+        $this->getSelect()->where(
+            'main_table.export_status != ? OR main_table.export_status IS NULL',
+            FailureTrackableInterface::EXPORT_STATUS_FAILED
+        );
         return $this;
     }
 

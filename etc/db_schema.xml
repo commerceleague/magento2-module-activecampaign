@@ -7,6 +7,14 @@
         <column xsi:type="varchar" name="email" nullable="true" length="255" comment="Email"/>
         <column xsi:type="int" name="activecampaign_id" padding="10" unsigned="true" nullable="true" identity="false"
                 comment="Active Campaign Id"/>
+        <column xsi:type="int" name="export_attempts" padding="10" unsigned="true" nullable="false" default="0"
+                comment="Export Attempts"/>
+        <column xsi:type="varchar" name="last_error_code" length="64" nullable="true" comment="Last Error Code"/>
+        <column xsi:type="varchar" name="last_error_message" length="255" nullable="true"
+                comment="Last Error Message"/>
+        <column xsi:type="datetime" name="last_attempted_at" nullable="true" comment="Last Attempted At"/>
+        <column xsi:type="smallint" name="export_status" padding="5" unsigned="true" nullable="false" default="0"
+                comment="Export Status (0=pending,1=synced,2=failed)"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
                 comment="Created At"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
@@ -25,6 +33,14 @@
                 comment="Magento Customer Id"/>
         <column xsi:type="int" name="activecampaign_id" padding="10" unsigned="true" nullable="true" identity="false"
                 comment="Active Campaign Id"/>
+        <column xsi:type="int" name="export_attempts" padding="10" unsigned="true" nullable="false" default="0"
+                comment="Export Attempts"/>
+        <column xsi:type="varchar" name="last_error_code" length="64" nullable="true" comment="Last Error Code"/>
+        <column xsi:type="varchar" name="last_error_message" length="255" nullable="true"
+                comment="Last Error Message"/>
+        <column xsi:type="datetime" name="last_attempted_at" nullable="true" comment="Last Attempted At"/>
+        <column xsi:type="smallint" name="export_status" padding="5" unsigned="true" nullable="false" default="0"
+                comment="Export Status (0=pending,1=synced,2=failed)"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
                 comment="Created At"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
@@ -47,6 +63,14 @@
         <column xsi:type="varchar" name="firstname" nullable="true" length="255" comment="First Name"/>
         <column xsi:type="varchar" name="lastname" nullable="true" length="255" comment="Last Name"/>
         <column xsi:type="varchar" name="email" nullable="true" length="255" comment="Email"/>
+        <column xsi:type="int" name="export_attempts" padding="10" unsigned="true" nullable="false" default="0"
+                comment="Export Attempts"/>
+        <column xsi:type="varchar" name="last_error_code" length="64" nullable="true" comment="Last Error Code"/>
+        <column xsi:type="varchar" name="last_error_message" length="255" nullable="true"
+                comment="Last Error Message"/>
+        <column xsi:type="datetime" name="last_attempted_at" nullable="true" comment="Last Attempted At"/>
+        <column xsi:type="smallint" name="export_status" padding="5" unsigned="true" nullable="false" default="0"
+                comment="Export Status (0=pending,1=synced,2=failed)"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
                 comment="Created At"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"
@@ -58,10 +82,20 @@
     <table name="activecampaign_order" resource="default" engine="innodb" comment="ActiveCampaign Order Table">
         <column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true"
                 comment="Entity Id"/>
-        <column xsi:type="int" name="magento_quote_id" padding="11" unsigned="false" nullable="true" identity="false"
+        <column xsi:type="int" name="magento_quote_id" padding="10" unsigned="true" nullable="true" identity="false"
                 comment="Magento Quote Id"/>
+        <column xsi:type="int" name="magento_order_id" padding="10" unsigned="true" nullable="true" identity="false"
+                comment="Magento Order Id"/>
         <column xsi:type="int" name="activecampaign_id" padding="10" unsigned="true" nullable="true" identity="false"
                 comment="Active Campaign Id"/>
+        <column xsi:type="int" name="export_attempts" padding="10" unsigned="true" nullable="false" default="0"
+                comment="Export Attempts"/>
+        <column xsi:type="varchar" name="last_error_code" length="64" nullable="true" comment="Last Error Code"/>
+        <column xsi:type="varchar" name="last_error_message" length="255" nullable="true"
+                comment="Last Error Message"/>
+        <column xsi:type="datetime" name="last_attempted_at" nullable="true" comment="Last Attempted At"/>
+        <column xsi:type="smallint" name="export_status" padding="5" unsigned="true" nullable="false" default="0"
+                comment="Export Status (0=pending,1=synced,2=failed)"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
                 comment="Created At"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP"

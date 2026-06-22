@@ -6,7 +6,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder;
-use CommerceLeague\ActiveCampaign\Helper\Contants;
+use CommerceLeague\ActiveCampaign\Helper\Constants;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 use Magento\Framework\Api\ExtensionAttributesInterface;
@@ -36,12 +36,12 @@ class ContactBuilderTest extends AbstractTestCase
      */
     protected $contactBuilder;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->magentoCustomer = $this->createMock(MagentoCustomerInterface::class);
         $this->subscriber = $this->createMock(Subscriber::class);
         $this->extensionAttributes = $this->getMockBuilder(ExtensionAttributesInterface::class)
-            ->setMethods(['getIsSubscribed'])
+            ->addMethods(['getIsSubscribed'])
             ->getMockForAbstractClass();
 
         $this->contactBuilder = new ContactBuilder();
@@ -66,7 +66,7 @@ class ContactBuilderTest extends AbstractTestCase
             ->willReturn($lastName);
 
         $expected = [
-            'status' => Contants::CONTACT_STATUS_ACTIVE,
+            'status' => Constants::CONTACT_STATUS_ACTIVE,
             'email' => $email,
             'firstName' => $firstName,
             'lastName' => $lastName
@@ -87,7 +87,7 @@ class ContactBuilderTest extends AbstractTestCase
             ->willReturn($email);
 
         $expected = [
-            'status' => Contants::CONTACT_STATUS_ACTIVE,
+            'status' => Constants::CONTACT_STATUS_ACTIVE,
             'email' => $email
         ];
 

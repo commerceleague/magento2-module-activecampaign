@@ -46,6 +46,16 @@ class GuestCustomerRepositoryTest extends AbstractTestCase
      */
     protected $guestCustomerRepository;
 
+    /**
+     * @var MockObject|\Magento\Customer\Model\ResourceModel\CustomerRepository
+     */
+    protected $magentoCustomerRepository;
+
+    /**
+     * @var MockObject|CustomerRepository
+     */
+    protected $customerRepository;
+
     public function testSaveThrowsException()
     {
         $this->customerResource->expects($this->once())
@@ -162,6 +172,15 @@ class GuestCustomerRepositoryTest extends AbstractTestCase
             ->with($this->customer, $email, GuestCustomerInterface::EMAIL)
             ->willReturn($this->customer);
 
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('get')
+            ->with($email)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->any())
+            ->method('getId')
+            ->willReturn(null);
+
         $this->customer->expects($this->once())
             ->method('getId')
             ->willReturn(null);
@@ -205,7 +224,16 @@ class GuestCustomerRepositoryTest extends AbstractTestCase
             ->with($this->customer, $email, GuestCustomerInterface::EMAIL)
             ->willReturn($this->customer);
 
-        $this->customer->expects($this->once())
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('get')
+            ->with($email)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->any())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->customer->expects($this->any())
             ->method('getId')
             ->willReturn(123);
 
@@ -218,8 +246,61 @@ class GuestCustomerRepositoryTest extends AbstractTestCase
         $this->customer->expects($this->never())
             ->method('setLastname');
 
-        $this->customerResource->expects($this->never())
-            ->method('save');
+        $this->customerResource->expects($this->once())
+            ->method('save')
+            ->with($this->customer)
+            ->willReturnSelf();
+
+        $this->assertSame($this->customer, $this->guestCustomerRepository->getOrCreate($customerData));
+    }
+
+    public function testGetOrCreateCoalescesNullNamesToEmptyString()
+    {
+        $email = 'something@something.com';
+
+        $customerData = [
+            GuestCustomerInterface::FIRSTNAME => null,
+            GuestCustomerInterface::LASTNAME  => null,
+            GuestCustomerInterface::EMAIL     => $email
+        ];
+
+        $this->customerResource->expects($this->once())
+            ->method('load')
+            ->with($this->customer, $email, GuestCustomerInterface::EMAIL)
+            ->willReturn($this->customer);
+
+        $this->magentoCustomerRepository->expects($this->once())
+            ->method('get')
+            ->with($email)
+            ->willReturn($this->magentoCustomer);
+
+        $this->magentoCustomer->expects($this->any())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->customer->expects($this->once())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->customer->expects($this->once())
+            ->method('setEmail')
+            ->with($email)
+            ->willReturnSelf();
+
+        $this->customer->expects($this->once())
+            ->method('setFirstname')
+            ->with('')
+            ->willReturnSelf();
+
+        $this->customer->expects($this->once())
+            ->method('setLastname')
+            ->with('')
+            ->willReturnSelf();
+
+        $this->customerResource->expects($this->once())
+            ->method('save')
+            ->with($this->customer)
+            ->willReturn($this->customer);
 
         $this->assertSame($this->customer, $this->guestCustomerRepository->getOrCreate($customerData));
     }
@@ -232,7 +313,7 @@ class GuestCustomerRepositoryTest extends AbstractTestCase
 
         $this->customerFactory = $this->getMockBuilder(GuestCustomerFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->customer = $this->getMockBuilder(GuestCustomer::class)
@@ -242,6 +323,10 @@ class GuestCustomerRepositoryTest extends AbstractTestCase
         $this->customerFactory->expects($this->any())
             ->method('create')
             ->willReturn($this->customer);
+
+        $this->magentoCustomer = $this->getMockBuilder(MagentoCustomer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->magentoCustomerRepository = $this->createMock(
             \Magento\Customer\Model\ResourceModel\CustomerRepository::class

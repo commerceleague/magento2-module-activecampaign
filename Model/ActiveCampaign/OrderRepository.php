@@ -78,6 +78,28 @@ class OrderRepository implements OrderRepositoryInterface
     /**
      * @inheritDoc
      */
+    public function getByMagentoOrderId($magentoOrderId): Data\OrderInterface
+    {
+        /** @var Order $order */
+        $order = $this->orderFactory->create();
+        $this->orderResource->load(
+            $order,
+            $magentoOrderId,
+            Data\OrderInterface::MAGENTO_ORDER_ID
+        );
+
+        if (!$order->getId()) {
+            throw new NoSuchEntityException(
+                __('The Order with the "%1" Magento Order ID doesn\'t exist', $magentoOrderId)
+            );
+        }
+
+        return $order;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getOrCreateByMagentoQuoteId($magentoQuoteId): Data\OrderInterface
     {
         $order = $this->getByMagentoQuoteId($magentoQuoteId);

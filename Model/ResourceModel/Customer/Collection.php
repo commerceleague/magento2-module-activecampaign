@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer;
 
+use CommerceLeague\ActiveCampaign\Api\Data\FailureTrackableInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
 use Magento\Customer\Model\ResourceModel\Customer\Collection as ExtendCustomerCollection;
@@ -77,22 +78,58 @@ class Collection extends ExtendCustomerCollection
     }
 
     /**
+     * @param bool $applyCustomerGroupFilter When false the allowed-customer-group window
+     *                                        filter is skipped (used for retry-all-omitted).
      * @return Collection
      */
-    public function addContactOmittedFilter(): self
+    public function addContactOmittedFilter(bool $applyCustomerGroupFilter = true): self
     {
         $this->getSelect()->where('ac_contact.activecampaign_id IS NULL');
-        $this->addAllowedCustomerGroupsFilter();
+        if ($applyCustomerGroupFilter) {
+            $this->addAllowedCustomerGroupsFilter();
+        }
         return $this;
     }
 
     /**
+     * @param bool $applyCustomerGroupFilter When false the allowed-customer-group window
+     *                                        filter is skipped (used for retry-all-omitted).
      * @return Collection
      */
-    public function addCustomerOmittedFilter(): self
+    public function addCustomerOmittedFilter(bool $applyCustomerGroupFilter = true): self
     {
         $this->getSelect()->where('ac_customer.activecampaign_id IS NULL');
-        $this->addAllowedCustomerGroupsFilter();
+        if ($applyCustomerGroupFilter) {
+            $this->addAllowedCustomerGroupsFilter();
+        }
+        return $this;
+    }
+
+    /**
+     * Exclude dead-lettered contact rows while keeping null, pending and synced rows.
+     *
+     * @return Collection
+     */
+    public function addContactNotDeadLetteredFilter(): self
+    {
+        $this->getSelect()->where(
+            'ac_contact.export_status != ? OR ac_contact.export_status IS NULL',
+            FailureTrackableInterface::EXPORT_STATUS_FAILED
+        );
+        return $this;
+    }
+
+    /**
+     * Exclude dead-lettered customer rows while keeping null, pending and synced rows.
+     *
+     * @return Collection
+     */
+    public function addCustomerNotDeadLetteredFilter(): self
+    {
+        $this->getSelect()->where(
+            'ac_customer.export_status != ? OR ac_customer.export_status IS NULL',
+            FailureTrackableInterface::EXPORT_STATUS_FAILED
+        );
         return $this;
     }
 
@@ -116,6 +153,18 @@ class Collection extends ExtendCustomerCollection
         );
 
         return $this;
+    }
+
+    /**
+     * Public entry point for the allowed-customer-group window filter, mirroring the scope
+     * bound the omitted crons apply. Used by the CLI --all path (which has no omitted filter
+     * to piggy-back the group filter on).
+     *
+     * @return Collection
+     */
+    public function addAllowedCustomerGroupFilter(): self
+    {
+        return $this->addAllowedCustomerGroupsFilter();
     }
 
     private function addAllowedCustomerGroupsFilter(): self

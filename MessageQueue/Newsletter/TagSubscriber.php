@@ -49,10 +49,24 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
             try {
                 $apiResponse = $this->client->getContactApi()->tagContact(['contactTag' => $request]);
             } catch (UnprocessableEntityHttpException $e) {
-                $this->logUnprocessableEntityHttpException($e, $request);
+                $this->logFailure(
+                    'contact',
+                    $this->castId($contact->getId()),
+                    null,
+                    $e->getCode() ?: 422,
+                    'unknown',
+                    $e->getMessage()
+                );
                 return;
             } catch (HttpException $e) {
-                $this->logException($e);
+                $this->logFailure(
+                    'contact',
+                    $this->castId($contact->getId()),
+                    null,
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
                 return;
             }
         }
@@ -61,10 +75,15 @@ class TagSubscriber extends AbstractConsumer implements ConsumerInterface
     /**
      * @inheritDoc
      */
-    function processDuplicateEntity(array $request, string $key): void
+    function processDuplicateEntity(array $request, string $key): array
     {
+        return [];
     }
 
+    /**
+     * @param array<int, int|string> $tagIds
+     * @return array<int, array<string, mixed>>
+     */
     private function buildRequests(ContactInterface $contact, array $tagIds): array
     {
         $requestBuilder = $this->requestBuilder;

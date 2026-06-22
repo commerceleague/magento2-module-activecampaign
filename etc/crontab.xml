@@ -17,5 +17,11 @@
 		<job name="activecampaign_publish_omitted_guest_customers" instance="CommerceLeague\ActiveCampaign\Cron\PublishOmittedGuestCustomers" method="run">
 			<schedule>*/10 * * * *</schedule>
 		</job>
+
+		<!-- Config-gated (activecampaign/export/relink_cron_enabled, default off): the only path that
+		     keeps GUEST tombstones reconciled. Weekly; idempotent and safe to run repeatedly. -->
+		<job name="activecampaign_relink_tombstones" instance="CommerceLeague\ActiveCampaign\Cron\RelinkTombstones" method="run">
+			<schedule>0 3 * * 0</schedule>
+		</job>
 	</group>
 </config>

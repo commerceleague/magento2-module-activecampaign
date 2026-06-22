@@ -13,6 +13,7 @@ use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote\Collection as QuoteCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 
 class ExportOmittedAbandonedCartsTest extends AbstractTestCase
 {
@@ -38,17 +39,23 @@ class ExportOmittedAbandonedCartsTest extends AbstractTestCase
     protected $publisher;
 
     /**
+     * @var MockObject|LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * @var PublishOmittedAbandonedCarts
      */
     protected $exportOmittedAbandonedCarts;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->quoteCollectionFactory = $this->getMockBuilder(QuoteCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->quoteCollection = $this->createMock(QuoteCollection::class);
@@ -62,7 +69,8 @@ class ExportOmittedAbandonedCartsTest extends AbstractTestCase
         $this->exportOmittedAbandonedCarts = new PublishOmittedAbandonedCarts(
             $this->configHelper,
             $this->quoteCollectionFactory,
-            $this->publisher
+            $this->publisher,
+            $this->logger
         );
     }
 
@@ -106,6 +114,13 @@ class ExportOmittedAbandonedCartsTest extends AbstractTestCase
             ->method('isAbandonedCartExportEnabled')
             ->willReturn(true);
 
+        $this->configHelper->expects($this->exactly(2))
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(false);
+
+        $this->logger->expects($this->never())
+            ->method('warning');
+
         $this->quoteCollection->expects($this->once())
             ->method('addAbandonedFilter')
             ->willReturnSelf();
@@ -115,25 +130,66 @@ class ExportOmittedAbandonedCartsTest extends AbstractTestCase
             ->willReturnSelf();
 
         $this->quoteCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->quoteCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn($quoteIds);
+
+        $expectedPublishArguments = [
+            [Topics::QUOTE_ABANDONED_CART_EXPORT, json_encode(['quote_id' => $quoteIds[0]])],
+            [Topics::QUOTE_ABANDONED_CART_EXPORT, json_encode(['quote_id' => $quoteIds[1]])],
+        ];
+        $actualPublishArguments = [];
+        $this->publisher->expects($this->exactly(2))
+            ->method('publish')
+            ->willReturnCallback(function (...$args) use (&$actualPublishArguments) {
+                $actualPublishArguments[] = $args;
+            });
+
+        $this->exportOmittedAbandonedCarts->run();
+
+        $this->assertSame($expectedPublishArguments, $actualPublishArguments);
+    }
+
+    public function testRunWithRetryAllOmittedSkipsWindowFilters()
+    {
+        $quoteIds = [123, 456];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isAbandonedCartExportEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->exactly(2))
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(true);
+
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('retry_all_omitted is ON'));
+
+        $this->quoteCollection->expects($this->never())
+            ->method('addAbandonedFilter');
+
+        $this->quoteCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->quoteCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->quoteCollection->expects($this->once())
             ->method('getAllIds')
             ->willReturn($quoteIds);
 
         $this->publisher->expects($this->exactly(2))
             ->method('publish');
-
-        $this->publisher->expects($this->at(0))
-            ->method('publish')
-            ->with(
-                Topics::QUOTE_ABANDONED_CART_EXPORT,
-                json_encode(['quote_id' => $quoteIds[0]])
-            );
-
-        $this->publisher->expects($this->at(1))
-            ->method('publish')
-            ->with(
-                Topics::QUOTE_ABANDONED_CART_EXPORT,
-                json_encode(['quote_id' => $quoteIds[1]])
-            );
 
         $this->exportOmittedAbandonedCarts->run();
     }

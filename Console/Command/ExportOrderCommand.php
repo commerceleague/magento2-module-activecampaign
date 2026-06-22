@@ -23,10 +23,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ExportOrderCommand extends AbstractExportCommand
 {
 
-    private const NAME           = 'activecampaign:export:order';
-    private const ORDER_ID       = 'order-id';
-    private const OPTION_OMITTED = 'omitted';
-    private const OPTION_ALL     = 'all';
+    private const NAME                  = 'activecampaign:export:order';
+    private const ORDER_ID              = 'order-id';
+    private const OPTION_OMITTED        = 'omitted';
+    private const OPTION_ALL            = 'all';
+    private const OPTION_IGNORE_DATE_FILTER = 'ignore-date-filter';
 
     /**
      * @param ProgressBarFactory     $progressBarFactory
@@ -40,6 +41,9 @@ class ExportOrderCommand extends AbstractExportCommand
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getOrderIds(InputInterface $input): array
     {
         /** @var OrderCollection $orderCollection */
@@ -48,13 +52,18 @@ class ExportOrderCommand extends AbstractExportCommand
 
         if (($orderId = $input->getOption(self::ORDER_ID))) {
             $orderCollection->addIdFilter((int)$orderId);
+
+            return $orderCollection->getAllIds();
         }
 
         if ($input->getOption(self::OPTION_OMITTED)) {
             $orderCollection->addOmittedFilter();
         }
-        $orderCollection->addExportFilterOrderStatus();
-        $orderCollection->addExportFilterStartDate();
+
+        if (!$input->getOption(self::OPTION_IGNORE_DATE_FILTER)) {
+            $orderCollection->addExportFilterOrderStatus();
+            $orderCollection->addExportFilterStartDate();
+        }
 
         return $orderCollection->getAllIds();
     }
@@ -62,7 +71,7 @@ class ExportOrderCommand extends AbstractExportCommand
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Export orders')
@@ -83,13 +92,20 @@ class ExportOrderCommand extends AbstractExportCommand
                 null,
                 InputOption::VALUE_NONE,
                 'Export all orders'
+            )
+            ->addOption(
+                self::OPTION_IGNORE_DATE_FILTER,
+                null,
+                InputOption::VALUE_NONE,
+                'Bypass the default cron scope filter (date/status/customer-group) '
+                . 'and export pre-cutoff historical records too'
             );
     }
 
     /**
      * @inheritDoc
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isOrderExportEnabled()) {
             throw new RuntimeException('Export disabled by system configuration');
@@ -123,6 +139,16 @@ class ExportOrderCommand extends AbstractExportCommand
         if ($orderIdsCount === 0) {
             $output->writeln('<error>No order(s) found matching your criteria</error>');
             return Cli::RETURN_FAILURE;
+        }
+
+        if ($input->getOption(self::ORDER_ID) === null
+            && $input->getOption(self::OPTION_IGNORE_DATE_FILTER)
+        ) {
+            $output->writeln(sprintf(
+                '<comment>Warning: --ignore-date-filter set — exporting %s record(s) without the '
+                . 'cron scope bound (includes pre-cutoff historical data).</comment>',
+                $orderIdsCount
+            ));
         }
 
         $progressBar = $this->createProgressBar(
