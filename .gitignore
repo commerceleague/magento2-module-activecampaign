@@ -11,3 +11,5 @@ compose.yaml
 .phpunit.cache/
 .DS_Store
 .var/
+docs/
+RELEASE-READINESS.md
