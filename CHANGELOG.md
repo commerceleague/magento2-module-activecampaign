@@ -5,6 +5,20 @@ All notable changes to this module are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-06-22
+
+### Fixed
+- **Tombstone relink/self-heal no longer silently no-ops against live ActiveCampaign.**
+  `TombstoneRelinker` read `$record['email']` from the single-resource
+  `getCustomerApi()->get()`, but the API client returns the wrapped shape
+  `{"ecomCustomer": {…}}`, so the email was always null and every record was
+  mis-classified as "not a tombstone" — the `activecampaign:relink:tombstones`
+  command and the config-gated export self-heal skipped everything and wrote
+  nothing. Now reads `$record['ecomCustomer']['email']`. (The unit test had
+  mocked the unwrapped shape, mirroring the bug; its fixtures now use the real
+  wrapped response so it reproduces and guards the fix.) 2.0.0's core data-loss
+  fixes were unaffected.
+
 ## [2.0.0] - 2026-06-20
 
 First stable release of the 2.x line: a hardening release that stops the
