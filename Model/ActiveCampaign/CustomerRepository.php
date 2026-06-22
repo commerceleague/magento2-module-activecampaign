@@ -7,6 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data;
+use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\CustomerFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Customer as CustomerResource;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -19,24 +20,17 @@ use Magento\Framework\Model\AbstractModel;
 class CustomerRepository implements CustomerRepositoryInterface
 {
     /**
-     * @var CustomerResource
-     */
-    private $customerResource;
-
-    /**
      * @var CustomerFactory
      */
     private $customerFactory;
 
     /**
-     * @param CustomerResource $customerResource
      * @param CustomerFactory $customerFactory
      */
     public function __construct(
-        CustomerResource $customerResource,
+        private readonly CustomerResource $customerResource,
         CustomerFactory $customerFactory
     ) {
-        $this->customerResource = $customerResource;
         $this->customerFactory = $customerFactory;
     }
 

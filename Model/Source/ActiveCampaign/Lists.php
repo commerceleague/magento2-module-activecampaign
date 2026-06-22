@@ -8,6 +8,9 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Model\Source\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Gateway\Client;
+use CommerceLeague\ActiveCampaignApi\Exception\NotFoundHttpException;
+use CommerceLeague\ActiveCampaignApi\Exception\UnauthorizedHttpException;
+use Magento\Framework\Exception\InvalidArgumentException;
 use Magento\Framework\Option\ArrayInterface;
 
 /**
@@ -17,16 +20,11 @@ use Magento\Framework\Option\ArrayInterface;
 class Lists implements ArrayInterface
 {
 
-    private $options = [];
+    private array $options = [];
 
-    /**
-     * @var CommonClient
-     */
-    private $client;
-
-    public function __construct(Client $client)
+    public function __construct(private readonly Client $client)
     {
-        $this->client = $client;
+
     }
 
     /**
@@ -36,17 +34,21 @@ class Lists implements ArrayInterface
      */
     public function toOptionArray()
     {
-
         if (count($this->options) == 0) {
             $options = [];
-            $page    = $this->client->getListsApi()->listPerPage(100);
-            $lists   = $page->getItems();
-            foreach ($lists as $list) {
-                $options[] = [
-                    'value' => $list['id'],
-                    'label' => $list['name']
-                ];
+            try {
+                $page  = $this->client->getListsApi()->listPerPage(100);
+                $lists = $page->getItems();
+                foreach ($lists as $list) {
+                    $options[] = [
+                        'value' => $list['id'],
+                        'label' => $list['name']
+                    ];
+                }
+            } catch (UnauthorizedHttpException|NotFoundHttpException|InvalidArgumentException) {
+                // fail silently for the moment
             }
+
             $this->options = $options;
         }
         return $this->options;

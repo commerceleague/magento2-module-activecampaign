@@ -5,15 +5,16 @@
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Contact;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact as ContactResource;
 use Magento\Framework\Model\Context;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
 
-class ContactTest extends TestCase
+class ContactTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|Context
      */
@@ -29,7 +30,7 @@ class ContactTest extends TestCase
      */
     protected $contact;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->context = $this->createMock(Context::class);
         $this->resource = $this->createMock(ContactResource::class);
@@ -83,6 +84,76 @@ class ContactTest extends TestCase
         $activeCampaignId = 123;
         $this->contact->setActiveCampaignId($activeCampaignId);
         $this->assertEquals($activeCampaignId, $this->contact->getData(ContactInterface::ACTIVE_CAMPAIGN_ID));
+    }
+
+    public function testGetExportAttempts()
+    {
+        $exportAttempts = 3;
+        $this->contact->setData(ContactInterface::EXPORT_ATTEMPTS, $exportAttempts);
+        $this->assertSame($exportAttempts, $this->contact->getExportAttempts());
+    }
+
+    public function testSetExportAttempts()
+    {
+        $exportAttempts = 3;
+        $this->contact->setExportAttempts($exportAttempts);
+        $this->assertEquals($exportAttempts, $this->contact->getData(ContactInterface::EXPORT_ATTEMPTS));
+    }
+
+    public function testGetLastErrorCode()
+    {
+        $lastErrorCode = 'HTTP_500';
+        $this->contact->setData(ContactInterface::LAST_ERROR_CODE, $lastErrorCode);
+        $this->assertEquals($lastErrorCode, $this->contact->getLastErrorCode());
+    }
+
+    public function testSetLastErrorCode()
+    {
+        $lastErrorCode = 'HTTP_500';
+        $this->contact->setLastErrorCode($lastErrorCode);
+        $this->assertEquals($lastErrorCode, $this->contact->getData(ContactInterface::LAST_ERROR_CODE));
+    }
+
+    public function testGetLastErrorMessage()
+    {
+        $lastErrorMessage = 'Something went wrong';
+        $this->contact->setData(ContactInterface::LAST_ERROR_MESSAGE, $lastErrorMessage);
+        $this->assertEquals($lastErrorMessage, $this->contact->getLastErrorMessage());
+    }
+
+    public function testSetLastErrorMessage()
+    {
+        $lastErrorMessage = 'Something went wrong';
+        $this->contact->setLastErrorMessage($lastErrorMessage);
+        $this->assertEquals($lastErrorMessage, $this->contact->getData(ContactInterface::LAST_ERROR_MESSAGE));
+    }
+
+    public function testGetLastAttemptedAt()
+    {
+        $lastAttemptedAt = '2019-01-01 00:00:00';
+        $this->contact->setData(ContactInterface::LAST_ATTEMPTED_AT, $lastAttemptedAt);
+        $this->assertEquals($lastAttemptedAt, $this->contact->getLastAttemptedAt());
+    }
+
+    public function testSetLastAttemptedAt()
+    {
+        $lastAttemptedAt = '2019-01-01 00:00:00';
+        $this->contact->setLastAttemptedAt($lastAttemptedAt);
+        $this->assertEquals($lastAttemptedAt, $this->contact->getData(ContactInterface::LAST_ATTEMPTED_AT));
+    }
+
+    public function testGetExportStatus()
+    {
+        $exportStatus = ContactInterface::EXPORT_STATUS_FAILED;
+        $this->contact->setData(ContactInterface::EXPORT_STATUS, $exportStatus);
+        $this->assertSame($exportStatus, $this->contact->getExportStatus());
+    }
+
+    public function testSetExportStatus()
+    {
+        $exportStatus = ContactInterface::EXPORT_STATUS_SYNCED;
+        $this->contact->setExportStatus($exportStatus);
+        $this->assertEquals($exportStatus, $this->contact->getData(ContactInterface::EXPORT_STATUS));
     }
 
     public function testGetCreatedAt()

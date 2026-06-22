@@ -8,19 +8,20 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Console\Command;
 use CommerceLeague\ActiveCampaign\Console\Command\ExportOrderCommand;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Tester\CommandTester;
 
-class ExportOrderCommandTest extends TestCase
+class ExportOrderCommandTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -56,13 +57,13 @@ class ExportOrderCommandTest extends TestCase
      */
     protected $exportOrderCommandTester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->orderCollectionFactory = $this->getMockBuilder(OrderCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->orderCollection = $this->createMock(OrderCollection::class);
@@ -73,7 +74,7 @@ class ExportOrderCommandTest extends TestCase
 
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->publisher = $this->createMock(PublisherInterface::class);
@@ -186,7 +187,7 @@ class ExportOrderCommandTest extends TestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             'No order(s) found matching your criteria',
             $this->exportOrderCommandTester->getDisplay()
         );
@@ -208,10 +209,6 @@ class ExportOrderCommandTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isOrderExportEnabled')
             ->willReturn(true);
-
-        $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
-            ->willReturnSelf();
 
         $this->orderCollection->expects($this->once())
             ->method('addIdFilter')
@@ -242,7 +239,7 @@ class ExportOrderCommandTest extends TestCase
             ['--order-id' => $orderId]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );
@@ -261,10 +258,6 @@ class ExportOrderCommandTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isOrderExportEnabled')
             ->willReturn(true);
-
-        $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
-            ->willReturnSelf();
 
         $this->orderCollection->expects($this->never())
             ->method('addIdFilter');
@@ -290,11 +283,87 @@ class ExportOrderCommandTest extends TestCase
             ['--omitted' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '2 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );
 
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
+    }
+
+    public function testOmittedAppliesScopeBoundByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
+        $this->orderCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterOrderStatus')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterStartDate')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportOrderCommandTester->execute(['--omitted' => true]);
+
+        $this->assertStringNotContainsString(
+            'ignore-date-filter set',
+            $this->exportOrderCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
+    }
+
+    public function testIgnoreDateFilterSkipsScopeBoundAndWarns()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterOrderStatus');
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterStartDate');
+
+        $this->orderCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123, 456]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportOrderCommandTester->execute(
+            ['--all' => true, '--ignore-date-filter' => true]
+        );
+
+        $this->assertStringContainsString(
+            'Warning: --ignore-date-filter set — exporting 2 record(s)',
+            $this->exportOrderCommandTester->getDisplay()
+        );
         $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportOrderCommandTester->getStatusCode());
     }
 
@@ -310,9 +379,6 @@ class ExportOrderCommandTest extends TestCase
             ->method('isOrderExportEnabled')
             ->willReturn(true);
 
-        $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
-            ->willReturnSelf();
 
         $this->orderCollection->expects($this->never())
             ->method('addIdFilter');
@@ -337,7 +403,7 @@ class ExportOrderCommandTest extends TestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '3 order(s) have been scheduled for export.',
             $this->exportOrderCommandTester->getDisplay()
         );

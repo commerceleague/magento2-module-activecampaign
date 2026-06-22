@@ -9,7 +9,9 @@ use CommerceLeague\ActiveCampaign\Controller\AbstractWebhook;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\RawFactory as RawResultFactory;
+use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Newsletter\Model\Subscriber;
@@ -25,33 +27,21 @@ class Unsubscribe extends AbstractWebhook
     private $subscriberFactory;
 
     /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @param Context $context
-     * @param ConfigHelper $configHelper
-     * @param RawResultFactory $rawResultFactory
      * @param SubscriberFactory $subscriberFactory
-     * @param Logger $logger
      */
     public function __construct(
         Context $context,
         ConfigHelper $configHelper,
         RawResultFactory $rawResultFactory,
         SubscriberFactory $subscriberFactory,
-        Logger $logger
+        private readonly Logger $logger
     ) {
         parent::__construct($context, $configHelper, $rawResultFactory);
         $this->subscriberFactory = $subscriberFactory;
-        $this->logger = $logger;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function execute()
+
+    public function execute(): void
     {
         $params = $this->getRequest()->getParams();
 
@@ -66,7 +56,7 @@ class Unsubscribe extends AbstractWebhook
         $subscriber = $this->subscriberFactory->create();
         $subscriber->loadByEmail($email);
 
-        if (!$subscriber->getId()) {
+        if ($subscriber->getId() === 0) {
             $this->logger->error(__('Unable to find subscriber with email "%s"', $email));
             return;
         }

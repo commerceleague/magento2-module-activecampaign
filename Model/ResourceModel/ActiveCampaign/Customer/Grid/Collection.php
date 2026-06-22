@@ -95,9 +95,9 @@ class Collection extends ExtendCollection implements SearchResultInterface
     }
 
     /**
-     * @inheritDoc
+     * @return SearchCriteriaInterface|null
      */
-    public function getSearchCriteria()
+    public function getSearchCriteria(): ?SearchCriteriaInterface
     {
         return null;
     }

@@ -18,42 +18,22 @@ use Symfony\Component\Console\Output\OutputInterface;
 abstract class AbstractExportCommand extends Command
 {
     /**
-     * @var ConfigHelper
-     */
-    protected $configHelper;
-
-    /**
      * @var ProgressBarFactory
      */
     private $progressBarFactory;
 
     /**
-     * @var PublisherInterface
-     */
-    protected $publisher;
-
-    /**
-     * @param ConfigHelper $configHelper
      * @param ProgressBarFactory $progressBarFactory
-     * @param PublisherInterface $publisher
      */
     public function __construct(
-        ConfigHelper $configHelper,
+        protected ConfigHelper $configHelper,
         ProgressBarFactory $progressBarFactory,
-        PublisherInterface $publisher
+        protected \Magento\Framework\MessageQueue\PublisherInterface $publisher
     ) {
-        $this->configHelper = $configHelper;
         $this->progressBarFactory = $progressBarFactory;
-        $this->publisher = $publisher;
         parent::__construct();
     }
 
-    /**
-     * @param OutputInterface $output
-     * @param string $message
-     * @param int $max
-     * @return ProgressBar
-     */
     protected function createProgressBar(OutputInterface $output, int $max, string $message): ProgressBar
     {
         /** @var ProgressBar $progressBar */

@@ -5,18 +5,19 @@
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
+use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\ContactFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Contact;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\ContactRepository;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact as ContactResource;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact as ContactResource;
-use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\ContactFactory;
 
-class ContactRepositoryTest extends TestCase
+class ContactRepositoryTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ContactResource
      */
@@ -37,7 +38,7 @@ class ContactRepositoryTest extends TestCase
      */
     protected $contactRepository;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->contactResource = $this->getMockBuilder(ContactResource::class)
             ->disableOriginalConstructor()
@@ -45,7 +46,7 @@ class ContactRepositoryTest extends TestCase
 
         $this->contactFactory = $this->getMockBuilder(ContactFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->contact = $this->getMockBuilder(Contact::class)

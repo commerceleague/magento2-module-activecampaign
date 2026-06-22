@@ -27,113 +27,149 @@ class Config extends AbstractHelper
     private const XML_PATH_EXPORT_ORDER_ENABLED          = 'activecampaign/export/order_enabled';
     private const XML_PATH_EXPORT_ABANDONED_CART_ENABLED = 'activecampaign/export/abandoned_cart_enabled';
 
+    private const XML_PATH_EXPORT_MAX_ATTEMPTS        = 'activecampaign/export/max_attempts';
+    private const XML_PATH_EXPORT_DEAD_LETTER_ENABLED = 'activecampaign/export/dead_letter_enabled';
+    private const XML_PATH_EXPORT_BACKOFF_ENABLED     = 'activecampaign/export/backoff_enabled';
+    private const XML_PATH_EXPORT_BACKOFF_THRESHOLD   = 'activecampaign/export/backoff_threshold';
+    private const XML_PATH_EXPORT_RETRY_ALL_OMITTED   = 'activecampaign/export/retry_all_omitted';
+    private const XML_PATH_EXPORT_TOMBSTONE_SELFHEAL  = 'activecampaign/export/tombstone_selfheal_enabled';
+    private const XML_PATH_EXPORT_RELINK_CRON_ENABLED = 'activecampaign/export/relink_cron_enabled';
+
+    private const DEFAULT_BACKOFF_THRESHOLD = 5;
+
+    private const XML_PATH_EXPORT_ORDER_STATUSES   = 'activecampaign/order_export/filter_order_statuses';
+    private const XML_PATH_EXPORT_ORDER_START_DATE = 'activecampaign/order_export/filter_date_from';
+
     private const XML_PATH_WEBHOOK_ENABLED = 'activecampaign/webhook/enabled';
     private const XML_PATH_WEBHOOK_TOKEN   = 'activecampaign/webhook/token';
 
-    private const XML_PATH_CUSTOMER_LIST_ID = 'activecampaign/customer_export/customer_list_id';
+    private const XML_PATH_CUSTOMER_LIST_ID               = 'activecampaign/customer_export/customer_list_id';
+    private const XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST = 'activecampaign/customer_export/allowed_group_id_list';
 
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_LIST = 'activecampaign/newsletter_export/newsletter_subscribers_list';
     private const XML_PATH_NEWSLETTER_SUBSCRIBER_TAGS = 'activecampaign/newsletter_export/newsletter_subscribers_tags';
 
-    /**
-     * @var AccountConfirmation
-     */
-    private $accountConfirmation;
-
-    /**
-     * @var AccountManagementInterface
-     */
-    private $accountManagement;
 
     /**
      * Config constructor.
-     *
-     * @param Context                    $context
-     * @param AccountManagementInterface $accountManagement
      */
     public function __construct(
         Context $context,
-        AccountManagementInterface $accountManagement
+        private readonly AccountManagementInterface $accountManagement
     ) {
         parent::__construct($context);
-        $this->accountManagement = $accountManagement;
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_GENERAL_ENABLED);
     }
 
-    /**
-     * @return string|null
-     */
     public function getApiUrl(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_GENERAL_API_URL);
     }
 
-    /**
-     * @return string|null
-     */
     public function getApiToken(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_GENERAL_API_TOKEN);
     }
 
-    /**
-     * @return string|null
-     */
     public function getConnectionId(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_GENERAL_CONNECTION_ID);
     }
 
-    /**
-     * @return bool
-     */
     public function isContactExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_CONTACT_ENABLED);
     }
 
-    /**
-     * @return bool
-     */
     public function isCustomerExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_CUSTOMER_ENABLED);
     }
 
-    /**
-     * @return bool
-     */
     public function isOrderExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_ORDER_ENABLED);
     }
 
-    /**
-     * @return bool
-     */
     public function isAbandonedCartExportEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_ABANDONED_CART_ENABLED);
     }
 
     /**
-     * @return bool
+     * Maximum export attempts before giving up (0 = unlimited, today's behavior)
      */
+    public function getMaxExportAttempts(): int
+    {
+        return (int)$this->scopeConfig->getValue(self::XML_PATH_EXPORT_MAX_ATTEMPTS);
+    }
+
+    /**
+     * Whether exhausted messages should be dead-lettered instead of retried forever
+     */
+    public function isDeadLetterEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_DEAD_LETTER_ENABLED);
+    }
+
+    /**
+     * Whether a cron run should early-exit after repeated 503 responses
+     */
+    public function isBackoffEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_BACKOFF_ENABLED);
+    }
+
+    /**
+     * Number of consecutive 503s before a cron run early-exits (defaults to 5)
+     */
+    public function getBackoffThreshold(): int
+    {
+        $threshold = (int)$this->scopeConfig->getValue(self::XML_PATH_EXPORT_BACKOFF_THRESHOLD);
+        if ($threshold < 1) {
+            return self::DEFAULT_BACKOFF_THRESHOLD;
+        }
+        return $threshold;
+    }
+
+    /**
+     * Whether the omitted crons should ignore the date/status/customer-group window
+     * filters and retry ALL non-dead-lettered rows (defaults to false / today's behavior)
+     */
+    public function isRetryAllOmittedEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_RETRY_ALL_OMITTED);
+    }
+
+    /**
+     * Whether the export path should self-heal tombstoned ecomCustomers by issuing a
+     * GET (then an id-preserving relink) before each update (defaults to false)
+     */
+    public function isTombstoneSelfHealEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_TOMBSTONE_SELFHEAL);
+    }
+
+    /**
+     * Whether a scheduled cron should run the bulk tombstone relink weekly
+     * (activecampaign:relink:tombstones --commit). Defaults to false. Run the
+     * bulk relink once manually first, then enable this together with
+     * tombstone_selfheal_enabled.
+     */
+    public function isRelinkCronEnabled(): bool
+    {
+        return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_EXPORT_RELINK_CRON_ENABLED);
+    }
+
     public function isWebhookEnabled(): bool
     {
         return (bool)$this->scopeConfig->isSetFlag(self::XML_PATH_WEBHOOK_ENABLED);
     }
 
-    /**
-     * @return string|null
-     */
     public function getWebhookToken(): ?string
     {
         return $this->scopeConfig->getValue(self::XML_PATH_WEBHOOK_TOKEN);
@@ -141,8 +177,6 @@ class Config extends AbstractHelper
 
     /**
      * Get the list id for registered customers, if set
-     *
-     * @return int|null
      */
     public function getCustomerListId(): ?int
     {
@@ -155,8 +189,6 @@ class Config extends AbstractHelper
 
     /**
      * Get the list id for newsletter subscribers
-     *
-     * @return int|null
      */
     public function getNewsletterSubscriberList(): ?int
     {
@@ -170,7 +202,7 @@ class Config extends AbstractHelper
     /**
      * Get the tags selected to be added to the Newsletter subscriber
      *
-     * @return array|null
+     * @return array<int, string>|null
      */
     public function getNewsletterSubscriberTags(): ?array
     {
@@ -179,15 +211,13 @@ class Config extends AbstractHelper
             return $tags;
         }
 
-        return explode(',', $tags);
+        return explode(',', (string) $tags);
     }
 
     /**
      * Is customer confirmation required
      *
-     * @param int $customerId
      *
-     * @return bool
      * @throws LocalizedException
      */
     public function isConfirmationRequired(int $customerId): bool
@@ -197,9 +227,49 @@ class Config extends AbstractHelper
             AccountManagementInterface::ACCOUNT_CONFIRMATION_NOT_REQUIRED,
             AccountManagementInterface::ACCOUNT_CONFIRMED
         ];
-        if (in_array($status, $noConfirmationRequired)) {
-            return false;
+        return !in_array($status, $noConfirmationRequired);
+    }
+
+    /**
+     * Get the set order status filters
+     *
+     * @return array<int, string>|null
+     */
+    public function getOrderExportStatuses(): ?array
+    {
+        $orderStatuses = $this->scopeConfig->getValue(self::XML_PATH_EXPORT_ORDER_STATUSES);
+        if (null !== $orderStatuses) {
+            return explode(',', (string) $orderStatuses);
         }
-        return true;
+        return null;
+    }
+
+    /**
+     * Get the set order export start date filter
+     */
+    public function getOrderExportStartDate(): ?string
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_EXPORT_ORDER_START_DATE);
+    }
+
+    /**
+     * Get the allowed customer group ids
+     *
+     * @return array<int, string>
+     */
+    public function getAllowedCustomerGroupIds(): array
+    {
+        $list = $this->scopeConfig->getValue(self::XML_PATH_CUSTOMER_ALLOWED_GROUP_ID_LIST);
+        if ($list) {
+            return explode(',', (string) $list);
+        }
+        return [];
+    }
+
+    public function isConnectionSet(): bool
+    {
+        $token  = $this->getApiToken();
+        $apiUrl = $this->getApiUrl();
+        return $token !== null && $apiUrl !== null;
     }
 }

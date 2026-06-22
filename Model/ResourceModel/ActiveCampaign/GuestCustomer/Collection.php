@@ -5,9 +5,17 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer;
 
+use CommerceLeague\ActiveCampaign\Api\Data\FailureTrackableInterface;
+use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomer;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer as CustomerResource;
+use Magento\Framework\Data\Collection\Db\FetchStrategyInterface;
+use Magento\Framework\Data\Collection\EntityFactoryInterface;
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\Event\ManagerInterface;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Collection
@@ -16,6 +24,17 @@ use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
  */
 class Collection extends AbstractCollection
 {
+
+    public function __construct(
+        EntityFactoryInterface $entityFactory, LoggerInterface $logger,
+        FetchStrategyInterface $fetchStrategy,
+        ManagerInterface $eventManager,
+        private readonly Config $configHelper,
+        AdapterInterface $connection = null,
+        AbstractDb $resource = null
+    ) {
+        parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
+    }
 
     /**
      * @return Collection
@@ -27,10 +46,88 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * Filter by the guest mapping entity id, explicitly qualified.
+     *
+     * _initSelect() LEFT JOINs sales_order (which also exposes entity_id), so an
+     * unqualified entity_id in the WHERE is ambiguous (SQLSTATE[23000]).
+     */
+    public function addEntityIdFilter(int $entityId): self
+    {
+        $this->getSelect()->where('main_table.entity_id = ?', $entityId);
+        return $this;
+    }
+
+    /**
+     * Filter by the guest mapping email, explicitly qualified.
+     *
+     * sales_order is LEFT JOINed exposing customer_email; qualifying as
+     * main_table.email keeps the filter unambiguous and on the AC table column.
+     */
+    public function addEmailFilter(string $email): self
+    {
+        $this->getSelect()->where('main_table.email = ?', $email);
+        return $this;
+    }
+
+    /**
+     * Exclude dead-lettered rows while keeping pending and synced rows.
+     *
+     * The guest customer AC table is the main_table here, so export_status is never null.
+     *
+     * @return Collection
+     */
+    public function addNotDeadLetteredFilter(): self
+    {
+        $this->getSelect()->where(
+            'main_table.export_status != ? OR main_table.export_status IS NULL',
+            FailureTrackableInterface::EXPORT_STATUS_FAILED
+        );
+        return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function addExportFilterOrderStatus(): self
+    {
+        $orderStatuses = $this->configHelper->getOrderExportStatuses();
+        if ($orderStatuses) {
+            $this->getSelect()->where('sales_order.status IN (?)', $orderStatuses);
+        }
+        return $this;
+    }
+
+    public function addExportFilterStartDate()
+    {
+        $startDateFilter = $this->configHelper->getOrderExportStartDate();
+        if ($startDateFilter) {
+            $this->getSelect()->where('sales_order.created_at > ?', $startDateFilter);
+        }
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     protected function _construct()
     {
         $this->_init(GuestCustomer::class, CustomerResource::class);
+    }
+
+    protected function _initSelect(): Collection
+    {
+        parent::_initSelect();
+
+        $this->getSelect()->joinLeft(
+            ['sales_order' => $this->_resource->getTable('sales_order')],
+            'sales_order.customer_email = main_table.email AND sales_order.customer_is_guest = 1',
+            [
+                'sales_order.customer_is_guest',
+                'sales_order.customer_email',
+                'count(sales_order.entity_id) as order_count']
+        );
+        $this->getSelect()->group('main_table.email');
+
+        return $this;
     }
 }

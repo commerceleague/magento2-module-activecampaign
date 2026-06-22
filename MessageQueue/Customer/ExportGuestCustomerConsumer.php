@@ -9,9 +9,14 @@ use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Api\GuestCustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
+use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
+use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
+use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneRelinker;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -22,83 +27,188 @@ use Magento\Framework\Exception\CouldNotSaveException;
 class ExportGuestCustomerConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
-    /**
-     * @var GuestCustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
-     * @var CustomerRequestBuilder
-     */
-    private $customerRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
-     * @param Logger                           $logger
-     * @param GuestCustomerRepositoryInterface $customerRepository
-     * @param CustomerRequestBuilder           $customerRequestBuilder
-     * @param Client                           $client
-     */
     public function __construct(
         Logger $logger,
-        GuestCustomerRepositoryInterface $customerRepository,
-        CustomerRequestBuilder $customerRequestBuilder,
-        Client $client
+        private readonly GuestCustomerRepositoryInterface $customerRepository,
+        private readonly CustomerRequestBuilder $customerRequestBuilder,
+        private readonly Client $client,
+        private readonly FailureRecorder $failureRecorder,
+        private readonly BackoffState $backoffState,
+        private readonly Config $config,
+        private readonly TombstoneRelinker $tombstoneRelinker
     ) {
         parent::__construct($logger);
-        $this->customerRepository     = $customerRepository;
-        $this->customerRequestBuilder = $customerRequestBuilder;
-        $this->client                 = $client;
     }
 
     /**
-     * @param string $message
-     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
 
-        $customerData = $message['customer_data'];
+        if ($this->backoffState->shouldHalt()) {
+            $this->getLogger()->warning('ActiveCampaign export backing off after repeated 503s; skipping');
+            return;
+        }
 
-        /** @var GuestCustomerInterface $guestCustomer */
-        $guestCustomer = $this->customerRepository->getOrCreate($customerData);
-        $request       = $this->customerRequestBuilder->buildWithGuest($guestCustomer);
+        try {
+            $customerData = $message['customer_data'];
 
-        if (!$guestCustomer->getActiveCampaignId()) {
-            try {
-                $apiResponse = $this->performApiRequest($guestCustomer, $request);
-            } catch (UnprocessableEntityHttpException $e) {
-                $this->logUnprocessableEntityHttpException($e, $request);
-                return;
-            } catch (HttpException $e) {
-                $this->logException($e);
-                return;
+            $guestCustomer = $this->customerRepository->getOrCreate($customerData);
+            $request       = $this->customerRequestBuilder->buildWithGuest($guestCustomer);
+
+            if (!$guestCustomer->getActiveCampaignId()) {
+                try {
+                    $apiResponse = $this->performApiRequest($guestCustomer, $request);
+
+                    $activeCampaignId = $this->extractActiveCampaignId(
+                        $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
+                    );
+                    if ($activeCampaignId === null) {
+                        $this->logFailure(
+                            'guest_customer',
+                            $this->castId($guestCustomer->getId()),
+                            null,
+                            null,
+                            'empty_response',
+                            sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CUSTOMER)
+                        );
+                        $this->failureRecorder->recordFailure($guestCustomer, 'empty_response', null);
+                        $this->customerRepository->save($guestCustomer);
+                        return;
+                    }
+
+                    $guestCustomer->setActiveCampaignId($activeCampaignId);
+                    $this->backoffState->reset();
+                    $this->failureRecorder->recordSuccess($guestCustomer);
+                    $this->customerRepository->save($guestCustomer);
+                } catch (UnprocessableEntityHttpException $e) {
+                    try {
+                        $outcome = $this->handleUnprocessableEntityHttpException(
+                            $e,
+                            $request,
+                            self::RESPONSE_KEY_CUSTOMER
+                        );
+                    } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                        $this->logFailure(
+                            'guest_customer',
+                            $this->castId($guestCustomer->getId()),
+                            null,
+                            $duplicateLookupException->getCode(),
+                            'http_error',
+                            $duplicateLookupException->getMessage()
+                        );
+                        return;
+                    }
+
+                    $duplicateId = $outcome->isDuplicate()
+                        ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null)
+                        : null;
+                    if ($duplicateId !== null) {
+                        $guestCustomer->setActiveCampaignId($duplicateId);
+                        $this->backoffState->reset();
+                        $this->failureRecorder->recordSuccess($guestCustomer);
+                        $this->customerRepository->save($guestCustomer);
+                        return;
+                    }
+
+                    $this->logFailure(
+                        'guest_customer',
+                        $this->castId($guestCustomer->getId()),
+                        null,
+                        $e->getCode() ?: 422,
+                        $outcome->code ?? 'unknown',
+                        $outcome->message
+                    );
+                    $this->failureRecorder->recordFailure(
+                        $guestCustomer,
+                        $outcome->code ?? 'unknown',
+                        $outcome->message
+                    );
+                    $this->customerRepository->save($guestCustomer);
+                    return;
+                } catch (HttpException $e) {
+                    if ($e->getCode() === 503) {
+                        $this->backoffState->record503();
+                    }
+                    $this->logFailure(
+                        'guest_customer',
+                        $this->castId($guestCustomer->getId()),
+                        null,
+                        $e->getCode(),
+                        'http_error',
+                        $e->getMessage()
+                    );
+                    $transient = $e->getCode() >= 500;
+                    $this->failureRecorder->recordFailure($guestCustomer, 'http_error', $e->getMessage(), $transient);
+                    $this->customerRepository->save($guestCustomer);
+                    return;
+                }
             }
-
-            $guestCustomer->setActiveCampaignId($apiResponse['ecomCustomer']['id']);
-            $this->customerRepository->save($guestCustomer);
+        } catch (\Throwable $t) {
+            $localId = isset($guestCustomer) ? $this->castId($guestCustomer->getId()) : null;
+            $this->logFailure('guest_customer', $localId, null, null, 'unexpected_error', $t->getMessage());
+            if (isset($guestCustomer)) {
+                $this->failureRecorder->recordFailure($guestCustomer, 'unexpected_error', $t->getMessage());
+                $this->customerRepository->save($guestCustomer);
+            }
+            return;
         }
     }
 
     /**
-     * @param GuestCustomerInterface $customer
-     * @param array                  $request
-     *
-     * @return array
+     * @param array<string, mixed> $request
+     * @return array<string, mixed>
      * @throws HttpException
      */
     private function performApiRequest(GuestCustomerInterface $customer, array $request): array
     {
         if ($activeCampaignId = $customer->getActiveCampaignId()) {
+            if ($this->config->isTombstoneSelfHealEnabled()) {
+                $result = $this->tombstoneRelinker->relink(
+                    (int)$activeCampaignId,
+                    (string)($request['email'] ?? ''),
+                    (string)($request['externalid'] ?? ''),
+                    true
+                );
+                if ($result === TombstoneRelinker::RESULT_NOT_FOUND) {
+                    // record truly gone — create a fresh ecomCustomer (the consumer will persist the new id)
+                    return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
+                }
+                // RELINKED (history-preserving restore done) / SKIPPED_* / NO_LIVE_CONTACT -> fall through to update
+            }
             return $this->client->getCustomerApi()->update((int)$activeCampaignId, ['ecomCustomer' => $request]);
-        } else {
-            return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
         }
+        return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key): array
+    {
+        $response = $this->client->getCustomerApi()->listPerPage(
+            1,
+            0,
+            [
+                'filters' => [
+                    'email'        => $request['email'],
+                    'connectionid' => $request['connectionid']
+                ]
+            ]
+        );
+
+        $items = $response->getItems();
+        if ($items === []) {
+            throw new DuplicateNotFoundException();
+        }
+
+        $item = $items[0];
+        if (strtolower((string)$item['email']) !== strtolower((string)$request['email'])) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $item];
     }
 }

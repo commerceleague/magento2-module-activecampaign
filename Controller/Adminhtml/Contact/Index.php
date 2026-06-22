@@ -7,29 +7,20 @@ namespace CommerceLeague\ActiveCampaign\Controller\Adminhtml\Contact;
 
 use CommerceLeague\ActiveCampaign\Controller\Adminhtml\AbstractContact;
 use Magento\Backend\App\Action;
+use Magento\Backend\Model\View\Result\Page as ResultPage;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\View\Result\PageFactory as ResultPageFactory;
-use Magento\Framework\View\Result\Page as ResultPage;
 
 /**
  * Class Index
  */
 class Index extends AbstractContact implements HttpGetActionInterface
 {
-    /**
-     * @var ResultPageFactory
-     */
-    protected $resultPageFactory;
 
-    /**
-     * @param Action\Context $context
-     * @param ResultPageFactory $resultPageFactory
-     */
     public function __construct(
-        Action\Context $context,
-        ResultPageFactory $resultPageFactory
+        Action\Context    $context,
+        protected ResultPageFactory $resultPageFactory
     ) {
-        $this->resultPageFactory = $resultPageFactory;
         parent::__construct($context);
     }
 
@@ -41,7 +32,7 @@ class Index extends AbstractContact implements HttpGetActionInterface
         /** @var ResultPage $resultPage */
         $resultPage = $this->resultPageFactory->create();
 
-        $this->initPage($resultPage)->getConfig()->getTitle()->prepend(__('ActiveCampaign Contacts'));
+        $this->initPage($resultPage)->getConfig()->getTitle()->prepend((string)__('ActiveCampaign Contacts'));
 
         return $resultPage;
     }

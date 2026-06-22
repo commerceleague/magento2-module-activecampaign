@@ -1,13 +1,12 @@
 <?php
-/**
- */
+declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Api\Data;
 
 /**
  * Interface GuestCustomerInterface
  */
-interface GuestCustomerInterface
+interface GuestCustomerInterface extends FailureTrackableInterface
 {
 
     public const ENTITY_ID          = 'entity_id';
@@ -15,90 +14,66 @@ interface GuestCustomerInterface
     public const EMAIL              = 'email';
     public const FIRSTNAME          = 'firstname';
     public const LASTNAME           = 'lastname';
+    public const EXPORT_ATTEMPTS    = 'export_attempts';
+    public const LAST_ERROR_CODE    = 'last_error_code';
+    public const LAST_ERROR_MESSAGE = 'last_error_message';
+    public const LAST_ATTEMPTED_AT  = 'last_attempted_at';
+    public const EXPORT_STATUS      = 'export_status';
     public const CREATED_AT         = 'created_at';
     public const UPDATED_AT         = 'updated_at';
 
-    /**
-     * @return int|null
-     */
-    public function getId();
+    public const EXPORT_STATUS_PENDING = 0;
+    public const EXPORT_STATUS_SYNCED  = 1;
+    public const EXPORT_STATUS_FAILED  = 2;
+
+    public function getId(): ?int;
 
     /**
-     * @param int $id
-     *
-     * @return GuestCustomerInterface
+     * @param int|mixed $value
      */
-    public function setId($id);
+    public function setId(mixed $value): GuestCustomerInterface;
 
-    /**
-     * @return int|null
-     */
-    public function getActiveCampaignId();
+    public function getActiveCampaignId(): ?int;
 
-    /**
-     * @param int $activeCampaignId
-     *
-     * @return GuestCustomerInterface
-     */
-    public function setActiveCampaignId($activeCampaignId): self;
+    public function setActiveCampaignId(int $activeCampaignId): GuestCustomerInterface;
 
-    /**
-     * @return string|null
-     */
-    public function getEmail();
+    public function getEmail(): ?string;
 
-    /**
-     * @param string $id
-     *
-     * @return GuestCustomerInterface
-     */
-    public function setEmail($email);
+    public function setEmail(string $email): GuestCustomerInterface;
 
-    /**
-     * @return string|null
-     */
-    public function getFirstname();
+    public function getFirstname(): ?string;
 
-    /**
-     * @param string $id
-     *
-     * @return GuestCustomerInterface
-     */
-    public function setFirstname($firstname);
+    public function setFirstname(string $firstname): GuestCustomerInterface;
 
-    /**
-     * @return string|null
-     */
-    public function getLastname();
+    public function getLastname(): ?string;
 
-    /**
-     * @param string $id
-     *
-     * @return GuestCustomerInterface
-     */
-    public function setLastname($lastname);
+    public function setLastname(string $lastname): GuestCustomerInterface;
 
-    /**
-     * @return string|null
-     */
-    public function getCreatedAt();
+    public function getExportAttempts(): int;
 
-    /**
-     * @param string $createdAt
-     *
-     * @return GuestCustomerInterface
-     */
-    public function setCreatedAt($createdAt): self;
+    public function setExportAttempts(int $exportAttempts): GuestCustomerInterface;
 
-    /**
-     * @return string|null
-     */
-    public function getUpdatedAt();
+    public function getLastErrorCode(): ?string;
 
-    /**
-     * @param string $updatedAt
-     *
-     * @return GuestCustomerInterface
-     */
-    public function setUpdatedAt($updatedAt): self;
+    public function setLastErrorCode(?string $lastErrorCode): GuestCustomerInterface;
+
+    public function getLastErrorMessage(): ?string;
+
+    public function setLastErrorMessage(?string $lastErrorMessage): GuestCustomerInterface;
+
+    public function getLastAttemptedAt(): ?string;
+
+    public function setLastAttemptedAt(?string $lastAttemptedAt): GuestCustomerInterface;
+
+    public function getExportStatus(): int;
+
+    public function setExportStatus(int $exportStatus): GuestCustomerInterface;
+
+    public function getCreatedAt(): ?string;
+
+    public function setCreatedAt(string $createdAt): GuestCustomerInterface;
+
+    public function getUpdatedAt(): ?string;
+
+    public function setUpdatedAt(string $updatedAt): GuestCustomerInterface;
 }

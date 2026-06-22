@@ -18,10 +18,7 @@ class TagContactBuilder
 {
 
     /**
-     * @param ContactInterface $contact
-     * @param int              $tagId
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function buildWithContact(ContactInterface $contact, int $tagId): array
     {

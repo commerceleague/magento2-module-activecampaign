@@ -7,12 +7,12 @@ namespace CommerceLeague\ActiveCampaign\Console\Command;
 
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -22,36 +22,56 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class ExportOrderCommand extends AbstractExportCommand
 {
-    private const NAME = 'activecampaign:export:order';
-    private const ORDER_ID = 'order-id';
-    private const OPTION_OMITTED = 'omitted';
-    private const OPTION_ALL = 'all';
+
+    private const NAME                  = 'activecampaign:export:order';
+    private const ORDER_ID              = 'order-id';
+    private const OPTION_OMITTED        = 'omitted';
+    private const OPTION_ALL            = 'all';
+    private const OPTION_IGNORE_DATE_FILTER = 'ignore-date-filter';
 
     /**
-     * @var OrderCollectionFactory
-     */
-    private $orderCollectionFactory;
-
-    /**
-     * @param ConfigHelper $configHelper
-     * @param OrderCollectionFactory $orderCollectionFactory
-     * @param ProgressBarFactory $progressBarFactory
-     * @param PublisherInterface $publisher
+     * @param ProgressBarFactory     $progressBarFactory
      */
     public function __construct(
         ConfigHelper $configHelper,
-        OrderCollectionFactory $orderCollectionFactory,
+        private readonly OrderCollectionFactory $orderCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
-        $this->orderCollectionFactory = $orderCollectionFactory;
         parent::__construct($configHelper, $progressBarFactory, $publisher);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getOrderIds(InputInterface $input): array
+    {
+        /** @var OrderCollection $orderCollection */
+        $orderCollection = $this->orderCollectionFactory->create();
+//        $orderCollection->addExcludeGuestFilter();
+
+        if (($orderId = $input->getOption(self::ORDER_ID))) {
+            $orderCollection->addIdFilter((int)$orderId);
+
+            return $orderCollection->getAllIds();
+        }
+
+        if ($input->getOption(self::OPTION_OMITTED)) {
+            $orderCollection->addOmittedFilter();
+        }
+
+        if (!$input->getOption(self::OPTION_IGNORE_DATE_FILTER)) {
+            $orderCollection->addExportFilterOrderStatus();
+            $orderCollection->addExportFilterStartDate();
+        }
+
+        return $orderCollection->getAllIds();
     }
 
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Export orders')
@@ -72,13 +92,20 @@ class ExportOrderCommand extends AbstractExportCommand
                 null,
                 InputOption::VALUE_NONE,
                 'Export all orders'
+            )
+            ->addOption(
+                self::OPTION_IGNORE_DATE_FILTER,
+                null,
+                InputOption::VALUE_NONE,
+                'Bypass the default cron scope filter (date/status/customer-group) '
+                . 'and export pre-cutoff historical records too'
             );
     }
 
     /**
      * @inheritDoc
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isOrderExportEnabled()) {
             throw new RuntimeException('Export disabled by system configuration');
@@ -86,7 +113,7 @@ class ExportOrderCommand extends AbstractExportCommand
 
         $orderId = $input->getOption(self::ORDER_ID);
         $omitted = $input->getOption(self::OPTION_OMITTED);
-        $all = $input->getOption(self::OPTION_ALL);
+        $all     = $input->getOption(self::OPTION_ALL);
 
         if ($orderId === null && $omitted === false && $all === false) {
             throw new RuntimeException('Please provide at least one option');
@@ -106,12 +133,22 @@ class ExportOrderCommand extends AbstractExportCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $orderIds = $this->getOrderIds($input);
+        $orderIds      = $this->getOrderIds($input);
         $orderIdsCount = count($orderIds);
 
         if ($orderIdsCount === 0) {
             $output->writeln('<error>No order(s) found matching your criteria</error>');
             return Cli::RETURN_FAILURE;
+        }
+
+        if ($input->getOption(self::ORDER_ID) === null
+            && $input->getOption(self::OPTION_IGNORE_DATE_FILTER)
+        ) {
+            $output->writeln(sprintf(
+                '<comment>Warning: --ignore-date-filter set — exporting %s record(s) without the '
+                . 'cron scope bound (includes pre-cutoff historical data).</comment>',
+                $orderIdsCount
+            ));
         }
 
         $progressBar = $this->createProgressBar(
@@ -123,39 +160,20 @@ class ExportOrderCommand extends AbstractExportCommand
         foreach ($orderIds as $orderId) {
             $this->publisher->publish(
                 Topics::SALES_ORDER_EXPORT,
-                json_encode(['magento_order_id' => $orderId])
+                json_encode(['magento_order_id' => $orderId], JSON_THROW_ON_ERROR)
             );
 
             $progressBar->advance();
         }
 
         $output->writeln('');
-        $output->writeln(sprintf(
-            '<info>%s order(s) have been scheduled for export.</info>',
-            ($orderIdsCount)
-        ));
+        $output->writeln(
+            sprintf(
+                '<info>%s order(s) have been scheduled for export.</info>',
+                ($orderIdsCount)
+            )
+        );
 
         return Cli::RETURN_SUCCESS;
-    }
-
-    /**
-     * @param InputInterface $input
-     * @return array
-     */
-    public function getOrderIds(InputInterface $input): array
-    {
-        /** @var OrderCollection $orderCollection */
-        $orderCollection = $this->orderCollectionFactory->create();
-        $orderCollection->addExcludeGuestFilter();
-
-        if (($orderId = $input->getOption(self::ORDER_ID))) {
-            $orderCollection->addIdFilter((int)$orderId);
-        }
-
-        if ($input->getOption(self::OPTION_OMITTED)) {
-            $orderCollection->addOmittedFilter();
-        }
-
-        return $orderCollection->getAllIds();
     }
 }

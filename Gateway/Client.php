@@ -15,9 +15,10 @@ use CommerceLeague\ActiveCampaignApi\Api\OrderApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\Api\TagsApiResourceInterface;
 use CommerceLeague\ActiveCampaignApi\ClientBuilder;
 use CommerceLeague\ActiveCampaignApi\CommonClientInterface;
-use Http\Adapter\Guzzle6\Client as GuzzleClient;
-use Http\Factory\Guzzle\RequestFactory as GuzzleRequestFactory;
-use Http\Factory\Guzzle\StreamFactory as GuzzleStreamFactory;
+use Http\Adapter\Guzzle7\Client as GuzzleClient;
+use Http\Factory\Guzzle\RequestFactory;
+use Http\Factory\Guzzle\StreamFactory;
+use Magento\Framework\Exception\InvalidArgumentException;
 
 /**
  * Class Client
@@ -25,53 +26,38 @@ use Http\Factory\Guzzle\StreamFactory as GuzzleStreamFactory;
 class Client
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @param ConfigHelper $configHelper
-     */
-    public function __construct(ConfigHelper $configHelper)
+    public function __construct(private readonly ConfigHelper $configHelper)
     {
-        $this->configHelper = $configHelper;
     }
 
     /**
-     * @return AbandonedCartApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getAbandonedCartApi(): AbandonedCartApiResourceInterface
     {
         return $this->getCommonClient()->getAbandonedCartApi();
     }
 
-    /**
-     * @return ConnectionApiResourceInterface
-     */
     public function getConnectionApi(): ConnectionApiResourceInterface
     {
         return $this->getCommonClient()->getConnectionApi();
     }
 
     /**
-     * @return ContactApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getContactApi(): ContactApiResourceInterface
     {
         return $this->getCommonClient()->getContactApi();
     }
 
-    /**
-     * @return CustomerApiResourceInterface
-     */
     public function getCustomerApi(): CustomerApiResourceInterface
     {
         return $this->getCommonClient()->getCustomerApi();
     }
 
     /**
-     * @return OrderApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getOrderApi(): OrderApiResourceInterface
     {
@@ -79,7 +65,7 @@ class Client
     }
 
     /**
-     * @return TagsApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getTagsApi(): TagsApiResourceInterface
     {
@@ -87,7 +73,7 @@ class Client
     }
 
     /**
-     * @return ListsApiResourceInterface
+     * @throws InvalidArgumentException
      */
     public function getListsApi(): ListsApiResourceInterface
     {
@@ -95,17 +81,23 @@ class Client
     }
 
     /**
-     * @return CommonClientInterface
+     * @throws InvalidArgumentException
      */
     private function getCommonClient(): CommonClientInterface
     {
         $url   = $this->configHelper->getApiUrl();
         $token = $this->configHelper->getApiToken();
 
+        if (!$this->configHelper->isConnectionSet()) {
+            throw new InvalidArgumentException(
+                __('Connection Credentials are not set')
+            );
+        }
+
         $clientBuilder = new ClientBuilder();
         $clientBuilder->setHttpClient(new GuzzleClient());
-        $clientBuilder->setRequestFactory(new GuzzleRequestFactory());
-        $clientBuilder->setStreamFactory(new GuzzleStreamFactory());
+        $clientBuilder->setRequestFactory(new RequestFactory());
+        $clientBuilder->setStreamFactory(new StreamFactory());
 
         return $clientBuilder->buildCommonClient($url, $token);
     }

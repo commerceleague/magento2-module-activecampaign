@@ -5,8 +5,18 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Order;
 
+use CommerceLeague\ActiveCampaign\Api\Data\FailureTrackableInterface;
+use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
+use Magento\Framework\Data\Collection\Db\FetchStrategyInterface;
+use Magento\Framework\Data\Collection\EntityFactory;
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\DB\Helper;
+use Magento\Framework\Event\ManagerInterface;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+use Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot;
 use Magento\Sales\Model\ResourceModel\Order\Collection as ExtendCollection;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Collection
@@ -17,17 +27,40 @@ class Collection extends ExtendCollection
 {
 
     /**
-     * @return Collection
+     * @param EntityFactory          $entityFactory
+     * @param LoggerInterface        $logger
+     * @param FetchStrategyInterface $fetchStrategy
+     * @param ManagerInterface       $eventManager
+     * @param Snapshot               $entitySnapshot
+     * @param Helper                 $coreResourceHelper
+     * @param Config                 $configHelper
+     * @param AdapterInterface|null  $connection
+     * @param AbstractDb|null        $resource
      */
-    public function addExcludeGuestFilter(): self
-    {
-        $this->getSelect()->where('main_table.customer_is_guest = 0');
-        return $this;
+    public function __construct(
+        EntityFactory $entityFactory, LoggerInterface $logger,
+        FetchStrategyInterface $fetchStrategy,
+        ManagerInterface $eventManager,
+        Snapshot $entitySnapshot,
+        Helper $coreResourceHelper,
+        private readonly Config $configHelper,
+        AdapterInterface $connection = null,
+        AbstractDb $resource = null
+
+    ) {
+        parent::__construct(
+            $entityFactory,
+            $logger,
+            $fetchStrategy,
+            $eventManager,
+            $entitySnapshot,
+            $coreResourceHelper,
+            $connection,
+            $resource
+        );
     }
 
     /**
-     * @param int $orderId
-     *
      * @return Collection
      */
     public function addIdFilter(int $orderId): self
@@ -46,18 +79,41 @@ class Collection extends ExtendCollection
     }
 
     /**
+     * Exclude dead-lettered rows while keeping null (no AC row yet), pending and synced rows.
+     *
      * @return Collection
      */
-    public function addStatusFilter(): self
+    public function addNotDeadLetteredFilter(): self
     {
-        $this->getSelect()->where('main_table.status IN (?)', ['complete', 'processing_mgm', 'pending']);
+        $this->getSelect()->where(
+            'ac_order.export_status != ? OR ac_order.export_status IS NULL',
+            FailureTrackableInterface::EXPORT_STATUS_FAILED
+        );
         return $this;
     }
 
     /**
-     * @inheritDoc
+     * @return Collection
      */
-    protected function _initSelect()
+    public function addExportFilterOrderStatus(): self
+    {
+        $orderStatuses = $this->configHelper->getOrderExportStatuses();
+        if ($orderStatuses) {
+            $this->getSelect()->where('main_table.status IN (?)', $orderStatuses);
+        }
+        return $this;
+    }
+
+    public function addExportFilterStartDate()
+    {
+        $startDateFilter = $this->configHelper->getOrderExportStartDate();
+        if ($startDateFilter) {
+            $this->getSelect()->where('main_table.created_at > ?', $startDateFilter);
+        }
+        return $this;
+    }
+
+    protected function _initSelect(): Collection
     {
         parent::_initSelect();
 

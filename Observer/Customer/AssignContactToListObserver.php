@@ -22,34 +22,11 @@ use Magento\Framework\MessageQueue\PublisherInterface;
 class AssignContactToListObserver implements ObserverInterface
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
-     * @param ConfigHelper       $configHelper
-     * @param PublisherInterface $publisher
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->publisher    = $publisher;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly PublisherInterface $publisher)
+    {
     }
 
-    /**
-     * @param Observer $observer
-     *
-     * @return void
-     */
-    public function execute(Observer $observer)
+    public function execute(Observer $observer): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isContactExportEnabled()) {
             return;
@@ -64,7 +41,7 @@ class AssignContactToListObserver implements ObserverInterface
                 [
                     'contact_id' => $contact->getId(),
                     'list_id'    => $this->configHelper->getCustomerListId()
-                ]
+                ], JSON_THROW_ON_ERROR
             )
         );
     }

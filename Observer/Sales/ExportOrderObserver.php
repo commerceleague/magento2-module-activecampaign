@@ -19,32 +19,14 @@ use Magento\Sales\Model\Order as MagentoOrder;
 class ExportOrderObserver implements ObserverInterface
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
-     * @param ConfigHelper       $configHelper
-     * @param PublisherInterface $publisher
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->publisher    = $publisher;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly PublisherInterface $publisher)
+    {
     }
 
     /**
      * @inheritDoc
      */
-    public function execute(Observer $observer)
+    public function execute(Observer $observer): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isOrderExportEnabled()) {
             return;
@@ -75,7 +57,7 @@ class ExportOrderObserver implements ObserverInterface
 
         $this->publisher->publish(
             Topics::SALES_ORDER_EXPORT,
-            json_encode(['magento_order_id' => $magentoOrder->getId()])
+            json_encode(['magento_order_id' => $magentoOrder->getId()], JSON_THROW_ON_ERROR)
         );
     }
 }

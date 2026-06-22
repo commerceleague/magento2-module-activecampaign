@@ -7,6 +7,7 @@
 					<resource id="Magento_Backend::stores_settings">
 						<resource id="Magento_Config::config">
 							<resource id="CommerceLeague_ActiveCampaign::activecampaign_config" title="ActiveCampaign Config" translate="title" sortOrder="1200" />
+							<resource id="CommerceLeague_ActiveCampaign::activecampaign_config_connectionChecker" title="ActiveCampaign Config Connection Checker" translate="title" sortOrder="1300" />
 						</resource>
 					</resource>
 				</resource>
@@ -15,7 +16,6 @@
 						<resource id="CommerceLeague_ActiveCampaign::activecampaign_contact" title="Contacts" sortOrder="10"/>
 						<resource id="CommerceLeague_ActiveCampaign::activecampaign_customer" title="Customers" sortOrder="20"/>
 						<resource id="CommerceLeague_ActiveCampaign::activecampaign_order" title="Orders" sortOrder="30"/>
-						<resource id="CommerceLeague_ActiveCampaign::activecampaign_abandoned" title="Abandoned Carts" sortOrder="40"/>
 					</resource>
 				</resource>
 			</resource>

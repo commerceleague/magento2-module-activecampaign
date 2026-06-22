@@ -23,35 +23,13 @@ class TagNewsletterSubscriberObserver implements ObserverInterface
 {
 
     /**
-     * @var Config
-     */
-    private $configHelper;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
      * TagNewsletterSubscriberObserver constructor.
-     *
-     * @param Config             $configHelper
-     * @param PublisherInterface $publisher
      */
-    public function __construct(
-        Config $configHelper,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->publisher    = $publisher;
+    public function __construct(private readonly Config $configHelper, private readonly PublisherInterface $publisher)
+    {
     }
 
-    /**
-     * @param Observer $observer
-     *
-     * @return void
-     */
-    public function execute(Observer $observer)
+    public function execute(Observer $observer): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isContactExportEnabled()) {
             return;
@@ -64,7 +42,7 @@ class TagNewsletterSubscriberObserver implements ObserverInterface
         if (null !== $tags) {
             $this->publisher->publish(
                 Topics::TAG_NEWSLETTER_SUBSCRIBER,
-                json_encode(['contact_id' => $contact->getId(), 'tags' => $tags])
+                json_encode(['contact_id' => $contact->getId(), 'tags' => $tags], JSON_THROW_ON_ERROR)
             );
         }
     }

@@ -6,18 +6,19 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\OrderInterface;
-use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Order;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\OrderFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Order;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\OrderRepository;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Order as OrderResource;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class OrderRepositoryTest extends TestCase
+class OrderRepositoryTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|OrderResource
      */
@@ -38,7 +39,7 @@ class OrderRepositoryTest extends TestCase
      */
     protected $orderRepository;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->orderResource = $this->getMockBuilder(OrderResource::class)
             ->disableOriginalConstructor()
@@ -46,7 +47,7 @@ class OrderRepositoryTest extends TestCase
 
         $this->orderFactory = $this->getMockBuilder(OrderFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->order = $this->getMockBuilder(Order::class)
@@ -111,6 +112,41 @@ class OrderRepositoryTest extends TestCase
         $this->assertSame($this->order, $this->orderRepository->getByMagentoQuoteId($magentoQuoteId));
     }
 
+
+    public function testGetByMagentoOrderId()
+    {
+        $magentoOrderId = 123;
+
+        $this->orderResource->expects($this->once())
+            ->method('load')
+            ->with($this->order, $magentoOrderId, OrderInterface::MAGENTO_ORDER_ID)
+            ->willReturn($this->order);
+
+        $this->order->expects($this->once())
+            ->method('getId')
+            ->willReturn($magentoOrderId);
+
+        $this->assertSame($this->order, $this->orderRepository->getByMagentoOrderId($magentoOrderId));
+    }
+
+    public function testGetByMagentoOrderIdThrowsException()
+    {
+        $magentoOrderId = 123;
+
+        $this->orderResource->expects($this->once())
+            ->method('load')
+            ->with($this->order, $magentoOrderId, OrderInterface::MAGENTO_ORDER_ID)
+            ->willReturn($this->order);
+
+        $this->order->expects($this->once())
+            ->method('getId')
+            ->willReturn(null);
+
+        $this->expectException(NoSuchEntityException::class);
+        $this->expectExceptionMessage('The Order with the "123" Magento Order ID doesn\'t exist');
+
+        $this->orderRepository->getByMagentoOrderId($magentoOrderId);
+    }
 
     public function testGetOrCreateByMagentoQuoteIdWithKnownMagentoOrder()
     {

@@ -17,32 +17,14 @@ use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
  */
 class ExportContactObserver implements ObserverInterface
 {
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var PublisherInterface
-     */
-    private $publisher;
-
-    /**
-     * @param ConfigHelper $configHelper
-     * @param PublisherInterface $publisher
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        PublisherInterface $publisher
-    ) {
-        $this->configHelper = $configHelper;
-        $this->publisher = $publisher;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly PublisherInterface $publisher)
+    {
     }
 
     /**
      * @inheritDoc
      */
-    public function execute(Observer $observer)
+    public function execute(Observer $observer): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isContactExportEnabled()) {
             return;
@@ -51,13 +33,13 @@ class ExportContactObserver implements ObserverInterface
         /** @var Subscriber $subscriber */
         $subscriber = $observer->getEvent()->getData('subscriber');
 
-        if ($subscriber->getData('customer_id')) {
+        if ($subscriber->getStatus() != Subscriber::STATUS_SUBSCRIBED) {
             return;
         }
 
         $this->publisher->publish(
             Topics::NEWSLETTER_CONTACT_EXPORT,
-            json_encode(['email' => $subscriber->getEmail()])
+            json_encode(['email' => $subscriber->getEmail()], JSON_THROW_ON_ERROR)
         );
     }
 }

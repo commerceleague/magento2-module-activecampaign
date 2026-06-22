@@ -18,40 +18,14 @@ use Magento\Sales\Model\Order as MagentoOrder;
 class OrderBuilder extends AbstractBuilder
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var CustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
-     * @var GuestCustomerRepositoryInterface
-     */
-    private $guestCustomerRepository;
-
-    /**
-     * @param ConfigHelper                     $configHelper
-     * @param CustomerRepositoryInterface      $customerRepository
-     * @param GuestCustomerRepositoryInterface $guestCustomerRepository
-     */
-    public function __construct(
-        ConfigHelper $configHelper,
-        CustomerRepositoryInterface $customerRepository,
-        GuestCustomerRepositoryInterface $guestCustomerRepository
-    ) {
-        $this->configHelper            = $configHelper;
-        $this->customerRepository      = $customerRepository;
-        $this->guestCustomerRepository = $guestCustomerRepository;
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly CustomerRepositoryInterface $customerRepository, private readonly GuestCustomerRepositoryInterface $guestCustomerRepository)
+    {
     }
 
     /**
      * @param MagentoOrderInterface|MagentoOrder $magentoOrder
      *
-     * @return array
+     * @return array<string, mixed>
      * @throws Exception
      */
     public function build(MagentoOrderInterface $magentoOrder): array
@@ -78,12 +52,14 @@ class OrderBuilder extends AbstractBuilder
 
         /** @var MagentoOrder\Item $magentoOrderItem */
         foreach ($magentoOrder->getAllVisibleItems() as $magentoOrderItem) {
+            $product = $magentoOrderItem->getProduct();
+
             $request['orderProducts'][] = [
                 'externalid' => $magentoOrderItem->getSku(),
                 'name'       => $magentoOrderItem->getName(),
                 'price'      => $this->convertToCent((float)$magentoOrderItem->getPriceInclTax()),
                 'quantity'   => (int)$magentoOrderItem->getQtyOrdered(),
-                'productUrl' => $magentoOrderItem->getProduct()->getProductUrl(),
+                'productUrl' => $product !== null ? $product->getProductUrl() : '',
             ];
         }
 

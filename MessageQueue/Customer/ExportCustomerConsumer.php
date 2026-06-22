@@ -9,9 +9,14 @@ use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data\CustomerInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\CustomerBuilder as CustomerRequestBuilder;
+use CommerceLeague\ActiveCampaign\Helper\Config;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
+use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
+use CommerceLeague\ActiveCampaign\Model\Tombstone\TombstoneRelinker;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
@@ -25,55 +30,31 @@ use Magento\Framework\Exception\NoSuchEntityException;
 class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
-    /**
-     * @var MagentoCustomerRepositoryInterface
-     */
-    private $magentoCustomerRepository;
-
-    /**
-     * @var CustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
-     * @var CustomerRequestBuilder
-     */
-    private $customerRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
-     * @param MagentoCustomerRepositoryInterface $magentoCustomerRepository
-     * @param Logger                             $logger
-     * @param CustomerRepositoryInterface        $customerRepository
-     * @param CustomerRequestBuilder             $customerRequestBuilder
-     * @param Client                             $client
-     */
     public function __construct(
-        MagentoCustomerRepositoryInterface $magentoCustomerRepository,
+        private readonly MagentoCustomerRepositoryInterface $magentoCustomerRepository,
         Logger $logger,
-        CustomerRepositoryInterface $customerRepository,
-        CustomerRequestBuilder $customerRequestBuilder,
-        Client $client
+        private readonly CustomerRepositoryInterface $customerRepository,
+        private readonly CustomerRequestBuilder $customerRequestBuilder,
+        private readonly Client $client,
+        private readonly FailureRecorder $failureRecorder,
+        private readonly BackoffState $backoffState,
+        private readonly Config $config,
+        private readonly TombstoneRelinker $tombstoneRelinker
     ) {
         parent::__construct($logger);
-        $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->customerRepository        = $customerRepository;
-        $this->customerRequestBuilder    = $customerRequestBuilder;
-        $this->client                    = $client;
     }
 
     /**
-     * @param string $message
-     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
+
+        if ($this->backoffState->shouldHalt()) {
+            $this->getLogger()->warning('ActiveCampaign export backing off after repeated 503s; skipping');
+            return;
+        }
 
         try {
             $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
@@ -82,36 +63,158 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
             return;
         }
 
-        $customer = $this->customerRepository->getOrCreateByMagentoCustomerId($magentoCustomer->getId());
-        $request  = $this->customerRequestBuilder->build($magentoCustomer);
-
         try {
-            $apiResponse = $this->performApiRequest($customer, $request);
-        } catch (UnprocessableEntityHttpException $e) {
-            $this->logUnprocessableEntityHttpException($e, $request);
-            return;
-        } catch (HttpException $e) {
-            $this->logException($e);
+            $customer = $this->customerRepository->getOrCreateByMagentoCustomerId($magentoCustomer->getId());
+            $request  = $this->customerRequestBuilder->build($magentoCustomer);
+
+            try {
+                $apiResponse = $this->performApiRequest($customer, $request);
+
+                $activeCampaignEcomCustomerId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null
+                );
+                if ($activeCampaignEcomCustomerId === null) {
+                    $this->logFailure(
+                        'customer',
+                        $this->castId($customer->getId()),
+                        $this->castId($message['magento_customer_id']),
+                        null,
+                        'empty_response',
+                        sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CUSTOMER)
+                    );
+                    $this->failureRecorder->recordFailure($customer, 'empty_response', null);
+                    $this->customerRepository->save($customer);
+                    return;
+                }
+
+                $customer->setActiveCampaignId($activeCampaignEcomCustomerId);
+                $this->backoffState->reset();
+                $this->failureRecorder->recordSuccess($customer);
+                $this->customerRepository->save($customer);
+            } catch (UnprocessableEntityHttpException $e) {
+                try {
+                    $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_CUSTOMER);
+                } catch (UnprocessableEntityHttpException $duplicateLookupException) {
+                    $this->logFailure(
+                        'customer',
+                        $this->castId($customer->getId()),
+                        $this->castId($message['magento_customer_id']),
+                        $duplicateLookupException->getCode(),
+                        'http_error',
+                        $duplicateLookupException->getMessage()
+                    );
+                    return;
+                }
+
+                $duplicateId = $outcome->isDuplicate()
+                    ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_CUSTOMER]['id'] ?? null)
+                    : null;
+                if ($duplicateId !== null) {
+                    $customer->setActiveCampaignId($duplicateId);
+                    $this->backoffState->reset();
+                    $this->failureRecorder->recordSuccess($customer);
+                    $this->customerRepository->save($customer);
+                    return;
+                }
+
+                $this->logFailure(
+                    'customer',
+                    $this->castId($customer->getId()),
+                    $this->castId($message['magento_customer_id']),
+                    $e->getCode() ?: 422,
+                    $outcome->code ?? 'unknown',
+                    $outcome->message
+                );
+                $this->failureRecorder->recordFailure($customer, $outcome->code ?? 'unknown', $outcome->message);
+                $this->customerRepository->save($customer);
+                return;
+            } catch (HttpException $e) {
+                if ($e->getCode() === 503) {
+                    $this->backoffState->record503();
+                }
+                $this->logFailure(
+                    'customer',
+                    $this->castId($customer->getId()),
+                    $this->castId($message['magento_customer_id']),
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
+                $transient = $e->getCode() >= 500;
+                $this->failureRecorder->recordFailure($customer, 'http_error', $e->getMessage(), $transient);
+                $this->customerRepository->save($customer);
+                return;
+            }
+        } catch (\Throwable $t) {
+            $localId = isset($customer) ? $this->castId($customer->getId()) : null;
+            $this->logFailure(
+                'customer',
+                $localId,
+                $this->castId($message['magento_customer_id'] ?? null),
+                null,
+                'unexpected_error',
+                $t->getMessage()
+            );
+            if (isset($customer)) {
+                $this->failureRecorder->recordFailure($customer, 'unexpected_error', $t->getMessage());
+                $this->customerRepository->save($customer);
+            }
             return;
         }
-
-        $customer->setActiveCampaignId($apiResponse['ecomCustomer']['id']);
-        $this->customerRepository->save($customer);
     }
 
     /**
-     * @param CustomerInterface $customer
-     * @param array             $request
-     *
-     * @return array
+     * @param array<string, mixed> $request
+     * @return array<string, mixed>
      * @throws HttpException
      */
     private function performApiRequest(CustomerInterface $customer, array $request): array
     {
         if ($activeCampaignId = $customer->getActiveCampaignId()) {
+            if ($this->config->isTombstoneSelfHealEnabled()) {
+                $result = $this->tombstoneRelinker->relink(
+                    (int)$activeCampaignId,
+                    (string)($request['email'] ?? ''),
+                    (string)($request['externalid'] ?? ''),
+                    true
+                );
+                if ($result === TombstoneRelinker::RESULT_NOT_FOUND) {
+                    // record truly gone — create a fresh ecomCustomer (the consumer will persist the new id)
+                    return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
+                }
+                // RELINKED (history-preserving restore done) / SKIPPED_* / NO_LIVE_CONTACT -> fall through to update
+            }
             return $this->client->getCustomerApi()->update((int)$activeCampaignId, ['ecomCustomer' => $request]);
-        } else {
-            return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
         }
+        return $this->client->getCustomerApi()->create(['ecomCustomer' => $request]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key): array
+    {
+        $response = $this->client->getCustomerApi()->listPerPage(
+            1,
+            0,
+            [
+                'filters' => [
+                    'email'        => $request['email'],
+                    'connectionid' => $request['connectionid']
+                ]
+            ]
+        );
+
+        $items = $response->getItems();
+        if ($items === []) {
+            throw new DuplicateNotFoundException();
+        }
+
+        $item = $items[0];
+        if (strtolower((string)$item['email']) !== strtolower((string)$request['email'])) {
+            throw new DuplicateNotFoundException();
+        }
+
+        return [$key => $item];
     }
 }

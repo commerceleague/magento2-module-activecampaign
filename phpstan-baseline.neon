@@ -1,0 +1,51 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Call to an undefined method Magento\\\\Framework\\\\View\\\\Element\\\\BlockInterface\\:\\:setData\\(\\)\\.$#"
+			count: 1
+			path: Block/Adminhtml/System/Config/Connection.php
+
+		-
+			message: "#^Parameter \\#1 \\$resultPage of method CommerceLeague\\\\ActiveCampaign\\\\Controller\\\\Adminhtml\\\\AbstractAbandoned\\:\\:initPage\\(\\) expects Magento\\\\Backend\\\\Model\\\\View\\\\Result\\\\Page, Magento\\\\Framework\\\\View\\\\Result\\\\Page given\\.$#"
+			count: 1
+			path: Controller/Adminhtml/Abandoned/Index.php
+
+		-
+			message: "#^Return type \\(void\\) of method CommerceLeague\\\\ActiveCampaign\\\\Controller\\\\Webhook\\\\Contact\\\\Unsubscribe\\:\\:execute\\(\\) should be compatible with return type \\(Magento\\\\Framework\\\\App\\\\ResponseInterface\\|Magento\\\\Framework\\\\Controller\\\\ResultInterface\\) of method Magento\\\\Framework\\\\App\\\\ActionInterface\\:\\:execute\\(\\)$#"
+			count: 4
+			path: Controller/Webhook/Contact/Unsubscribe.php
+
+		-
+			message: "#^Parameter \\#1 \\$requestFactory of method CommerceLeague\\\\ActiveCampaignApi\\\\ClientBuilder\\:\\:setRequestFactory\\(\\) expects Psr\\\\Http\\\\Message\\\\RequestFactoryInterface, Http\\\\Factory\\\\Guzzle\\\\RequestFactory given\\.$#"
+			count: 1
+			path: Gateway/Client.php
+
+		-
+			message: "#^Parameter \\#1 \\$streamFactory of method CommerceLeague\\\\ActiveCampaignApi\\\\ClientBuilder\\:\\:setStreamFactory\\(\\) expects Psr\\\\Http\\\\Message\\\\StreamFactoryInterface, Http\\\\Factory\\\\Guzzle\\\\StreamFactory given\\.$#"
+			count: 1
+			path: Gateway/Client.php
+
+		-
+			message: "#^Call to an undefined method Magento\\\\Sales\\\\Api\\\\Data\\\\OrderInterface\\:\\:getAllVisibleItems\\(\\)\\.$#"
+			count: 1
+			path: Gateway/Request/OrderBuilder.php
+
+		-
+			message: "#^Call to an undefined method Magento\\\\Sales\\\\Api\\\\Data\\\\OrderInterface\\:\\:getId\\(\\)\\.$#"
+			count: 1
+			path: Gateway/Request/OrderBuilder.php
+
+		-
+			message: "#^Call to an undefined method Magento\\\\Sales\\\\Api\\\\Data\\\\OrderInterface\\:\\:getShippingMethod\\(\\)\\.$#"
+			count: 1
+			path: Gateway/Request/OrderBuilder.php
+
+		-
+			message: "#^Call to an undefined method CommerceLeague\\\\ActiveCampaign\\\\Api\\\\GuestCustomerRepositoryInterface\\:\\:getOrCreate\\(\\)\\.$#"
+			count: 1
+			path: MessageQueue/Customer/ExportGuestCustomerConsumer.php
+
+		-
+			message: "#^Use service contracts to persist entities in favour of Magento\\\\Newsletter\\\\Model\\\\Subscriber\\:\\:load\\(\\) method$#"
+			count: 1
+			path: MessageQueue/Newsletter/ExportContactConsumer.php

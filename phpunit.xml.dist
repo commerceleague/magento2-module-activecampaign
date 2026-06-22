@@ -1,33 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit
-		bootstrap="vendor/autoload.php"
-		backupGlobals="false"
-		backupStaticAttributes="false"
-		colors="true"
-		convertErrorsToExceptions="true"
-		convertNoticesToExceptions="true"
-		convertWarningsToExceptions="true"
-		processIsolation="false"
-		stopOnFailure="false"
-		syntaxCheck="false">
-	
-	<testsuite>
-		<directory suffix="Test.php">Test/Unit</directory>
-	</testsuite>
-	
-	<filter>
-		<whitelist>
-			<directory suffix=".php">Api</directory>
-			<directory suffix=".php">Console</directory>
-			<directory suffix=".php">Cron</directory>
-			<directory suffix=".php">Gateway</directory>
-			<directory suffix=".php">Helper</directory>
-			<directory suffix=".php">Logger</directory>
-			<directory suffix=".php">MessageQueue</directory>
-			<directory suffix=".php">Model</directory>
-			<directory suffix=".php">Observer</directory>
-			<directory suffix=".php">Service</directory>
-			<directory suffix=".php">Setup</directory>
-		</whitelist>
-	</filter>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="Test/Unit/bootstrap.php"
+         colors="true"
+         backupGlobals="false"
+         cacheResultFile=".phpunit.cache/test-results">
+    <testsuites>
+        <testsuite name="unit">
+            <directory suffix="Test.php">Test/Unit</directory>
+        </testsuite>
+    </testsuites>
+    <coverage>
+        <include>
+            <directory suffix=".php">Api</directory>
+            <directory suffix=".php">Console</directory>
+            <directory suffix=".php">Cron</directory>
+            <directory suffix=".php">Gateway</directory>
+            <directory suffix=".php">Helper</directory>
+            <directory suffix=".php">Logger</directory>
+            <directory suffix=".php">MessageQueue</directory>
+            <directory suffix=".php">Model</directory>
+            <directory suffix=".php">Observer</directory>
+            <directory suffix=".php">Service</directory>
+            <directory suffix=".php">Setup</directory>
+        </include>
+    </coverage>
 </phpunit>

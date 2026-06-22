@@ -8,11 +8,11 @@ namespace CommerceLeague\ActiveCampaign\Console\Command;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Input\InputInterface;
@@ -28,40 +28,25 @@ class ExportContactCommand extends AbstractExportCommand
     private const OPTION_EMAIL = 'email';
     private const OPTION_OMITTED = 'omitted';
     private const OPTION_ALL = 'all';
+    private const OPTION_IGNORE_DATE_FILTER = 'ignore-date-filter';
 
     /**
-     * @var CustomerCollectionFactory
-     */
-    private $customerCollectionFactory;
-
-    /**
-     * @var SubscriberCollectionFactory
-     */
-    private $subscriberCollectionFactory;
-
-    /**
-     * @param ConfigHelper $configHelper
-     * @param CustomerCollectionFactory $customerCollectionFactory
-     * @param SubscriberCollectionFactory $subscriberCollectionFactory
      * @param ProgressBarFactory $progressBarFactory
-     * @param PublisherInterface $publisher
      */
     public function __construct(
         ConfigHelper $configHelper,
-        CustomerCollectionFactory $customerCollectionFactory,
-        SubscriberCollectionFactory $subscriberCollectionFactory,
+        private readonly CustomerCollectionFactory $customerCollectionFactory,
+        private readonly SubscriberCollectionFactory $subscriberCollectionFactory,
         ProgressBarFactory $progressBarFactory,
         PublisherInterface $publisher
     ) {
-        $this->customerCollectionFactory = $customerCollectionFactory;
-        $this->subscriberCollectionFactory = $subscriberCollectionFactory;
         parent::__construct($configHelper, $progressBarFactory, $publisher);
     }
 
     /**
      * @inheritDoc
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName(self::NAME)
             ->setDescription('Export contacts')
@@ -82,13 +67,20 @@ class ExportContactCommand extends AbstractExportCommand
                 null,
                 InputOption::VALUE_NONE,
                 'Export all contacts'
+            )
+            ->addOption(
+                self::OPTION_IGNORE_DATE_FILTER,
+                null,
+                InputOption::VALUE_NONE,
+                'Bypass the default cron scope filter (date/status/customer-group) '
+                . 'and export pre-cutoff historical records too'
             );
     }
 
     /**
      * @inheritDoc
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         if (!$this->configHelper->isEnabled() || !$this->configHelper->isContactExportEnabled()) {
             throw new RuntimeException('Export disabled by system configuration');
@@ -126,6 +118,16 @@ class ExportContactCommand extends AbstractExportCommand
             return Cli::RETURN_FAILURE;
         }
 
+        if ($input->getOption(self::OPTION_EMAIL) === null
+            && $input->getOption(self::OPTION_IGNORE_DATE_FILTER)
+        ) {
+            $output->writeln(sprintf(
+                '<comment>Warning: --ignore-date-filter set — exporting %s record(s) without the '
+                . 'cron scope bound (includes pre-cutoff historical data).</comment>',
+                ($customerIdsCount + $subscriberEmailsCount)
+            ));
+        }
+
         if ($customerIdsCount > 0) {
             $progressBar = $this->createProgressBar(
                 $output,
@@ -136,7 +138,7 @@ class ExportContactCommand extends AbstractExportCommand
             foreach ($customerIds as $customerId) {
                 $this->publisher->publish(
                     Topics::CUSTOMER_CONTACT_EXPORT,
-                    json_encode(['magento_customer_id' => $customerId])
+                    json_encode(['magento_customer_id' => $customerId], JSON_THROW_ON_ERROR)
                 );
 
                 $progressBar->advance();
@@ -155,7 +157,7 @@ class ExportContactCommand extends AbstractExportCommand
             foreach ($subscriberEmails as $subscriberEmail) {
                 $this->publisher->publish(
                     Topics::NEWSLETTER_CONTACT_EXPORT,
-                    json_encode(['email' => $subscriberEmail])
+                    json_encode(['email' => $subscriberEmail], JSON_THROW_ON_ERROR)
                 );
 
                 $progressBar->advance();
@@ -173,8 +175,7 @@ class ExportContactCommand extends AbstractExportCommand
     }
 
     /**
-     * @param InputInterface $input
-     * @return array
+     * @return array<int, string>
      */
     private function getCustomerIds(InputInterface $input): array
     {
@@ -183,18 +184,23 @@ class ExportContactCommand extends AbstractExportCommand
 
         if (($email = $input->getOption(self::OPTION_EMAIL)) !== null) {
             $customerCollection->addEmailFilter($email);
+
+            return $customerCollection->getAllIds();
         }
 
+        $applyCustomerGroupFilter = !$input->getOption(self::OPTION_IGNORE_DATE_FILTER);
+
         if ($input->getOption(self::OPTION_OMITTED)) {
-            $customerCollection->addContactOmittedFilter();
+            $customerCollection->addContactOmittedFilter($applyCustomerGroupFilter);
+        } elseif ($applyCustomerGroupFilter) {
+            $customerCollection->addAllowedCustomerGroupFilter();
         }
 
         return $customerCollection->getAllIds();
     }
 
     /**
-     * @param InputInterface $input
-     * @return array
+     * @return array<int, string>
      */
     private function getSubscriberEmails(InputInterface $input): array
     {

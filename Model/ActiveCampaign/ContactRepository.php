@@ -6,6 +6,7 @@ namespace CommerceLeague\ActiveCampaign\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\Data;
+use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\ContactFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact as ContactResource;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -18,24 +19,17 @@ use Magento\Framework\Model\AbstractModel;
 class ContactRepository implements ContactRepositoryInterface
 {
     /**
-     * @var ContactResource
-     */
-    private $contactResource;
-
-    /**
      * @var ContactFactory
      */
     private $contactFactory;
 
     /**
-     * @param ContactResource $contactResource
      * @param ContactFactory $contactFactory
      */
     public function __construct(
-        ContactResource $contactResource,
+        private readonly ContactResource $contactResource,
         ContactFactory $contactFactory
     ) {
-        $this->contactResource = $contactResource;
         $this->contactFactory = $contactFactory;
     }
 

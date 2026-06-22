@@ -1,0 +1,23 @@
+includes:
+	- phpstan-baseline.neon
+
+parameters:
+    level: 6
+    paths:
+        - Api
+        - Block
+        - Console
+        - Controller
+        - Cron
+        - Gateway
+        - Helper
+        - Logger
+        - MessageQueue
+        - Observer
+        - Setup
+    reportUnmatchedIgnoredErrors: false
+    bootstrapFiles:
+        - vendor/bitexpert/phpstan-magento/autoload.php
+
+    ignoreErrors:
+        - '#Call to an undefined method Magento\\Framework\\App\\RequestInterface\:\:isAjax\(\)#'

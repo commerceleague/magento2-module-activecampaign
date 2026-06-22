@@ -6,7 +6,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
-use CommerceLeague\ActiveCampaign\Helper\Contants;
+use CommerceLeague\ActiveCampaign\Helper\Constants;
 use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 use Magento\Newsletter\Model\Subscriber;
 
@@ -17,14 +17,12 @@ class ContactBuilder
 {
 
     /**
-     * @param MagentoCustomerInterface $magentoCustomer
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function buildWithMagentoCustomer(MagentoCustomerInterface $magentoCustomer): array
     {
         return [
-            'status'    => Contants::CONTACT_STATUS_ACTIVE,
+            'status'    => Constants::CONTACT_STATUS_ACTIVE,
             'email'     => $magentoCustomer->getEmail(),
             'firstName' => $magentoCustomer->getFirstname(),
             'lastName'  => $magentoCustomer->getLastname()
@@ -32,29 +30,23 @@ class ContactBuilder
     }
 
     /**
-     * @param Subscriber $subscriber
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function buildWithSubscriber(Subscriber $subscriber): array
     {
         return [
-            'status' => Contants::CONTACT_STATUS_ACTIVE,
+            'status' => Constants::CONTACT_STATUS_ACTIVE,
             'email'  => $subscriber->getEmail()
         ];
     }
 
     /**
-     * @param ContactInterface $contact
-     * @param string           $firstname
-     * @param string           $lastname
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function buildWithGuestContact(ContactInterface $contact, string $firstname, string $lastname): array
     {
         return [
-            'status'    => Contants::CONTACT_STATUS_ACTIVE,
+            'status'    => Constants::CONTACT_STATUS_ACTIVE,
             'email'     => $contact->getEmail(),
             'firstName' => $firstname,
             'lastName'  => $lastname

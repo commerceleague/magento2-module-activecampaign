@@ -8,19 +8,20 @@ namespace CommerceLeague\ActiveCampaign\Test\Unit\Console\Command;
 use CommerceLeague\ActiveCampaign\Console\Command\ExportCustomerCommand;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Tester\CommandTester;
 
-class ExportCustomerCommandTest extends TestCase
+class ExportCustomerCommandTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -56,13 +57,13 @@ class ExportCustomerCommandTest extends TestCase
      */
     protected $exportCustomerCommandTester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->customerCollection = $this->createMock(CustomerCollection::class);
@@ -75,7 +76,7 @@ class ExportCustomerCommandTest extends TestCase
 
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->exportCustomerCommand = new ExportCustomerCommand(
@@ -186,7 +187,7 @@ class ExportCustomerCommandTest extends TestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             'No customer(s) found matching your criteria',
             $this->exportCustomerCommandTester->getDisplay()
         );
@@ -239,7 +240,7 @@ class ExportCustomerCommandTest extends TestCase
             ['--email' => $email]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 customers(s) have been scheduled for export.',
             $this->exportCustomerCommandTester->getDisplay()
         );
@@ -283,7 +284,7 @@ class ExportCustomerCommandTest extends TestCase
             ['--omitted' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '2 customers(s) have been scheduled for export.',
             $this->exportCustomerCommandTester->getDisplay()
         );
@@ -291,6 +292,105 @@ class ExportCustomerCommandTest extends TestCase
         $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportCustomerCommandTester->getStatusCode());
     }
 
+
+    public function testOmittedAppliesGroupFilterByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isCustomerExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addCustomerOmittedFilter')
+            ->with(true)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportCustomerCommandTester->execute(['--omitted' => true]);
+
+        $this->assertStringNotContainsString(
+            'ignore-date-filter set',
+            $this->exportCustomerCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportCustomerCommandTester->getStatusCode());
+    }
+
+    public function testOmittedIgnoreDateFilterSkipsGroupFilterAndWarns()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isCustomerExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addCustomerOmittedFilter')
+            ->with(false)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->never())
+            ->method('addAllowedCustomerGroupFilter');
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123, 456]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportCustomerCommandTester->execute(
+            ['--omitted' => true, '--ignore-date-filter' => true]
+        );
+
+        $this->assertStringContainsString(
+            'Warning: --ignore-date-filter set — exporting 2 record(s)',
+            $this->exportCustomerCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportCustomerCommandTester->getStatusCode());
+    }
+
+    public function testAllAppliesGroupFilterByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isCustomerExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addAllowedCustomerGroupFilter')
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportCustomerCommandTester->execute(['--all' => true]);
+
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportCustomerCommandTester->getStatusCode());
+    }
 
     public function testExecuteWithAllOption()
     {
@@ -324,7 +424,7 @@ class ExportCustomerCommandTest extends TestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '3 customers(s) have been scheduled for export.',
             $this->exportCustomerCommandTester->getDisplay()
         );

@@ -1,0 +1,87 @@
+<?php
+declare(strict_types=1);
+/**
+ */
+
+namespace CommerceLeague\ActiveCampaign\Cron;
+
+use CommerceLeague\ActiveCampaign\Api\CronInterface;
+use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
+use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
+use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\CollectionFactory as CustomerCollectionFactory;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer\Collection as CustomerCollection;
+use Magento\Framework\MessageQueue\PublisherInterface;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Class PublishOmittedGuestCustomers
+ */
+class PublishOmittedGuestCustomers implements CronInterface
+{
+
+    public function __construct(private readonly ConfigHelper              $configHelper,
+                                private readonly CustomerCollectionFactory $customerCollectionFactory,
+                                private readonly PublisherInterface        $publisher,
+                                private readonly LoggerInterface           $logger
+    ) {
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function run(): void
+    {
+        if (!$this->configHelper->isEnabled() || !$this->configHelper->isCustomerExportEnabled()) {
+            return;
+        }
+
+        $guestCustomers = $this->getCustomers();
+
+        if ($this->configHelper->isRetryAllOmittedEnabled()) {
+            $this->logger->warning(sprintf(
+                'ActiveCampaign retry_all_omitted is ON — re-publishing %d omitted guest customer '
+                . 'record(s) without the scope bound',
+                count($guestCustomers)
+            ));
+        }
+
+        /** @var GuestCustomerInterface $customer */
+        foreach ($guestCustomers as $customer) {
+            $this->publisher->publish(
+                Topics::GUEST_CUSTOMER_EXPORT,
+                json_encode(
+                    [
+                        'magento_customer_id' => null,
+                        'customer_is_guest'   => true,
+                        'customer_data'       => [
+                            GuestCustomerInterface::FIRSTNAME => $customer->getFirstname(),
+                            GuestCustomerInterface::LASTNAME  => $customer->getLastname(),
+                            GuestCustomerInterface::EMAIL     => $customer->getEmail()
+                        ]
+                    ]
+                )
+            );
+        }
+    }
+
+    /**
+     * @return array<int, GuestCustomerInterface>
+     */
+    private function getCustomers(): array
+    {
+        /** @var CustomerCollection $customerCollection */
+        $customerCollection = $this->customerCollectionFactory->create();
+        $customerCollection->addOmittedFilter();
+        $customerCollection->addNotDeadLetteredFilter();
+        if (!$this->configHelper->isRetryAllOmittedEnabled()) {
+            $customerCollection->addExportFilterOrderStatus();
+            $customerCollection->addExportFilterStartDate();
+        }
+
+        /** @var array<int, GuestCustomerInterface> $items */
+        $items = $customerCollection->getItems();
+
+        return $items;
+    }
+}

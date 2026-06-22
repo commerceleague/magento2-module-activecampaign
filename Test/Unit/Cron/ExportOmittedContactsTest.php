@@ -5,19 +5,21 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\ExportOmittedContacts;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedContacts;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
-class ExportOmittedContactsTest extends TestCase
+class ExportOmittedContactsTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -49,17 +51,23 @@ class ExportOmittedContactsTest extends TestCase
     protected $publisher;
 
     /**
-     * @var ExportOmittedContacts
+     * @var MockObject|LoggerInterface
+     */
+    protected $logger;
+
+    /**
+     * @var PublishOmittedContacts
      */
     protected $exportOmittedContacts;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->customerCollection = $this->createMock(CustomerCollection::class);
@@ -70,7 +78,7 @@ class ExportOmittedContactsTest extends TestCase
 
         $this->subscriberCollectionFactory = $this->getMockBuilder(SubscriberCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->subscriberCollection = $this->createMock(SubscriberCollection::class);
@@ -81,11 +89,12 @@ class ExportOmittedContactsTest extends TestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedContacts = new ExportOmittedContacts(
+        $this->exportOmittedContacts = new PublishOmittedContacts(
             $this->configHelper,
             $this->customerCollectionFactory,
             $this->subscriberCollectionFactory,
-            $this->publisher
+            $this->publisher,
+            $this->logger
         );
     }
 
@@ -130,8 +139,20 @@ class ExportOmittedContactsTest extends TestCase
             ->method('isContactExportEnabled')
             ->willReturn(true);
 
+        $this->configHelper->expects($this->exactly(2))
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(false);
+
+        $this->logger->expects($this->never())
+            ->method('warning');
+
         $this->customerCollection->expects($this->once())
             ->method('addContactOmittedFilter')
+            ->with(true)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactNotDeadLetteredFilter')
             ->willReturnSelf();
 
         $this->customerCollection->expects($this->once())
@@ -147,39 +168,83 @@ class ExportOmittedContactsTest extends TestCase
             ->willReturnSelf();
 
         $this->subscriberCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('getAllEmails')
+            ->willReturn($emails);
+
+        $expectedPublishArguments = [
+            [Topics::CUSTOMER_CONTACT_EXPORT, json_encode(['magento_customer_id' => $customerIds[0]])],
+            [Topics::CUSTOMER_CONTACT_EXPORT, json_encode(['magento_customer_id' => $customerIds[1]])],
+            [Topics::NEWSLETTER_CONTACT_EXPORT, json_encode(['email' => $emails[0]])],
+            [Topics::NEWSLETTER_CONTACT_EXPORT, json_encode(['email' => $emails[1]])],
+        ];
+        $actualPublishArguments = [];
+        $this->publisher->expects($this->exactly(4))
+            ->method('publish')
+            ->willReturnCallback(function (...$args) use (&$actualPublishArguments) {
+                $actualPublishArguments[] = $args;
+            });
+
+        $this->exportOmittedContacts->run();
+
+        $this->assertSame($expectedPublishArguments, $actualPublishArguments);
+    }
+
+    public function testRunWithRetryAllOmittedSkipsCustomerGroupFilter()
+    {
+        $customerIds = [123, 456];
+        $emails = ['example1@example.com', 'example2@example.com'];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->exactly(2))
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(true);
+
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('retry_all_omitted is ON'));
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactOmittedFilter')
+            ->with(false)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn($customerIds);
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('excludeCustomers')
+            ->willReturnSelf();
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('addContactOmittedFilter')
+            ->willReturnSelf();
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->subscriberCollection->expects($this->once())
             ->method('getAllEmails')
             ->willReturn($emails);
 
         $this->publisher->expects($this->exactly(4))
             ->method('publish');
-
-        $this->publisher->expects($this->at(0))
-            ->method('publish')
-            ->with(
-                Topics::CUSTOMER_CONTACT_EXPORT,
-                json_encode(['magento_customer_id' => $customerIds[0]])
-            );
-
-        $this->publisher->expects($this->at(1))
-            ->method('publish')
-            ->with(
-                Topics::CUSTOMER_CONTACT_EXPORT,
-                json_encode(['magento_customer_id' => $customerIds[1]])
-            );
-
-        $this->publisher->expects($this->at(2))
-            ->method('publish')
-            ->with(
-                Topics::NEWSLETTER_CONTACT_EXPORT,
-                json_encode(['email' => $emails[0]])
-            );
-
-        $this->publisher->expects($this->at(3))
-            ->method('publish')
-            ->with(
-                Topics::NEWSLETTER_CONTACT_EXPORT,
-                json_encode(['email' => $emails[1]])
-            );
 
         $this->exportOmittedContacts->run();
     }

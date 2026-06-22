@@ -32,9 +32,9 @@ class Contact extends AbstractModel implements ContactInterface
     /**
      * @inheritDoc
      */
-    public function setId($id)
+    public function setId($value)
     {
-        return $this->setData(self::ENTITY_ID, $id);
+        return $this->setData(self::ENTITY_ID, $value);
     }
 
     /**
@@ -67,6 +67,86 @@ class Contact extends AbstractModel implements ContactInterface
     public function setActiveCampaignId($activeCampaignId): ContactInterface
     {
         return $this->setData(self::ACTIVE_CAMPAIGN_ID, $activeCampaignId);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getExportAttempts()
+    {
+        return (int) $this->_getData(self::EXPORT_ATTEMPTS);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setExportAttempts($exportAttempts): ContactInterface
+    {
+        return $this->setData(self::EXPORT_ATTEMPTS, $exportAttempts);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastErrorCode()
+    {
+        return $this->_getData(self::LAST_ERROR_CODE);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastErrorCode($lastErrorCode): ContactInterface
+    {
+        return $this->setData(self::LAST_ERROR_CODE, $lastErrorCode);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastErrorMessage()
+    {
+        return $this->_getData(self::LAST_ERROR_MESSAGE);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastErrorMessage($lastErrorMessage): ContactInterface
+    {
+        return $this->setData(self::LAST_ERROR_MESSAGE, $lastErrorMessage);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastAttemptedAt()
+    {
+        return $this->_getData(self::LAST_ATTEMPTED_AT);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastAttemptedAt($lastAttemptedAt): ContactInterface
+    {
+        return $this->setData(self::LAST_ATTEMPTED_AT, $lastAttemptedAt);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getExportStatus()
+    {
+        return (int) $this->_getData(self::EXPORT_STATUS);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setExportStatus($exportStatus): ContactInterface
+    {
+        return $this->setData(self::EXPORT_STATUS, $exportStatus);
     }
 
     /**

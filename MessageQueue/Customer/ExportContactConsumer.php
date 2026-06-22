@@ -12,6 +12,8 @@ use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactReque
 use CommerceLeague\ActiveCampaign\Logger\Logger;
 use CommerceLeague\ActiveCampaign\MessageQueue\AbstractConsumer;
 use CommerceLeague\ActiveCampaign\MessageQueue\ConsumerInterface;
+use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
+use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Magento\Customer\Api\CustomerRepositoryInterface as MagentoCustomerRepositoryInterface;
@@ -26,99 +28,136 @@ use Magento\Framework\Exception\NoSuchEntityException;
 class ExportContactConsumer extends AbstractConsumer implements ConsumerInterface
 {
 
-    /**
-     * @var MagentoCustomerRepositoryInterface
-     */
-    private $magentoCustomerRepository;
-
-    /**
-     * @var ContactRepositoryInterface
-     */
-    private $contactRepository;
-
-    /**
-     * @var ContactRequestBuilder
-     */
-    private $contactRequestBuilder;
-
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
-     * @var ManagerInterface
-     */
-    private $eventManager;
-
-    /**
-     * @param MagentoCustomerRepositoryInterface $magentoCustomerRepository
-     * @param Logger                             $logger
-     * @param ContactRequestBuilder              $contactRequestBuilder
-     * @param ContactRepositoryInterface         $contactRepository
-     * @param Client                             $client
-     */
     public function __construct(
-        MagentoCustomerRepositoryInterface $magentoCustomerRepository,
+        private readonly MagentoCustomerRepositoryInterface $magentoCustomerRepository,
         Logger $logger,
-        ContactRepositoryInterface $contactRepository,
-        ContactRequestBuilder $contactRequestBuilder,
-        Client $client,
-        ManagerInterface $eventManager
-
+        private readonly ContactRepositoryInterface $contactRepository,
+        private readonly ContactRequestBuilder $contactRequestBuilder,
+        private readonly Client $client,
+        private readonly ManagerInterface $eventManager,
+        private readonly FailureRecorder $failureRecorder,
+        private readonly BackoffState $backoffState
     ) {
         parent::__construct($logger);
-        $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->contactRepository         = $contactRepository;
-        $this->contactRequestBuilder     = $contactRequestBuilder;
-        $this->client                    = $client;
-        $this->eventManager              = $eventManager;
     }
 
     /**
-     * @param string $message
-     *
      * @throws CouldNotSaveException
      */
     public function consume(string $message): void
     {
-        $message = json_decode($message, true);
+        $message = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
+
+        if ($this->backoffState->shouldHalt()) {
+            $this->getLogger()->warning('ActiveCampaign export backing off after repeated 503s; skipping');
+            return;
+        }
 
         try {
-            $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
-            $contact         = $this->contactRepository->getOrCreateByEmail($magentoCustomer->getEmail());
-            $request         = $this->contactRequestBuilder->buildWithMagentoCustomer($magentoCustomer);
-        } catch (NoSuchEntityException|LocalizedException $e) {
-            if (array_key_exists('customer_is_guest', $message)) {
-                // not a customer but a guest
-                $guestCustomerData = $message['customer_data'];
-                $contact           = $this->contactRepository->getOrCreateByEmail(
-                    $guestCustomerData[GuestCustomerInterface::EMAIL]
+            try {
+                $magentoCustomer = $this->magentoCustomerRepository->getById($message['magento_customer_id']);
+                $contact         = $this->contactRepository->getOrCreateByEmail($magentoCustomer->getEmail());
+                $request         = $this->contactRequestBuilder->buildWithMagentoCustomer($magentoCustomer);
+
+            } catch (NoSuchEntityException|LocalizedException $e) {
+                if (array_key_exists('customer_is_guest', $message)) {
+                    // not a customer but a guest
+                    $guestCustomerData = $message['customer_data'];
+                    $contact           = $this->contactRepository->getOrCreateByEmail(
+                        $guestCustomerData[GuestCustomerInterface::EMAIL]
+                    );
+                    $request           = $this->contactRequestBuilder->buildWithGuestContact(
+                        $contact,
+                        $guestCustomerData[GuestCustomerInterface::FIRSTNAME],
+                        $guestCustomerData[GuestCustomerInterface::LASTNAME]
+                    );
+                } else {
+                    $this->getLogger()->error($e->getMessage());
+                    return;
+                }
+            }
+
+            try {
+                $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
+
+                $activeCampaignId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_CONTACT]['id'] ?? null
                 );
-                $request           = $this->contactRequestBuilder->buildWithGuestContact(
-                    $contact,
-                    $guestCustomerData[GuestCustomerInterface::FIRSTNAME],
-                    $guestCustomerData[GuestCustomerInterface::LASTNAME]
+                if ($activeCampaignId === null) {
+                    $this->logFailure(
+                        'contact',
+                        $this->castId($contact->getId()),
+                        null,
+                        null,
+                        'empty_response',
+                        sprintf('missing "%s.id" in API response; skipping save', self::RESPONSE_KEY_CONTACT)
+                    );
+                    $this->failureRecorder->recordFailure($contact, 'empty_response', null);
+                    $this->contactRepository->save($contact);
+                    return;
+                }
+
+                $contact->setActiveCampaignId($activeCampaignId);
+                $this->backoffState->reset();
+                $this->failureRecorder->recordSuccess($contact);
+                $this->contactRepository->save($contact);
+                // trigger event after contact has been saved
+                $this->eventManager->dispatch(
+                    'commmerceleague_activecampaign_export_contact_success',
+                    ['contact' => $contact]
                 );
-            } else {
-                $this->getLogger()->error($e->getMessage());
+            } catch (UnprocessableEntityHttpException $e) {
+                $this->logFailure(
+                    'contact',
+                    $this->castId($contact->getId()),
+                    null,
+                    $e->getCode() ?: 422,
+                    'unknown',
+                    $e->getMessage()
+                );
+                $this->failureRecorder->recordFailure($contact, 'unknown', $e->getMessage());
+                $this->contactRepository->save($contact);
+                return;
+            } catch (HttpException $e) {
+                if ($e->getCode() === 503) {
+                    $this->backoffState->record503();
+                }
+                $this->logFailure(
+                    'contact',
+                    $this->castId($contact->getId()),
+                    null,
+                    $e->getCode(),
+                    'http_error',
+                    $e->getMessage()
+                );
+                $transient = $e->getCode() >= 500;
+                $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage(), $transient);
+                $this->contactRepository->save($contact);
                 return;
             }
-        }
-
-        try {
-            $apiResponse = $this->client->getContactApi()->upsert(['contact' => $request]);
-        } catch (UnprocessableEntityHttpException $e) {
-            $this->logUnprocessableEntityHttpException($e, $request);
+        } catch (\Throwable $t) {
+            $localId = isset($contact) ? $this->castId($contact->getId()) : null;
+            $this->logFailure(
+                'contact',
+                $localId,
+                $this->castId($message['magento_customer_id'] ?? null),
+                null,
+                'unexpected_error',
+                $t->getMessage()
+            );
+            if (isset($contact)) {
+                $this->failureRecorder->recordFailure($contact, 'unexpected_error', $t->getMessage());
+                $this->contactRepository->save($contact);
+            }
             return;
-        } catch (HttpException $e) {
-            $this->logException($e);
-            return;
         }
+    }
 
-        $contact->setActiveCampaignId($apiResponse['contact']['id']);
-        $this->contactRepository->save($contact);
-        // trigger event after contact has been saved
-        $this->eventManager->dispatch('commmerceleague_activecampaign_export_contact_success', ['contact' => $contact]);
+    /**
+     * @inheritDoc
+     */
+    function processDuplicateEntity(array $request, string $key): array
+    {
+        return [];
     }
 }

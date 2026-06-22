@@ -6,7 +6,6 @@ namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
 /**

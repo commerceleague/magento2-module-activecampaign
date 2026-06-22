@@ -20,11 +20,7 @@ class ContactListBuilder
     /**
      * Build the contactList Request with Contact
      *
-     * @param ContactInterface $contact
-     * @param int              $listId
-     * @param int              $status
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function buildWithContact(ContactInterface $contact, int $listId, int $status = 1): array
     {

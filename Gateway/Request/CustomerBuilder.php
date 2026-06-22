@@ -7,7 +7,7 @@ namespace CommerceLeague\ActiveCampaign\Gateway\Request;
 
 use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
-use CommerceLeague\ActiveCampaign\Helper\Contants;
+use CommerceLeague\ActiveCampaign\Helper\Constants;
 use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 
 /**
@@ -16,23 +16,12 @@ use Magento\Customer\Api\Data\CustomerInterface as MagentoCustomerInterface;
 class CustomerBuilder
 {
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @param ConfigHelper $configHelper
-     */
-    public function __construct(ConfigHelper $configHelper)
+    public function __construct(private readonly ConfigHelper $configHelper)
     {
-        $this->configHelper = $configHelper;
     }
 
     /**
-     * @param MagentoCustomerInterface $magentoCustomer
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function build(MagentoCustomerInterface $magentoCustomer): array
     {
@@ -40,14 +29,12 @@ class CustomerBuilder
             'connectionid'     => $this->configHelper->getConnectionId(),
             'externalid'       => $magentoCustomer->getId(),
             'email'            => $magentoCustomer->getEmail(),
-            'acceptsMarketing' => Contants::CONTACT_STATUS_ACTIVE
+            'acceptsMarketing' => Constants::CONTACT_STATUS_ACTIVE
         ];
     }
 
     /**
-     * @param GuestCustomerInterface $guestCustomer
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function buildWithGuest(GuestCustomerInterface $guestCustomer): array
     {
@@ -55,7 +42,7 @@ class CustomerBuilder
             'connectionid'     => $this->configHelper->getConnectionId(),
             'externalid'       => 'guest-' . $guestCustomer->getId(),
             'email'            => $guestCustomer->getEmail(),
-            'acceptsMarketing' => Contants::CONTACT_STATUS_ACTIVE
+            'acceptsMarketing' => Constants::CONTACT_STATUS_ACTIVE
         ];
     }
 }

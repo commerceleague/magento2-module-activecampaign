@@ -5,7 +5,10 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Model\ResourceModel\Quote;
 
+use CommerceLeague\ActiveCampaign\Api\Data\FailureTrackableInterface;
 use CommerceLeague\ActiveCampaign\Setup\SchemaInterface;
+use DateInterval;
+use Exception;
 use Magento\Framework\Data\Collection\Db\FetchStrategyInterface;
 use Magento\Framework\Data\Collection\EntityFactoryInterface;
 use Magento\Framework\DB\Adapter\AdapterInterface;
@@ -18,36 +21,32 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Class Collection
+ *
  * @codeCoverageIgnore
  */
 class Collection extends ExtendCollection
 {
-    /**
-     * @var TimezoneInterface
-     */
-    private $timezone;
 
     /**
      * @param EntityFactoryInterface $entityFactory
-     * @param LoggerInterface $logger
+     * @param LoggerInterface        $logger
      * @param FetchStrategyInterface $fetchStrategy
-     * @param ManagerInterface $eventManager
-     * @param Snapshot $entitySnapshot
-     * @param TimezoneInterface $timezone
-     * @param AdapterInterface|null $connection
-     * @param AbstractDb|null $resource
+     * @param ManagerInterface       $eventManager
+     * @param Snapshot               $entitySnapshot
+     * @param TimezoneInterface      $timezone
+     * @param AdapterInterface|null  $connection
+     * @param AbstractDb|null        $resource
      */
     public function __construct(
-        EntityFactoryInterface $entityFactory,
-        LoggerInterface $logger,
-        FetchStrategyInterface $fetchStrategy,
-        ManagerInterface $eventManager,
-        Snapshot $entitySnapshot,
-        TimezoneInterface $timezone,
-        AdapterInterface $connection = null,
-        AbstractDb $resource = null
+        EntityFactoryInterface             $entityFactory,
+        LoggerInterface                    $logger,
+        FetchStrategyInterface             $fetchStrategy,
+        ManagerInterface                   $eventManager,
+        Snapshot                           $entitySnapshot,
+        private readonly TimezoneInterface $timezone,
+        AdapterInterface                   $connection = null,
+        AbstractDb                         $resource = null
     ) {
-        $this->timezone = $timezone;
         parent::__construct(
             $entityFactory,
             $logger,
@@ -60,24 +59,8 @@ class Collection extends ExtendCollection
     }
 
     /**
-     * @inheritDoc
-     */
-    protected function _initSelect()
-    {
-        parent::_initSelect();
-
-        $this->getSelect()->joinLeft(
-            ['ac_order' => $this->_resource->getTable(SchemaInterface::ORDER_TABLE)],
-            'ac_order.magento_quote_id = main_table.entity_id',
-            ['ac_order.activecampaign_id']
-        );
-
-        return $this;
-    }
-
-    /**
      * @return Collection
-     * @throws \Exception
+     * @throws Exception
      */
     public function addAbandonedFilter(): self
     {
@@ -86,7 +69,7 @@ class Collection extends ExtendCollection
         $this->getSelect()->where('main_table.customer_id IS NOT NULL');
 
         $fromDateTime = $this->timezone->date()
-            ->sub(new \DateInterval('PT1H'))
+            ->sub(new DateInterval('PT1H'))
             ->format('Y-m-d H:i:s');
 
         $this->getSelect()->where('main_table.updated_at <= ?', $fromDateTime);
@@ -95,7 +78,6 @@ class Collection extends ExtendCollection
     }
 
     /**
-     * @param int $quoteId
      * @return Collection
      */
     public function addIdFilter(int $quoteId): self
@@ -110,6 +92,33 @@ class Collection extends ExtendCollection
     public function addOmittedFilter(): self
     {
         $this->getSelect()->where('ac_order.activecampaign_id IS NULL');
+        return $this;
+    }
+
+    /**
+     * Exclude dead-lettered rows while keeping null (no AC row yet), pending and synced rows.
+     *
+     * @return Collection
+     */
+    public function addNotDeadLetteredFilter(): self
+    {
+        $this->getSelect()->where(
+            'ac_order.export_status != ? OR ac_order.export_status IS NULL',
+            FailureTrackableInterface::EXPORT_STATUS_FAILED
+        );
+        return $this;
+    }
+
+    protected function _initSelect(): Collection
+    {
+        parent::_initSelect();
+
+        $this->getSelect()->joinLeft(
+            ['ac_order' => $this->_resource->getTable(SchemaInterface::ORDER_TABLE)],
+            'ac_order.magento_quote_id = main_table.entity_id',
+            ['ac_order.activecampaign_id']
+        );
+
         return $this;
     }
 }

@@ -6,12 +6,15 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\Model\ActiveCampaign;
 
 use CommerceLeague\ActiveCampaign\Api\Data;
+use CommerceLeague\ActiveCampaign\Api\Data\GuestCustomerInterface;
 use CommerceLeague\ActiveCampaign\Api\GuestCustomerRepositoryInterface;
+use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\GuestCustomerFactory;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\GuestCustomer as GuestCustomerResource;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
 
@@ -22,41 +25,20 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
 {
 
     /**
-     * @var GuestCustomerResource
-     */
-    private $guestCustomerResource;
-
-    /**
      * @var GuestCustomerFactory
      */
     private $guestCustomerFactory;
 
     /**
-     * @var CustomerRepositoryInterface
-     */
-    private $magentoCustomerRepository;
-
-    /**
-     * @var CustomerRepository
-     */
-    private $customerRepository;
-
-    /**
-     * @param GuestCustomerResource       $customerResource
      * @param GuestCustomerFactory        $GuestCustomerFactory
-     * @param CustomerRepositoryInterface $magentoCustomerRepository
-     * @param CustomerRepository          $customerRepository
      */
     public function __construct(
-        GuestCustomerResource $customerResource,
+        private readonly GuestCustomerResource $guestCustomerResource,
         GuestCustomerFactory $GuestCustomerFactory,
-        CustomerRepositoryInterface $magentoCustomerRepository,
-        CustomerRepository $customerRepository
+        private readonly CustomerRepositoryInterface $magentoCustomerRepository,
+        private readonly CustomerRepository $customerRepository
     ) {
-        $this->guestCustomerResource     = $customerResource;
         $this->guestCustomerFactory      = $GuestCustomerFactory;
-        $this->magentoCustomerRepository = $magentoCustomerRepository;
-        $this->customerRepository        = $customerRepository;
     }
 
     /**
@@ -136,20 +118,21 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
     }
 
     /**
-     * @param string $email
+     * @param array $customerData
      *
-     * @return Data\GuestCustomerInterface
+     * @return GuestCustomerInterface|null
+     * @throws CouldNotSaveException
+     * @throws LocalizedException
      */
-    public function getOrCreate(array $customerData): Data\GuestCustomerInterface
+    public function getOrCreate(array $customerData): ?Data\GuestCustomerInterface
     {
 
         if (array_key_exists(Data\GuestCustomerInterface::EMAIL, $customerData)) {
 
             $customerEmail = $customerData[Data\GuestCustomerInterface::EMAIL];
-            $firstname     = $customerData[Data\GuestCustomerInterface::FIRSTNAME];
-            $lastname      = $customerData[Data\GuestCustomerInterface::LASTNAME];
+            $firstname     = $customerData[Data\GuestCustomerInterface::FIRSTNAME] ?? '';
+            $lastname      = $customerData[Data\GuestCustomerInterface::LASTNAME] ?? '';
 
-            /** @var Data\GuestCustomerInterface $guestCustomer */
             $guestCustomer = $this->getByEmail($customerEmail);
 
             try {
@@ -164,10 +147,10 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
                         $magentoCustomer->getId()
                     );
                     if ($activeCampaignCustomer->getActiveCampaignId()) {
-                        $guestCustomer->setActiveCampaignId($activeCampaignCustomer->getActiveCampaignId());
+                        $guestCustomer->setActiveCampaignId((int)$activeCampaignCustomer->getActiveCampaignId());
                     }
                 }
-            } catch (NoSuchEntityException $e) {
+            } catch (NoSuchEntityException) {
 
             }
 
@@ -181,5 +164,6 @@ class GuestCustomerRepository implements GuestCustomerRepositoryInterface
 
             return $guestCustomer;
         }
+        return null;
     }
 }

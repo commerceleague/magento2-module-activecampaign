@@ -8,22 +8,23 @@ namespace Test\Unit\Console\Command;
 use CommerceLeague\ActiveCampaign\Console\Command\ExportContactCommand;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaign\Test\Unit\Console\Command\TestOutput;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Customer\Collection as CustomerCollection;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Framework\Console\Cli;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\ProgressBarFactory;
 use Symfony\Component\Console\Tester\CommandTester;
 
-class ExportContactCommandTest extends TestCase
+class ExportContactCommandTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -69,13 +70,13 @@ class ExportContactCommandTest extends TestCase
      */
     protected $exportContactCommandTester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->customerCollectionFactory = $this->getMockBuilder(CustomerCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->customerCollection = $this->createMock(CustomerCollection::class);
@@ -86,7 +87,7 @@ class ExportContactCommandTest extends TestCase
 
         $this->subscriberCollectionFactory = $this->getMockBuilder(SubscriberCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->subscriberCollection = $this->createMock(SubscriberCollection::class);
@@ -97,7 +98,7 @@ class ExportContactCommandTest extends TestCase
 
         $this->progressBarFactory = $this->getMockBuilder(ProgressBarFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->publisher = $this->createMock(PublisherInterface::class);
@@ -215,7 +216,7 @@ class ExportContactCommandTest extends TestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             'No contact(s) found matching your criteria',
             $this->exportContactCommandTester->getDisplay()
         );
@@ -268,7 +269,7 @@ class ExportContactCommandTest extends TestCase
             ['--email' => $email]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 contact(s) have been scheduled for export.',
             $this->exportContactCommandTester->getDisplay()
         );
@@ -332,7 +333,7 @@ class ExportContactCommandTest extends TestCase
             ['--email' => $email]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '1 contact(s) have been scheduled for export.',
             $this->exportContactCommandTester->getDisplay()
         );
@@ -388,7 +389,7 @@ class ExportContactCommandTest extends TestCase
             ['--omitted' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '4 contact(s) have been scheduled for export.',
             $this->exportContactCommandTester->getDisplay()
         );
@@ -396,6 +397,114 @@ class ExportContactCommandTest extends TestCase
         $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportContactCommandTester->getStatusCode());
     }
 
+
+    public function testOmittedAppliesGroupFilterByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactOmittedFilter')
+            ->with(true)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('getAllEmails')
+            ->willReturn([]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportContactCommandTester->execute(['--omitted' => true]);
+
+        $this->assertStringNotContainsString(
+            'ignore-date-filter set',
+            $this->exportContactCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportContactCommandTester->getStatusCode());
+    }
+
+    public function testOmittedIgnoreDateFilterSkipsGroupFilterAndWarns()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addContactOmittedFilter')
+            ->with(false)
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('getAllEmails')
+            ->willReturn([]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportContactCommandTester->execute(
+            ['--omitted' => true, '--ignore-date-filter' => true]
+        );
+
+        $this->assertStringContainsString(
+            'Warning: --ignore-date-filter set — exporting 1 record(s)',
+            $this->exportContactCommandTester->getDisplay()
+        );
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportContactCommandTester->getStatusCode());
+    }
+
+    public function testAllAppliesGroupFilterByDefault()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isContactExportEnabled')
+            ->willReturn(true);
+
+        $this->customerCollection->expects($this->once())
+            ->method('addAllowedCustomerGroupFilter')
+            ->willReturnSelf();
+
+        $this->customerCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn([123]);
+
+        $this->subscriberCollection->expects($this->once())
+            ->method('getAllEmails')
+            ->willReturn([]);
+
+        $progressBar = new ProgressBar(new TestOutput());
+        $this->progressBarFactory->expects($this->once())
+            ->method('create')
+            ->willReturn($progressBar);
+
+        $this->exportContactCommandTester->execute(['--all' => true]);
+
+        $this->assertEquals(Cli::RETURN_SUCCESS, $this->exportContactCommandTester->getStatusCode());
+    }
 
     public function testExecuteWithAllOption()
     {
@@ -443,7 +552,7 @@ class ExportContactCommandTest extends TestCase
             ['--all' => true]
         );
 
-        $this->assertContains(
+        $this->assertStringContainsString(
             '4 contact(s) have been scheduled for export.',
             $this->exportContactCommandTester->getDisplay()
         );

@@ -16,41 +16,33 @@ use Magento\Newsletter\Model\Subscriber;
 interface ContactRepositoryInterface
 {
     /**
-     * @param Data\ContactInterface $contact
-     * @return Data\ContactInterface
      * @throws CouldNotSaveException
      */
     public function save(Data\ContactInterface $contact): Data\ContactInterface;
 
     /**
      * @param int $entityId
-     * @return Data\ContactInterface
      */
     public function getById($entityId): Data\ContactInterface;
 
     /**
      * @param string $email
-     * @return Data\ContactInterface
      */
     public function getByEmail($email): Data\ContactInterface;
 
     /**
      * @param string $email
-     * @return Data\ContactInterface
      * @throws CouldNotSaveException
      */
     public function getOrCreateByEmail($email): Data\ContactInterface;
 
     /**
-     * @param Data\ContactInterface $contact
-     * @return bool
      * @throws CouldNotDeleteException
      */
     public function delete(Data\ContactInterface $contact): bool;
 
     /**
      * @param int $entityId
-     * @return bool
      * @throws NoSuchEntityException
      * @throws CouldNotDeleteException
      */

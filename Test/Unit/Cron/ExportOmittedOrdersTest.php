@@ -5,17 +5,19 @@ declare(strict_types=1);
 
 namespace CommerceLeague\ActiveCampaign\Test\Unit\Cron;
 
-use CommerceLeague\ActiveCampaign\Cron\ExportOmittedOrders;
+use CommerceLeague\ActiveCampaign\Cron\PublishOmittedOrders;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
-use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use CommerceLeague\ActiveCampaign\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
-class ExportOmittedOrdersTest extends TestCase
+class ExportOmittedOrdersTest extends AbstractTestCase
 {
+
     /**
      * @var MockObject|ConfigHelper
      */
@@ -37,17 +39,23 @@ class ExportOmittedOrdersTest extends TestCase
     protected $publisher;
 
     /**
-     * @var ExportOmittedOrders
+     * @var MockObject|LoggerInterface
+     */
+    protected $logger;
+
+    /**
+     * @var PublishOmittedOrders
      */
     protected $exportOmittedOrders;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->orderCollectionFactory = $this->getMockBuilder(OrderCollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
         $this->orderCollection = $this->createMock(OrderCollection::class);
@@ -58,10 +66,11 @@ class ExportOmittedOrdersTest extends TestCase
 
         $this->publisher = $this->createMock(PublisherInterface::class);
 
-        $this->exportOmittedOrders = new ExportOmittedOrders(
+        $this->exportOmittedOrders = new PublishOmittedOrders(
             $this->configHelper,
             $this->orderCollectionFactory,
-            $this->publisher
+            $this->publisher,
+            $this->logger
         );
     }
 
@@ -70,9 +79,6 @@ class ExportOmittedOrdersTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isEnabled')
             ->willReturn(false);
-
-        $this->orderCollection->expects($this->never())
-            ->method('addExcludeGuestFilter');
 
         $this->exportOmittedOrders->run();
     }
@@ -86,9 +92,6 @@ class ExportOmittedOrdersTest extends TestCase
         $this->configHelper->expects($this->once())
             ->method('isOrderExportEnabled')
             ->willReturn(false);
-
-        $this->orderCollection->expects($this->never())
-            ->method('addExcludeGuestFilter');
 
         $this->exportOmittedOrders->run();
     }
@@ -105,12 +108,81 @@ class ExportOmittedOrdersTest extends TestCase
             ->method('isOrderExportEnabled')
             ->willReturn(true);
 
+        $this->configHelper->expects($this->exactly(2))
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(false);
+
+        $this->logger->expects($this->never())
+            ->method('warning');
+
         $this->orderCollection->expects($this->once())
-            ->method('addExcludeGuestFilter')
+            ->method('addExportFilterOrderStatus')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addExportFilterStartDate')
             ->willReturnSelf();
 
         $this->orderCollection->expects($this->once())
             ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('getAllIds')
+            ->willReturn($orderIds);
+
+        $expectedPublishArguments = [
+            [Topics::SALES_ORDER_EXPORT, json_encode(['magento_order_id' => $orderIds[0]])],
+            [Topics::SALES_ORDER_EXPORT, json_encode(['magento_order_id' => $orderIds[1]])],
+        ];
+        $actualPublishArguments = [];
+        $this->publisher->expects($this->exactly(2))
+            ->method('publish')
+            ->willReturnCallback(function (...$args) use (&$actualPublishArguments) {
+                $actualPublishArguments[] = $args;
+            });
+
+        $this->exportOmittedOrders->run();
+
+        $this->assertSame($expectedPublishArguments, $actualPublishArguments);
+    }
+
+    public function testRunWithRetryAllOmittedSkipsWindowFilters()
+    {
+        $orderIds = [123, 456];
+
+        $this->configHelper->expects($this->once())
+            ->method('isEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->once())
+            ->method('isOrderExportEnabled')
+            ->willReturn(true);
+
+        $this->configHelper->expects($this->exactly(2))
+            ->method('isRetryAllOmittedEnabled')
+            ->willReturn(true);
+
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('retry_all_omitted is ON'));
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterOrderStatus');
+
+        $this->orderCollection->expects($this->never())
+            ->method('addExportFilterStartDate');
+
+        $this->orderCollection->expects($this->once())
+            ->method('addOmittedFilter')
+            ->willReturnSelf();
+
+        $this->orderCollection->expects($this->once())
+            ->method('addNotDeadLetteredFilter')
             ->willReturnSelf();
 
         $this->orderCollection->expects($this->once())
@@ -119,20 +191,6 @@ class ExportOmittedOrdersTest extends TestCase
 
         $this->publisher->expects($this->exactly(2))
             ->method('publish');
-
-        $this->publisher->expects($this->at(0))
-            ->method('publish')
-            ->with(
-                Topics::SALES_ORDER_EXPORT,
-                json_encode(['magento_order_id' => $orderIds[0]])
-            );
-
-        $this->publisher->expects($this->at(1))
-            ->method('publish')
-            ->with(
-                Topics::SALES_ORDER_EXPORT,
-                json_encode(['magento_order_id' => $orderIds[1]])
-            );
 
         $this->exportOmittedOrders->run();
     }

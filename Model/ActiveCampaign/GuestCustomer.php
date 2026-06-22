@@ -18,55 +18,97 @@ class GuestCustomer extends AbstractModel implements GuestCustomerInterface
     /**
      * @inheritDoc
      */
-    public function getId()
+    public function getActiveCampaignId(): ?int
     {
-        return $this->_getData(self::ENTITY_ID);
+        $value = $this->_getData(self::ACTIVE_CAMPAIGN_ID);
+        return $value !== null ? (int) $value : null;
     }
 
     /**
      * @inheritDoc
      */
-    public function setId($id)
-    {
-        return $this->setData(self::ENTITY_ID, $id);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getActiveCampaignId()
-    {
-        return $this->_getData(self::ACTIVE_CAMPAIGN_ID);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function setActiveCampaignId($activeCampaignId): GuestCustomerInterface
-    {
-        return $this->setData(self::ACTIVE_CAMPAIGN_ID, $activeCampaignId);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getCreatedAt()
+    public function getCreatedAt(): ?string
     {
         return $this->_getData(self::CREATED_AT);
     }
 
     /**
-     * @inheritDoc
+     * @return string|null
      */
-    public function setCreatedAt($createdAt): GuestCustomerInterface
+    public function getEmail(): ?string
     {
-        return $this->setData(self::CREATED_AT, $createdAt);
+        return $this->_getData(self::EMAIL);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getFirstname(): ?string
+    {
+        return $this->_getData(self::FIRSTNAME);
     }
 
     /**
      * @inheritDoc
      */
-    public function getUpdatedAt()
+    public function getId(): ?int
+    {
+        $value = $this->_getData(self::ENTITY_ID);
+        return $value !== null ? (int) $value : null;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getLastname(): ?string
+    {
+        return $this->_getData(self::LASTNAME);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getExportAttempts(): int
+    {
+        return (int) $this->_getData(self::EXPORT_ATTEMPTS);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastErrorCode(): ?string
+    {
+        return $this->_getData(self::LAST_ERROR_CODE);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastErrorMessage(): ?string
+    {
+        return $this->_getData(self::LAST_ERROR_MESSAGE);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastAttemptedAt(): ?string
+    {
+        return $this->_getData(self::LAST_ATTEMPTED_AT);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getExportStatus(): int
+    {
+        return (int) $this->_getData(self::EXPORT_STATUS);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getUpdatedAt(): ?string
     {
         return $this->_getData(self::UPDATED_AT);
     }
@@ -74,63 +116,103 @@ class GuestCustomer extends AbstractModel implements GuestCustomerInterface
     /**
      * @inheritDoc
      */
-    public function setUpdatedAt($updatedAt): GuestCustomerInterface
+    public function setActiveCampaignId(int $activeCampaignId): GuestCustomerInterface
     {
-        return $this->setData(self::UPDATED_AT, $updatedAt);
+        return $this->setData(self::ACTIVE_CAMPAIGN_ID, $activeCampaignId);
     }
 
     /**
-     * @return string|null
+     * @inheritDoc
      */
-    public function getEmail()
+    public function setCreatedAt(string $createdAt): GuestCustomerInterface
     {
-        return $this->_getData(self::EMAIL);
+        return $this->setData(self::CREATED_AT, $createdAt);
     }
 
     /**
-     * @param string $id
+     * @param string $email
      *
      * @return GuestCustomerInterface
      */
-    public function setEmail($email)
+    public function setEmail(string $email): GuestCustomerInterface
     {
         return $this->setData(self::EMAIL, $email);
     }
 
     /**
-     * @return string|null
-     */
-    public function getFirstname()
-    {
-        return $this->_getData(self::FIRSTNAME);
-    }
-
-    /**
-     * @param string $id
+     * @param string $firstname
      *
      * @return GuestCustomerInterface
      */
-    public function setFirstname($firstname)
+    public function setFirstname(string $firstname): GuestCustomerInterface
     {
         return $this->setData(self::FIRSTNAME, $firstname);
     }
 
     /**
-     * @return string|null
+     * @inheritDoc
      */
-    public function getLastname()
+    public function setId(mixed $value): GuestCustomerInterface
     {
-        return $this->_getData(self::LASTNAME);
+        return $this->setData(self::ENTITY_ID, $value);
     }
 
     /**
-     * @param string $id
+     * @param string $lastname
      *
      * @return GuestCustomerInterface
      */
-    public function setLastname($lastname)
+    public function setLastname(string $lastname): GuestCustomerInterface
     {
         return $this->setData(self::LASTNAME, $lastname);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setExportAttempts(int $exportAttempts): GuestCustomerInterface
+    {
+        return $this->setData(self::EXPORT_ATTEMPTS, $exportAttempts);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastErrorCode(?string $lastErrorCode): GuestCustomerInterface
+    {
+        return $this->setData(self::LAST_ERROR_CODE, $lastErrorCode);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastErrorMessage(?string $lastErrorMessage): GuestCustomerInterface
+    {
+        return $this->setData(self::LAST_ERROR_MESSAGE, $lastErrorMessage);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setLastAttemptedAt(?string $lastAttemptedAt): GuestCustomerInterface
+    {
+        return $this->setData(self::LAST_ATTEMPTED_AT, $lastAttemptedAt);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setExportStatus(int $exportStatus): GuestCustomerInterface
+    {
+        return $this->setData(self::EXPORT_STATUS, $exportStatus);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setUpdatedAt(string $updatedAt): GuestCustomerInterface
+    {
+        return $this->setData(self::UPDATED_AT, $updatedAt);
     }
 
     /**
