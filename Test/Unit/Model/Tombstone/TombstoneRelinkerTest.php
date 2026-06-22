@@ -93,7 +93,7 @@ class TombstoneRelinkerTest extends AbstractTestCase
         $this->customerApi->expects($this->once())
             ->method('get')
             ->with(self::ECOM_ID)
-            ->willReturn(['email' => self::REAL_EMAIL, 'subscriberid' => 5]);
+            ->willReturn(['ecomCustomer' => ['email' => self::REAL_EMAIL, 'subscriberid' => 5]]);
 
         $this->contactApi->expects($this->never())->method('listPerPage');
         $this->customerApi->expects($this->never())->method('update');
@@ -108,7 +108,7 @@ class TombstoneRelinkerTest extends AbstractTestCase
         $this->customerApi->expects($this->once())
             ->method('get')
             ->with(self::ECOM_ID)
-            ->willReturn(['email' => 'deleted+12@example.com', 'subscriberid' => null]);
+            ->willReturn(['ecomCustomer' => ['email' => 'deleted+12@example.com', 'subscriberid' => null]]);
 
         $this->contactApi->expects($this->once())
             ->method('listPerPage')
@@ -127,7 +127,7 @@ class TombstoneRelinkerTest extends AbstractTestCase
         $this->customerApi->expects($this->once())
             ->method('get')
             ->with(self::ECOM_ID)
-            ->willReturn(['email' => 'deleted+12@example.com', 'subscriberid' => null]);
+            ->willReturn(['ecomCustomer' => ['email' => 'deleted+12@example.com', 'subscriberid' => null]]);
 
         $this->contactApi->expects($this->once())
             ->method('listPerPage')
@@ -150,7 +150,7 @@ class TombstoneRelinkerTest extends AbstractTestCase
     {
         $this->customerApi->expects($this->once())
             ->method('get')
-            ->willReturn(['email' => 'deleted+12@example.com', 'subscriberid' => null]);
+            ->willReturn(['ecomCustomer' => ['email' => 'deleted+12@example.com', 'subscriberid' => null]]);
 
         $this->contactApi->expects($this->once())
             ->method('listPerPage')
@@ -184,7 +184,7 @@ class TombstoneRelinkerTest extends AbstractTestCase
     {
         $this->customerApi->expects($this->once())
             ->method('get')
-            ->willReturn(['email' => 'deleted+12@example.com', 'subscriberid' => null]);
+            ->willReturn(['ecomCustomer' => ['email' => 'deleted+12@example.com', 'subscriberid' => null]]);
 
         $this->contactApi->expects($this->once())
             ->method('listPerPage')
@@ -205,7 +205,7 @@ class TombstoneRelinkerTest extends AbstractTestCase
     {
         $this->customerApi->expects($this->once())
             ->method('get')
-            ->willReturn(['email' => 'deleted+7@example.com', 'subscriberid' => null]);
+            ->willReturn(['ecomCustomer' => ['email' => 'deleted+7@example.com', 'subscriberid' => null]]);
 
         $this->contactApi->expects($this->once())
             ->method('listPerPage')
