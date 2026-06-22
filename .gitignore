@@ -9,3 +9,5 @@ compose.yaml
 *.sync-conflict-*
 .phpunit.result.cache
 .phpunit.cache/
+.DS_Store
+.var/
