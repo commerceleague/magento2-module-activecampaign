@@ -56,7 +56,12 @@ class Unsubscribe extends AbstractWebhook
         $subscriber = $this->subscriberFactory->create();
         $subscriber->loadByEmail($email);
 
-        if ($subscriber->getId() === 0) {
+        // Not `=== 0`: loadByEmail() on an unknown address leaves an empty model whose getId() returns
+        // NULL, so a strict comparison against 0 never matched and execution fell through to
+        // unsubscribe() on an empty subscriber — sendUnsubscriptionEmail() then called addTo(null, null)
+        // and Magento's mail layer raised a TypeError. Every webhook call for a contact who is not also a
+        // Magento newsletter subscriber returned a 500.
+        if (!$subscriber->getId()) {
             $this->logger->error(__('Unable to find subscriber with email "%s"', $email));
             return;
         }

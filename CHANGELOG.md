@@ -5,6 +5,28 @@ All notable changes to this module are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-08-11
+
+### Fixed
+- **The contact-unsubscribe webhook returned HTTP 500 for any address that is not
+  already a Magento newsletter subscriber.** `Controller\Webhook\Contact\Unsubscribe`
+  guarded with `$subscriber->getId() === 0`, but `loadByEmail()` on an unknown
+  address leaves an empty model whose `getId()` returns **null**, and `null === 0`
+  is false. The guard never fired, so execution fell through to `unsubscribe()` on
+  an empty subscriber; `sendUnsubscriptionEmail()` then called `addTo(null, null)`
+  and Magento's mail layer raised a `TypeError`. Now guards with
+  `!$subscriber->getId()`.
+
+  This mattered more than a noisy log line: ActiveCampaign holds guests and
+  imported contacts that were never Magento newsletter subscribers, so most
+  unsubscribe callbacks failed — and ActiveCampaign disables a webhook that keeps
+  failing, which silently ends unsubscribe processing altogether. Found by calling
+  the live endpoint; the failure is invisible to a unit suite that never exercises
+  an unknown address.
+
+  Adds the first unit test for this controller, covering the unknown address, the
+  known address, and a payload carrying no contact email.
+
 ## [2.0.1] - 2026-06-22
 
 ### Fixed
@@ -168,4 +190,6 @@ behaviour; schema changes are additive and backward-compatible.
 - Schema changes are declarative; run `bin/magento setup:upgrade` in the target
   Magento project to apply the new columns.
 
+[2.0.2]: https://github.com/commerceleague/magento2-module-activecampaign/releases/tag/2.0.2
+[2.0.1]: https://github.com/commerceleague/magento2-module-activecampaign/releases/tag/2.0.1
 [2.0.0]: https://github.com/commerceleague/magento2-module-activecampaign/releases/tag/2.0.0
