@@ -246,7 +246,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     'http_error',
                     $e->getMessage()
                 );
-                $transient = $e->getCode() >= 500;
+                $transient = $e->getCode() >= 500 || $e->getCode() === 429;
                 $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage(), $transient);
                 $this->orderRepository->save($order);
                 return;

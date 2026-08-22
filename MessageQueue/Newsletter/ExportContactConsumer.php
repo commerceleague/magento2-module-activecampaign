@@ -127,7 +127,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                     'http_error',
                     $e->getMessage()
                 );
-                $transient = $e->getCode() >= 500;
+                $transient = $e->getCode() >= 500 || $e->getCode() === 429;
                 $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage(), $transient);
                 $this->contactRepository->save($contact);
                 return;

@@ -1307,6 +1307,61 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
+    public function testConsume429IsTransient()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request', 'customerid' => 999];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($this->httpExceptionWithCode(429));
+
+        // 429 (rate limited) is not a 503, so the 503 backoff counter is untouched.
+        $this->backoffState->expects($this->never())
+            ->method('record503');
+
+        // 429 is transient: recordFailure is called with $transient = true so a rate
+        // limit response can never dead-letter the row.
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'http_error', $this->anything(), true);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
     public function testConsumeSwallowsUnexpectedThrowableAndRecordsFailure()
     {
         $magentoOrderId = 123;
