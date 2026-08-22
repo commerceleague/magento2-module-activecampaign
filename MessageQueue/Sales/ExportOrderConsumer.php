@@ -167,12 +167,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     return;
                 }
 
-                $order->setActiveCampaignId($activeCampaignId);
-                $order->setMagentoOrderId($magentoOrder->getEntityId());
-
-                $this->backoffState->reset();
-                $this->failureRecorder->recordSuccess($order);
-                $this->orderRepository->save($order);
+                $this->recordExportSuccess($order, $magentoOrder, $activeCampaignId);
             } catch (UnprocessableEntityHttpException $e) {
                 try {
                     $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
@@ -192,11 +187,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_ORDER]['id'] ?? null)
                     : null;
                 if ($duplicateId !== null) {
-                    $order->setActiveCampaignId($duplicateId);
-                    $order->setMagentoOrderId($magentoOrder->getEntityId());
-                    $this->backoffState->reset();
-                    $this->failureRecorder->recordSuccess($order);
-                    $this->orderRepository->save($order);
+                    $this->recordExportSuccess($order, $magentoOrder, $duplicateId);
                     return;
                 }
 
@@ -241,13 +232,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 $activeCampaignId = $this->extractActiveCampaignId(
                     $apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null
                 );
-                if ($activeCampaignId !== null) {
-                    $order->setActiveCampaignId($activeCampaignId);
-                }
-                $order->setMagentoOrderId($magentoOrder->getEntityId());
-                $this->backoffState->reset();
-                $this->failureRecorder->recordSuccess($order);
-                $this->orderRepository->save($order);
+                $this->recordExportSuccess($order, $magentoOrder, $activeCampaignId);
                 return;
             } catch (HttpException $e) {
                 if ($e->getCode() === 503) {
@@ -310,6 +295,31 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
         }
 
         return [$key => $item];
+    }
+
+    /**
+     * Links the local row to the resolved ActiveCampaign id (when one is present —
+     * the duplicate-recovery paths call this after already resolving a valid id
+     * elsewhere and tolerate an absent one here), stamps the Magento order id,
+     * resets backoff, and persists the success.
+     *
+     * @param OrderInterface $order the local ActiveCampaign order row
+     * @param MagentoOrderInterface $magentoOrder the source Magento order
+     * @param int|null $activeCampaignId the resolved ActiveCampaign order id, if any
+     */
+    private function recordExportSuccess(
+        OrderInterface $order,
+        MagentoOrderInterface $magentoOrder,
+        ?int $activeCampaignId
+    ): void {
+        if ($activeCampaignId !== null) {
+            $order->setActiveCampaignId($activeCampaignId);
+        }
+        $order->setMagentoOrderId($magentoOrder->getEntityId());
+
+        $this->backoffState->reset();
+        $this->failureRecorder->recordSuccess($order);
+        $this->orderRepository->save($order);
     }
 
     /**
