@@ -11,6 +11,7 @@ use CommerceLeague\ActiveCampaign\Api\GuestCustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Request\OrderBuilder;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Magento\Sales\Model\Order as MagentoOrder;
 use Magento\Sales\Model\Order\Item as MagentoOrderItem;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -39,6 +40,11 @@ class OrderBuilderTest extends AbstractTestCase
     protected $magentoOrder;
 
     /**
+     * @var MockObject|BackendUrl
+     */
+    protected $backendUrl;
+
+    /**
      * @var OrderBuilder
      */
     protected $orderBuilder;
@@ -49,11 +55,13 @@ class OrderBuilderTest extends AbstractTestCase
         $this->customerRepository = $this->createMock(CustomerRepositoryInterface::class);
         $this->guestCustomerRepository = $this->createMock(GuestCustomerRepositoryInterface::class);
         $this->magentoOrder = $this->createMock(MagentoOrder::class);
+        $this->backendUrl = $this->createMock(BackendUrl::class);
 
         $this->orderBuilder = new OrderBuilder(
             $this->configHelper,
             $this->customerRepository,
-            $this->guestCustomerRepository
+            $this->guestCustomerRepository,
+            $this->backendUrl
         );
     }
 
@@ -71,6 +79,7 @@ class OrderBuilderTest extends AbstractTestCase
 
         $this->configHelper->method('getConnectionId')->willReturn('1');
         $this->magentoOrder->method('getId')->willReturn(123);
+        $this->magentoOrder->method('getEntityId')->willReturn(123);
         $this->magentoOrder->method('getCustomerEmail')->willReturn('john@example.com');
         $this->magentoOrder->method('getIncrementId')->willReturn('000000123');
         $this->magentoOrder->method('getCreatedAt')->willReturn('2026-01-01 00:00:00');
@@ -88,10 +97,20 @@ class OrderBuilderTest extends AbstractTestCase
 
         $this->magentoOrder->method('getAllVisibleItems')->willReturn([$orderItem]);
 
+        $this->backendUrl->expects($this->once())
+            ->method('turnOffSecretKey');
+        $this->backendUrl->method('getUrl')
+            ->with('sales/order/view', ['order_id' => 123])
+            ->willReturn('https://shop.example/admin/sales/order/view/order_id/123/');
+
         $request = $this->orderBuilder->build($this->magentoOrder);
 
         $this->assertCount(1, $request['orderProducts']);
         $this->assertSame('', $request['orderProducts'][0]['productUrl']);
         $this->assertSame('SKU-1', $request['orderProducts'][0]['externalid']);
+        $this->assertSame(
+            'https://shop.example/admin/sales/order/view/order_id/123/',
+            $request['orderUrl']
+        );
     }
 }
