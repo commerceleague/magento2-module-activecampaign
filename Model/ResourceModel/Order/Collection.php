@@ -74,7 +74,9 @@ class Collection extends ExtendCollection
      */
     public function addOmittedFilter(): self
     {
-        $this->getSelect()->where('ac_order.activecampaign_id IS NULL');
+        $this->getSelect()->where(
+            'ac_order.activecampaign_id IS NULL OR ac_order.magento_order_id IS NULL'
+        );
         return $this;
     }
 

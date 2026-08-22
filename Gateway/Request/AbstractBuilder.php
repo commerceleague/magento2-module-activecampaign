@@ -22,4 +22,21 @@ abstract class AbstractBuilder
     {
         return (new \DateTime($date))->format(\DateTime::W3C);
     }
+
+    protected function buildCategoryNames(\Magento\Catalog\Model\Product $product): string
+    {
+        try {
+            /** @var \Magento\Catalog\Model\ResourceModel\Category\Collection $categoryCollection */
+            $categoryCollection = $product->getCategoryCollection();
+
+            $names = [];
+            foreach ($categoryCollection->addAttributeToSelect('name') as $category) {
+                $names[] = (string)$category->getName();
+            }
+
+            return implode(', ', array_filter($names, static fn (string $name): bool => $name !== ''));
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
 }
