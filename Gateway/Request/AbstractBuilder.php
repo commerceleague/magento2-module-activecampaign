@@ -34,7 +34,7 @@ abstract class AbstractBuilder
                 $names[] = (string)$category->getName();
             }
 
-            return implode(', ', array_filter($names));
+            return implode(', ', array_filter($names, static fn (string $name): bool => $name !== ''));
         } catch (\Throwable $e) {
             return '';
         }

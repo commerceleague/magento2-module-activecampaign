@@ -102,6 +102,8 @@ class OrderBuilderTest extends AbstractTestCase
 
         $this->backendUrl->expects($this->once())
             ->method('turnOffSecretKey');
+        $this->backendUrl->expects($this->once())
+            ->method('turnOnSecretKey');
         $this->backendUrl->method('getUrl')
             ->with('sales/order/view', ['order_id' => 123])
             ->willReturn('https://shop.example/admin/sales/order/view/order_id/123/');

@@ -74,10 +74,13 @@ class OrderBuilder extends AbstractBuilder
     {
         // Secret keys are session-bound; a key minted inside a queue consumer would be
         // invalid for whichever admin clicks the link, so the URL is built without one.
+        // The restore must run even if getUrl() throws, or the backend URL model stays
+        // key-less for the rest of the process.
         $this->backendUrl->turnOffSecretKey();
-        $url = $this->backendUrl->getUrl('sales/order/view', ['order_id' => $orderId]);
-        $this->backendUrl->turnOnSecretKey();
-
-        return $url;
+        try {
+            return $this->backendUrl->getUrl('sales/order/view', ['order_id' => $orderId]);
+        } finally {
+            $this->backendUrl->turnOnSecretKey();
+        }
     }
 }
