@@ -5,6 +5,25 @@ All notable changes to this module are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-08-22
+
+### Added
+- Admin order URL on order exports.
+- SKU and category on exported product lines.
+
+### Fixed
+- **Abandoned carts now convert to recovered orders on update.** Updating an
+  existing abandoned-cart record as an order now clears `externalcheckoutid` and
+  `abandonedDate` while setting `externalid`, so ActiveCampaign marks the cart
+  recovered; product lines are included in the update and therefore preserved.
+- **Order exports re-link when the external ID is already taken.** When the API
+  rejects an export because another record already holds the target `externalid`
+  (HTTP 400 "Order already exists"), the export now looks up that record, re-links
+  to it, and applies the update there instead of failing permanently.
+- **Omitted-order repair now reaches carts with failed order exports.** The
+  omitted-order repair (cron and console) now includes carts whose order export
+  previously failed, enabling recovery of stale abandoned-cart records.
+
 ## [2.0.2] - 2026-08-11
 
 ### Fixed
@@ -190,6 +209,7 @@ behaviour; schema changes are additive and backward-compatible.
 - Schema changes are declarative; run `bin/magento setup:upgrade` in the target
   Magento project to apply the new columns.
 
+[2.1.0]: https://github.com/commerceleague/magento2-module-activecampaign/releases/tag/2.1.0
 [2.0.2]: https://github.com/commerceleague/magento2-module-activecampaign/releases/tag/2.0.2
 [2.0.1]: https://github.com/commerceleague/magento2-module-activecampaign/releases/tag/2.0.1
 [2.0.0]: https://github.com/commerceleague/magento2-module-activecampaign/releases/tag/2.0.0
