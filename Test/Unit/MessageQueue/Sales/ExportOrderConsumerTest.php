@@ -1307,6 +1307,61 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
+    public function testConsume429IsTransient()
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $request = ['request', 'customerid' => 999];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->expects($this->once())
+            ->method('getActiveCampaignId')
+            ->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with(['ecomOrder' => $request])
+            ->willThrowException($this->httpExceptionWithCode(429));
+
+        // 429 (rate limited) is not a 503, so the 503 backoff counter is untouched.
+        $this->backoffState->expects($this->never())
+            ->method('record503');
+
+        // 429 is transient: recordFailure is called with $transient = true so a rate
+        // limit response can never dead-letter the row.
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'http_error', $this->anything(), true);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
     public function testConsumeSwallowsUnexpectedThrowableAndRecordsFailure()
     {
         $magentoOrderId = 123;
@@ -1708,6 +1763,156 @@ class ExportOrderConsumerTest extends AbstractTestCase
             ->with($this->order);
 
         $this->logger->expects($this->atLeastOnce())->method('error');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testBadRequestCollisionRetryThrows503RecordsTransientFailure(): void
+    {
+        $magentoOrderId = 25555;
+        $magentoQuoteId = 777;
+        $linkedActiveCampaignId = 28441;
+        $foundActiveCampaignId = 23999;
+        $request = [
+            'externalid'    => $magentoOrderId,
+            'customerid'    => 41472,
+            'orderProducts' => [['externalid' => 'SKU-1']],
+        ];
+        $badRequest = $this->badRequestException();
+        $retryError = $this->httpExceptionWithCode(503);
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        // Called once before the retry (initial update target, and the "is the
+        // resolved duplicate already what we hold?" check), then once more inside
+        // the retried performApiRequest, after setActiveCampaignId(23999) below.
+        $this->order->method('getActiveCampaignId')
+            ->willReturnOnConsecutiveCalls($linkedActiveCampaignId, $linkedActiveCampaignId, $foundActiveCampaignId);
+
+        $this->client->method('getOrderApi')->willReturn($this->orderApi);
+
+        $page = $this->createMock(PageInterface::class);
+        $page->method('getItems')->willReturn([
+            ['id' => (string)$foundActiveCampaignId, 'externalid' => (string)$magentoOrderId],
+        ]);
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => $magentoOrderId]])
+            ->willReturn($page);
+
+        $this->orderApi->expects($this->exactly(2))
+            ->method('update')
+            ->willReturnCallback(function (int $id, array $body) use ($badRequest, $retryError, $linkedActiveCampaignId, $foundActiveCampaignId) {
+                static $call = 0;
+                $call++;
+                if ($call === 1) {
+                    $this->assertSame($linkedActiveCampaignId, $id);
+                    throw $badRequest;
+                }
+                $this->assertSame($foundActiveCampaignId, $id);
+                throw $retryError;
+            });
+        $this->orderApi->expects($this->never())->method('create');
+
+        // Only the re-link set happens; recordExportSuccess (and its own
+        // setActiveCampaignId from the response) is never reached.
+        $this->order->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($foundActiveCampaignId)
+            ->willReturnSelf();
+
+        $this->order->expects($this->never())->method('setMagentoOrderId');
+
+        // 503 on the retry must still trip the process-wide backoff, exactly like
+        // a 503 on the initial attempt does.
+        $this->backoffState->expects($this->once())->method('record503');
+        $this->backoffState->expects($this->never())->method('reset');
+
+        // Transient per the same >=500 || 429 rule as the sibling HttpException handler.
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'http_error', $retryError->getMessage(), true);
+        $this->failureRecorder->expects($this->never())->method('recordSuccess');
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->logger->expects($this->atLeastOnce())->method('error');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testBadRequestDuplicateLookupFailureIsLogged(): void
+    {
+        $magentoOrderId = 25555;
+        $magentoQuoteId = 777;
+        $linkedActiveCampaignId = 28441;
+        $request = ['externalid' => $magentoOrderId, 'customerid' => 41472];
+        $badRequest = $this->badRequestException('Order already exists');
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->method('getActiveCampaignId')->willReturn($linkedActiveCampaignId);
+
+        $this->client->method('getOrderApi')->willReturn($this->orderApi);
+
+        // Empty result set: processDuplicateEntity throws DuplicateNotFoundException,
+        // which the lookup's catch (\Throwable $lookupError) swallows down to null.
+        $page = $this->createMock(PageInterface::class);
+        $page->method('getItems')->willReturn([]);
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => $magentoOrderId]])
+            ->willReturn($page);
+
+        $this->orderApi->expects($this->once())
+            ->method('update')
+            ->with($linkedActiveCampaignId, $this->anything())
+            ->willThrowException($badRequest);
+
+        $this->failureRecorder->expects($this->once())->method('recordFailure');
+        $this->orderRepository->expects($this->once())->method('save')->with($this->order);
+
+        // The lookup failure's own message must survive into the log, not just
+        // the outer BadRequestHttpException's message.
+        $this->logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->with($this->stringContains('Duplicate entity could not be resolved.'));
 
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
