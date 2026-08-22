@@ -479,7 +479,15 @@ class ExportOrderConsumerTest extends AbstractTestCase
 
         $this->orderApi->expects($this->once())
             ->method('update')
-            ->with($activeCampaignId, ['ecomOrder' => $request])
+            ->with(
+                $activeCampaignId,
+                [
+                    'ecomOrder' => $request + [
+                        'externalcheckoutid' => null,
+                        'abandonedDate'      => null,
+                    ],
+                ]
+            )
             ->willReturn($response);
 
         $this->order->expects($this->once())
@@ -1385,6 +1393,153 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->failureRecorder->expects($this->once())
             ->method('recordFailure')
             ->with($this->order, 'http_error', $this->anything(), false);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testUpdateClearsAbandonedCartIdentity(): void
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $activeCampaignId = 28441;
+        $request = [
+            'externalid'    => 25555,
+            'customerid'    => 41472,
+            'orderProducts' => [['externalid' => 'SKU-1']],
+        ];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getEntityId')
+            ->willReturn($magentoOrderId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->method('getActiveCampaignId')->willReturn($activeCampaignId);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('update')
+            ->with(
+                $activeCampaignId,
+                $this->callback(function (array $body): bool {
+                    $request = $body['ecomOrder'];
+                    return array_key_exists('externalcheckoutid', $request)
+                        && $request['externalcheckoutid'] === null
+                        && array_key_exists('abandonedDate', $request)
+                        && $request['abandonedDate'] === null
+                        && $request['orderProducts'] !== [];
+                })
+            )
+            ->willReturn(['ecomOrder' => ['id' => $activeCampaignId]]);
+        $this->orderApi->expects($this->never())->method('create');
+
+        $this->order->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($activeCampaignId)
+            ->willReturnSelf();
+
+        $this->order->expects($this->once())
+            ->method('setMagentoOrderId')
+            ->with($magentoOrderId)
+            ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->order);
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
+    public function testCreateDoesNotAddCartIdentityKeys(): void
+    {
+        $magentoOrderId = 123;
+        $magentoQuoteId = 456;
+        $newActiveCampaignId = 99;
+        $request = [
+            'externalid' => 25555,
+            'customerid' => 41472,
+        ];
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getEntityId')
+            ->willReturn($magentoOrderId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->method('getActiveCampaignId')->willReturn(null);
+
+        $this->client->expects($this->once())
+            ->method('getOrderApi')
+            ->willReturn($this->orderApi);
+
+        $this->orderApi->expects($this->once())
+            ->method('create')
+            ->with($this->callback(function (array $body): bool {
+                $request = $body['ecomOrder'];
+                return !array_key_exists('externalcheckoutid', $request)
+                    && !array_key_exists('abandonedDate', $request);
+            }))
+            ->willReturn(['ecomOrder' => ['id' => $newActiveCampaignId]]);
+        $this->orderApi->expects($this->never())->method('update');
+
+        $this->order->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($newActiveCampaignId)
+            ->willReturnSelf();
+
+        $this->order->expects($this->once())
+            ->method('setMagentoOrderId')
+            ->with($magentoOrderId)
+            ->willReturnSelf();
+
+        $this->failureRecorder->expects($this->once())
+            ->method('recordSuccess')
+            ->with($this->order);
 
         $this->orderRepository->expects($this->once())
             ->method('save')

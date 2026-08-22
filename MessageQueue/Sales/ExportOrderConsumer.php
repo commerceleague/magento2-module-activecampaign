@@ -280,9 +280,15 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
     private function performApiRequest(OrderInterface $order, array $request): array
     {
         if ($activeCampaignId = $order->getActiveCampaignId()) {
+            // The record may have started life as an abandoned cart (externalcheckoutid).
+            // Clearing that id and abandonedDate while externalid is set makes ActiveCampaign
+            // convert the record to a completed order and mark the cart recovered.
+            $request['externalcheckoutid'] = null;
+            $request['abandonedDate'] = null;
+
             return $this->client->getOrderApi()->update((int)$activeCampaignId, ['ecomOrder' => $request]);
-        } else {
-            return $this->client->getOrderApi()->create(['ecomOrder' => $request]);
         }
+
+        return $this->client->getOrderApi()->create(['ecomOrder' => $request]);
     }
 }
