@@ -59,6 +59,8 @@ class AbandonedCartBuilder extends AbstractBuilder
                 'price' => $this->convertToCent((float)$quoteItem->getPriceInclTax()),
                 'quantity' => (int)$quoteItem->getQty(),
                 'productUrl' => $product !== null ? $product->getProductUrl() : '',
+                'sku' => $quoteItem->getSku(),
+                'category' => $product !== null ? $this->buildCategoryNames($product) : '',
             ];
         }
 

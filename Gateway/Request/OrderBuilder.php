@@ -9,6 +9,7 @@ use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Api\GuestCustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use Exception;
+use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Magento\Sales\Api\Data\OrderInterface as MagentoOrderInterface;
 use Magento\Sales\Model\Order as MagentoOrder;
 
@@ -18,7 +19,7 @@ use Magento\Sales\Model\Order as MagentoOrder;
 class OrderBuilder extends AbstractBuilder
 {
 
-    public function __construct(private readonly ConfigHelper $configHelper, private readonly CustomerRepositoryInterface $customerRepository, private readonly GuestCustomerRepositoryInterface $guestCustomerRepository)
+    public function __construct(private readonly ConfigHelper $configHelper, private readonly CustomerRepositoryInterface $customerRepository, private readonly GuestCustomerRepositoryInterface $guestCustomerRepository, private readonly BackendUrl $backendUrl)
     {
     }
 
@@ -47,6 +48,7 @@ class OrderBuilder extends AbstractBuilder
             'currency'       => $magentoOrder->getBaseCurrencyCode(),
             'connectionid'   => $this->configHelper->getConnectionId(),
             'customerid'     => $customer->getActiveCampaignId(),
+            'orderUrl'       => $this->buildAdminOrderUrl((int)$magentoOrder->getEntityId()),
             'orderProducts'  => []
         ];
 
@@ -60,9 +62,25 @@ class OrderBuilder extends AbstractBuilder
                 'price'      => $this->convertToCent((float)$magentoOrderItem->getPriceInclTax()),
                 'quantity'   => (int)$magentoOrderItem->getQtyOrdered(),
                 'productUrl' => $product !== null ? $product->getProductUrl() : '',
+                'sku'        => $magentoOrderItem->getSku(),
+                'category'   => $product !== null ? $this->buildCategoryNames($product) : '',
             ];
         }
 
         return $request;
+    }
+
+    private function buildAdminOrderUrl(int $orderId): string
+    {
+        // Secret keys are session-bound; a key minted inside a queue consumer would be
+        // invalid for whichever admin clicks the link, so the URL is built without one.
+        // The restore must run even if getUrl() throws, or the backend URL model stays
+        // key-less for the rest of the process.
+        $this->backendUrl->turnOffSecretKey();
+        try {
+            return $this->backendUrl->getUrl('sales/order/view', ['order_id' => $orderId]);
+        } finally {
+            $this->backendUrl->turnOnSecretKey();
+        }
     }
 }

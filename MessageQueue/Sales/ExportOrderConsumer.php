@@ -17,6 +17,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
+use CommerceLeague\ActiveCampaignApi\Exception\BadRequestHttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
@@ -166,12 +167,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     return;
                 }
 
-                $order->setActiveCampaignId($activeCampaignId);
-                $order->setMagentoOrderId($magentoOrder->getEntityId());
-
-                $this->backoffState->reset();
-                $this->failureRecorder->recordSuccess($order);
-                $this->orderRepository->save($order);
+                $this->recordExportSuccess($order, $magentoOrder, $activeCampaignId);
             } catch (UnprocessableEntityHttpException $e) {
                 try {
                     $outcome = $this->handleUnprocessableEntityHttpException($e, $request, self::RESPONSE_KEY_ORDER);
@@ -191,11 +187,7 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     ? $this->extractActiveCampaignId($outcome->payload[self::RESPONSE_KEY_ORDER]['id'] ?? null)
                     : null;
                 if ($duplicateId !== null) {
-                    $order->setActiveCampaignId($duplicateId);
-                    $order->setMagentoOrderId($magentoOrder->getEntityId());
-                    $this->backoffState->reset();
-                    $this->failureRecorder->recordSuccess($order);
-                    $this->orderRepository->save($order);
+                    $this->recordExportSuccess($order, $magentoOrder, $duplicateId);
                     return;
                 }
 
@@ -209,6 +201,38 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 );
                 $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
                 $this->orderRepository->save($order);
+                return;
+            } catch (BadRequestHttpException $e) {
+                try {
+                    $resolved = $this->processDuplicateEntity($request, self::RESPONSE_KEY_ORDER);
+                    $duplicateId = $this->extractActiveCampaignId($resolved[self::RESPONSE_KEY_ORDER]['id'] ?? null);
+                } catch (\Throwable $lookupError) {
+                    $duplicateId = null;
+                }
+
+                if ($duplicateId === null || $duplicateId === (int)$order->getActiveCampaignId()) {
+                    $this->logFailure(
+                        'order',
+                        $this->castId($order->getId()),
+                        $this->castId($message['magento_order_id']),
+                        $e->getCode(),
+                        'http_error',
+                        $e->getMessage()
+                    );
+                    $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage());
+                    $this->orderRepository->save($order);
+                    return;
+                }
+
+                // Another AC record already owns this externalid (typically after a database
+                // refresh reused Magento entity ids). Re-link and apply the update there.
+                $order->setActiveCampaignId($duplicateId);
+                $apiResponse = $this->performApiRequest($order, $request);
+
+                $activeCampaignId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null
+                );
+                $this->recordExportSuccess($order, $magentoOrder, $activeCampaignId);
                 return;
             } catch (HttpException $e) {
                 if ($e->getCode() === 503) {
@@ -274,15 +298,46 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
     }
 
     /**
+     * Links the local row to the resolved ActiveCampaign id (when one is present —
+     * the duplicate-recovery paths call this after already resolving a valid id
+     * elsewhere and tolerate an absent one here), stamps the Magento order id,
+     * resets backoff, and persists the success.
+     *
+     * @param OrderInterface $order the local ActiveCampaign order row
+     * @param MagentoOrderInterface $magentoOrder the source Magento order
+     * @param int|null $activeCampaignId the resolved ActiveCampaign order id, if any
+     */
+    private function recordExportSuccess(
+        OrderInterface $order,
+        MagentoOrderInterface $magentoOrder,
+        ?int $activeCampaignId
+    ): void {
+        if ($activeCampaignId !== null) {
+            $order->setActiveCampaignId($activeCampaignId);
+        }
+        $order->setMagentoOrderId($magentoOrder->getEntityId());
+
+        $this->backoffState->reset();
+        $this->failureRecorder->recordSuccess($order);
+        $this->orderRepository->save($order);
+    }
+
+    /**
      * @param array<string, mixed> $request
      * @return array<string, mixed>
      */
     private function performApiRequest(OrderInterface $order, array $request): array
     {
         if ($activeCampaignId = $order->getActiveCampaignId()) {
+            // The record may have started life as an abandoned cart (externalcheckoutid).
+            // Clearing that id and abandonedDate while externalid is set makes ActiveCampaign
+            // convert the record to a completed order and mark the cart recovered.
+            $request['externalcheckoutid'] = null;
+            $request['abandonedDate'] = null;
+
             return $this->client->getOrderApi()->update((int)$activeCampaignId, ['ecomOrder' => $request]);
-        } else {
-            return $this->client->getOrderApi()->create(['ecomOrder' => $request]);
         }
+
+        return $this->client->getOrderApi()->create(['ecomOrder' => $request]);
     }
 }
