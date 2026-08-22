@@ -9,6 +9,9 @@ use CommerceLeague\ActiveCampaign\Api\CustomerRepositoryInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Request\AbandonedCartBuilder;
 use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
+use Magento\Framework\DataObject;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -111,5 +114,44 @@ class AbandonedCartBuilderTest extends AbstractTestCase
         $this->assertCount(1, $request['orderProducts']);
         $this->assertSame('', $request['orderProducts'][0]['productUrl']);
         $this->assertSame('SKU-1', $request['orderProducts'][0]['externalid']);
+        $this->assertSame('', $request['orderProducts'][0]['category']);
+        $this->assertSame('SKU-1', $request['orderProducts'][0]['sku']);
+    }
+
+    public function testBuildAddsSkuAndCategoryToProductLine()
+    {
+        $this->configureQuote([
+            'customer_id'        => null,
+            'customer_email'     => 'guest@example.com',
+            'grand_total'        => 10.0,
+            'base_currency_code' => 'EUR',
+        ]);
+
+        $category = new DataObject(['name' => 'Naturkosmetik']);
+        $categoryCollection = $this->createMock(CategoryCollection::class);
+        $categoryCollection->method('addAttributeToSelect')->willReturnSelf();
+        $categoryCollection->method('getIterator')->willReturn(new \ArrayIterator([$category]));
+
+        $product = $this->createMock(Product::class);
+        $product->method('getProductUrl')->willReturn('https://shop.example/product-1.html');
+        $product->method('getCategoryCollection')->willReturn($categoryCollection);
+
+        $quoteItem = $this->getMockBuilder(QuoteItem::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['getPriceInclTax'])
+            ->onlyMethods(['getSku', 'getName', 'getQty', 'getProduct'])
+            ->getMock();
+        $quoteItem->method('getSku')->willReturn('SKU-1');
+        $quoteItem->method('getName')->willReturn('Product 1');
+        $quoteItem->method('getPriceInclTax')->willReturn(10.0);
+        $quoteItem->method('getQty')->willReturn(1.0);
+        $quoteItem->method('getProduct')->willReturn($product);
+
+        $this->quote->method('getAllVisibleItems')->willReturn([$quoteItem]);
+
+        $request = $this->abandonedCartBuilder->build($this->quote);
+
+        $this->assertSame('SKU-1', $request['orderProducts'][0]['sku']);
+        $this->assertSame('Naturkosmetik', $request['orderProducts'][0]['category']);
     }
 }

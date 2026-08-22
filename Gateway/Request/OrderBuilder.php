@@ -62,6 +62,8 @@ class OrderBuilder extends AbstractBuilder
                 'price'      => $this->convertToCent((float)$magentoOrderItem->getPriceInclTax()),
                 'quantity'   => (int)$magentoOrderItem->getQtyOrdered(),
                 'productUrl' => $product !== null ? $product->getProductUrl() : '',
+                'sku'        => $magentoOrderItem->getSku(),
+                'category'   => $product !== null ? $this->buildCategoryNames($product) : '',
             ];
         }
 
