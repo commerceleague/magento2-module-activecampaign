@@ -17,6 +17,7 @@ use CommerceLeague\ActiveCampaign\MessageQueue\Topics;
 use CommerceLeague\ActiveCampaign\Model\Export\BackoffState;
 use CommerceLeague\ActiveCampaign\Model\Export\DuplicateNotFoundException;
 use CommerceLeague\ActiveCampaign\Model\Export\FailureRecorder;
+use CommerceLeague\ActiveCampaignApi\Exception\BadRequestHttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\UnprocessableEntityHttpException;
 use Exception;
@@ -208,6 +209,44 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     $outcome->message
                 );
                 $this->failureRecorder->recordFailure($order, $outcome->code ?? 'unknown', $outcome->message);
+                $this->orderRepository->save($order);
+                return;
+            } catch (BadRequestHttpException $e) {
+                try {
+                    $resolved = $this->processDuplicateEntity($request, self::RESPONSE_KEY_ORDER);
+                    $duplicateId = $this->extractActiveCampaignId($resolved[self::RESPONSE_KEY_ORDER]['id'] ?? null);
+                } catch (\Throwable $lookupError) {
+                    $duplicateId = null;
+                }
+
+                if ($duplicateId === null || $duplicateId === (int)$order->getActiveCampaignId()) {
+                    $this->logFailure(
+                        'order',
+                        $this->castId($order->getId()),
+                        $this->castId($message['magento_order_id']),
+                        $e->getCode(),
+                        'http_error',
+                        $e->getMessage()
+                    );
+                    $this->failureRecorder->recordFailure($order, 'http_error', $e->getMessage());
+                    $this->orderRepository->save($order);
+                    return;
+                }
+
+                // Another AC record already owns this externalid (typically after a database
+                // refresh reused Magento entity ids). Re-link and apply the update there.
+                $order->setActiveCampaignId($duplicateId);
+                $apiResponse = $this->performApiRequest($order, $request);
+
+                $activeCampaignId = $this->extractActiveCampaignId(
+                    $apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null
+                );
+                if ($activeCampaignId !== null) {
+                    $order->setActiveCampaignId($activeCampaignId);
+                }
+                $order->setMagentoOrderId($magentoOrder->getEntityId());
+                $this->backoffState->reset();
+                $this->failureRecorder->recordSuccess($order);
                 $this->orderRepository->save($order);
                 return;
             } catch (HttpException $e) {
