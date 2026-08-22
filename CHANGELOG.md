@@ -5,6 +5,19 @@ All notable changes to this module are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-08-22
+
+### Added
+- Data patch backfilling `magento_order_id` for orders exported before 2.0.0, so
+  the widened omitted-order repair no longer re-publishes the historical order
+  book.
+
+### Fixed
+- **HTTP 429 responses are now classified as transient export failures.**
+- **Errors thrown by the collision re-link retry are now classified as HTTP
+  failures** (including 503 backoff) instead of generic errors.
+- **The duplicate-lookup failure during collision recovery is now logged.**
+
 ## [2.1.0] - 2026-08-22
 
 ### Added

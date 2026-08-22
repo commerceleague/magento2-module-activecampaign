@@ -140,7 +140,7 @@ class ExportCustomerConsumer extends AbstractConsumer implements ConsumerInterfa
                     'http_error',
                     $e->getMessage()
                 );
-                $transient = $e->getCode() >= 500;
+                $transient = $e->getCode() >= 500 || $e->getCode() === 429;
                 $this->failureRecorder->recordFailure($customer, 'http_error', $e->getMessage(), $transient);
                 $this->customerRepository->save($customer);
                 return;
