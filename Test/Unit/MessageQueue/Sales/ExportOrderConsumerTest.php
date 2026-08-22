@@ -1767,4 +1767,97 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
+    public function testBadRequestCollisionRetryThrows503RecordsTransientFailure(): void
+    {
+        $magentoOrderId = 25555;
+        $magentoQuoteId = 777;
+        $linkedActiveCampaignId = 28441;
+        $foundActiveCampaignId = 23999;
+        $request = [
+            'externalid'    => $magentoOrderId,
+            'customerid'    => 41472,
+            'orderProducts' => [['externalid' => 'SKU-1']],
+        ];
+        $badRequest = $this->badRequestException();
+        $retryError = $this->httpExceptionWithCode(503);
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        // Called once before the retry (initial update target, and the "is the
+        // resolved duplicate already what we hold?" check), then once more inside
+        // the retried performApiRequest, after setActiveCampaignId(23999) below.
+        $this->order->method('getActiveCampaignId')
+            ->willReturnOnConsecutiveCalls($linkedActiveCampaignId, $linkedActiveCampaignId, $foundActiveCampaignId);
+
+        $this->client->method('getOrderApi')->willReturn($this->orderApi);
+
+        $page = $this->createMock(PageInterface::class);
+        $page->method('getItems')->willReturn([
+            ['id' => (string)$foundActiveCampaignId, 'externalid' => (string)$magentoOrderId],
+        ]);
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => $magentoOrderId]])
+            ->willReturn($page);
+
+        $this->orderApi->expects($this->exactly(2))
+            ->method('update')
+            ->willReturnCallback(function (int $id, array $body) use ($badRequest, $retryError, $linkedActiveCampaignId, $foundActiveCampaignId) {
+                static $call = 0;
+                $call++;
+                if ($call === 1) {
+                    $this->assertSame($linkedActiveCampaignId, $id);
+                    throw $badRequest;
+                }
+                $this->assertSame($foundActiveCampaignId, $id);
+                throw $retryError;
+            });
+        $this->orderApi->expects($this->never())->method('create');
+
+        // Only the re-link set happens; recordExportSuccess (and its own
+        // setActiveCampaignId from the response) is never reached.
+        $this->order->expects($this->once())
+            ->method('setActiveCampaignId')
+            ->with($foundActiveCampaignId)
+            ->willReturnSelf();
+
+        $this->order->expects($this->never())->method('setMagentoOrderId');
+
+        // 503 on the retry must still trip the process-wide backoff, exactly like
+        // a 503 on the initial attempt does.
+        $this->backoffState->expects($this->once())->method('record503');
+        $this->backoffState->expects($this->never())->method('reset');
+
+        // Transient per the same >=500 || 429 rule as the sibling HttpException handler.
+        $this->failureRecorder->expects($this->once())
+            ->method('recordFailure')
+            ->with($this->order, 'http_error', $retryError->getMessage(), true);
+        $this->failureRecorder->expects($this->never())->method('recordSuccess');
+
+        $this->orderRepository->expects($this->once())
+            ->method('save')
+            ->with($this->order);
+
+        $this->logger->expects($this->atLeastOnce())->method('error');
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
 }

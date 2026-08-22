@@ -227,7 +227,26 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                 // Another AC record already owns this externalid (typically after a database
                 // refresh reused Magento entity ids). Re-link and apply the update there.
                 $order->setActiveCampaignId($duplicateId);
-                $apiResponse = $this->performApiRequest($order, $request);
+
+                try {
+                    $apiResponse = $this->performApiRequest($order, $request);
+                } catch (HttpException $retryError) {
+                    if ($retryError->getCode() === 503) {
+                        $this->backoffState->record503();
+                    }
+                    $this->logFailure(
+                        'order',
+                        $this->castId($order->getId()),
+                        $this->castId($message['magento_order_id']),
+                        $retryError->getCode(),
+                        'http_error',
+                        $retryError->getMessage()
+                    );
+                    $transient = $retryError->getCode() >= 500 || $retryError->getCode() === 429;
+                    $this->failureRecorder->recordFailure($order, 'http_error', $retryError->getMessage(), $transient);
+                    $this->orderRepository->save($order);
+                    return;
+                }
 
                 $activeCampaignId = $this->extractActiveCampaignId(
                     $apiResponse[self::RESPONSE_KEY_ORDER]['id'] ?? null
