@@ -207,6 +207,11 @@ class ExportOrderConsumer extends AbstractConsumer implements ConsumerInterface
                     $resolved = $this->processDuplicateEntity($request, self::RESPONSE_KEY_ORDER);
                     $duplicateId = $this->extractActiveCampaignId($resolved[self::RESPONSE_KEY_ORDER]['id'] ?? null);
                 } catch (\Throwable $lookupError) {
+                    $this->getLogger()->warning(sprintf(
+                        'ActiveCampaign duplicate-order lookup failed for magento_id=%s: %s',
+                        $message['magento_order_id'],
+                        $lookupError->getMessage()
+                    ));
                     $duplicateId = null;
                 }
 

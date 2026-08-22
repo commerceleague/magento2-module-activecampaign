@@ -1860,4 +1860,61 @@ class ExportOrderConsumerTest extends AbstractTestCase
         $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
     }
 
+    public function testBadRequestDuplicateLookupFailureIsLogged(): void
+    {
+        $magentoOrderId = 25555;
+        $magentoQuoteId = 777;
+        $linkedActiveCampaignId = 28441;
+        $request = ['externalid' => $magentoOrderId, 'customerid' => 41472];
+        $badRequest = $this->badRequestException('Order already exists');
+
+        $this->magentoOrderRepository->expects($this->once())
+            ->method('get')
+            ->with($magentoOrderId)
+            ->willReturn($this->magentoOrder);
+
+        $this->magentoOrder->expects($this->once())
+            ->method('getQuoteId')
+            ->willReturn($magentoQuoteId);
+
+        $this->orderRepository->expects($this->once())
+            ->method('getOrCreateByMagentoQuoteId')
+            ->with($magentoQuoteId)
+            ->willReturn($this->order);
+
+        $this->orderRequestBuilder->expects($this->once())
+            ->method('build')
+            ->with($this->magentoOrder)
+            ->willReturn($request);
+
+        $this->order->method('getActiveCampaignId')->willReturn($linkedActiveCampaignId);
+
+        $this->client->method('getOrderApi')->willReturn($this->orderApi);
+
+        // Empty result set: processDuplicateEntity throws DuplicateNotFoundException,
+        // which the lookup's catch (\Throwable $lookupError) swallows down to null.
+        $page = $this->createMock(PageInterface::class);
+        $page->method('getItems')->willReturn([]);
+        $this->orderApi->expects($this->once())
+            ->method('listPerPage')
+            ->with(1, 0, ['filters' => ['externalid' => $magentoOrderId]])
+            ->willReturn($page);
+
+        $this->orderApi->expects($this->once())
+            ->method('update')
+            ->with($linkedActiveCampaignId, $this->anything())
+            ->willThrowException($badRequest);
+
+        $this->failureRecorder->expects($this->once())->method('recordFailure');
+        $this->orderRepository->expects($this->once())->method('save')->with($this->order);
+
+        // The lookup failure's own message must survive into the log, not just
+        // the outer BadRequestHttpException's message.
+        $this->logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->with($this->stringContains('Duplicate entity could not be resolved.'));
+
+        $this->exportOrderConsumer->consume(json_encode(['magento_order_id' => $magentoOrderId]));
+    }
+
 }
