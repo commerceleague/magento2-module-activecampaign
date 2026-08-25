@@ -5,6 +5,28 @@ All notable changes to this module are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-08-25
+
+### Added
+- **`activecampaign:contacts:check-tombstones` console command** — read-only
+  audit of the `activecampaign_contact` mapping against ActiveCampaign. For
+  every synced row it confirms the Contact still exists via a GET (a deleted
+  Contact is removed outright by AC, unlike the anonymized ecomCustomer
+  tombstones handled by `activecampaign:relink:tombstones`), and lists the
+  gone ones with the `activecampaign:export:contact --email` command needed to
+  reattach each. `--limit` samples randomly so a bounded run estimates real
+  scope; requests are paced and 429/5xx responses retried with exponential
+  backoff so rate-limit hits are not misreported as errors.
+- **Protected extension points on the contact publish/consume pipeline** — the
+  two contact export consumers now call no-op protected hooks
+  (`onConsumeStart`, `onSuccess`, `onEmptyResponse`, `onUnprocessable`,
+  `onHttpError`, `onUnexpectedError`) and the three publishing observers call
+  `afterPublish`, each with the same data the existing failure/success
+  recording already computes. Constructor dependencies on these five classes
+  are now `protected`, so an integrator's preference-bound subclass can
+  observe every pipeline stage (e.g. an audit trail) without duplicating the
+  control flow. No behavioral change.
+
 ## [2.1.1] - 2026-08-22
 
 ### Added
