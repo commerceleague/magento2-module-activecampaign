@@ -109,6 +109,10 @@ class ContactTombstoneChecker
         }
 
         if ($limit > 0) {
+            // A bare LIMIT would always take the oldest rows first (lowest
+            // entity_id) — not a representative slice of the table. Order
+            // randomly so a bounded run gives a real estimate of scope.
+            $collection->getSelect()->orderRand();
             $collection->setPageSize($limit);
         }
 

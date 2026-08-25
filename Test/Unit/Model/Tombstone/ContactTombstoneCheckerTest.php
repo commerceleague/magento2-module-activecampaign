@@ -106,7 +106,11 @@ class ContactTombstoneCheckerTest extends AbstractTestCase
 
     public function testLimitSetsPageSize(): void
     {
+        $select = $this->createMock(\Magento\Framework\DB\Select::class);
+        $select->expects($this->once())->method('orderRand');
+
         $this->contactCollection->method('addFieldToFilter')->willReturnSelf();
+        $this->contactCollection->method('getSelect')->willReturn($select);
         $this->contactCollection->expects($this->once())->method('setPageSize')->with(50);
         $this->contactCollection->method('getItems')->willReturn([]);
 
