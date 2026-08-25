@@ -10,6 +10,7 @@ namespace CommerceLeague\ActiveCampaign\Model\Tombstone;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Model\ActiveCampaign\Contact;
 use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact\CollectionFactory as ContactCollectionFactory;
+use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\NotFoundHttpException;
 
 /**
@@ -34,6 +35,16 @@ class ContactTombstoneChecker
     public const RESULT_FOUND     = 'found';
     public const RESULT_NOT_FOUND = 'not_found';
     public const RESULT_ERROR     = 'error';
+
+    /**
+     * Paces requests to roughly AC's documented budget (see the spam-detector
+     * cleanup tooling's RATE_LIMIT_SLEEP) so a full-table run doesn't trigger
+     * throttling in the first place.
+     */
+    private const REQUEST_PACING_MICROSECONDS = 100_000;
+
+    private const MAX_TRANSIENT_RETRIES  = 3;
+    private const BASE_BACKOFF_MICROSECONDS = 1_000_000;
 
     public function __construct(
         private readonly ContactCollectionFactory $contactCollectionFactory,
@@ -85,15 +96,41 @@ class ContactTombstoneChecker
      */
     private function checkOne(int $activeCampaignId): array
     {
-        try {
-            $this->client->getContactApi()->get($activeCampaignId);
+        for ($attempt = 0; $attempt <= self::MAX_TRANSIENT_RETRIES; $attempt++) {
+            $this->sleep(self::REQUEST_PACING_MICROSECONDS);
 
-            return [self::RESULT_FOUND, null];
-        } catch (NotFoundHttpException) {
-            return [self::RESULT_NOT_FOUND, null];
-        } catch (\Throwable $exception) {
-            return [self::RESULT_ERROR, $exception->getMessage()];
+            try {
+                $this->client->getContactApi()->get($activeCampaignId);
+
+                return [self::RESULT_FOUND, null];
+            } catch (NotFoundHttpException) {
+                return [self::RESULT_NOT_FOUND, null];
+            } catch (HttpException $exception) {
+                // Same transient classification as the export consumers
+                // ($code >= 500 or 429): back off and retry rather than
+                // mistaking a rate-limit hit for a confirmed permanent error.
+                $transient = $exception->getCode() >= 500 || $exception->getCode() === 429;
+
+                if (!$transient || $attempt === self::MAX_TRANSIENT_RETRIES) {
+                    return [self::RESULT_ERROR, $exception->getMessage()];
+                }
+
+                $this->sleep(self::BASE_BACKOFF_MICROSECONDS * (2 ** $attempt));
+            } catch (\Throwable $exception) {
+                return [self::RESULT_ERROR, $exception->getMessage()];
+            }
         }
+
+        // Unreachable: the last loop iteration always hits a return above.
+        return [self::RESULT_ERROR, 'exhausted retries'];
+    }
+
+    /**
+     * Extracted so tests can stub out real sleeping.
+     */
+    protected function sleep(int $microseconds): void
+    {
+        usleep($microseconds);
     }
 
     /**

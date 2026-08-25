@@ -14,6 +14,7 @@ use CommerceLeague\ActiveCampaign\Model\ResourceModel\ActiveCampaign\Contact\Col
 use CommerceLeague\ActiveCampaign\Model\Tombstone\ContactTombstoneChecker;
 use CommerceLeague\ActiveCampaign\Test\Unit\AbstractTestCase;
 use CommerceLeague\ActiveCampaignApi\Api\ContactApiResourceInterface;
+use CommerceLeague\ActiveCampaignApi\Exception\HttpException;
 use CommerceLeague\ActiveCampaignApi\Exception\NotFoundHttpException;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -59,7 +60,10 @@ class ContactTombstoneCheckerTest extends AbstractTestCase
         $this->contactApi = $this->createMock(ContactApiResourceInterface::class);
         $this->client->method('getContactApi')->willReturn($this->contactApi);
 
-        $this->checker = new ContactTombstoneChecker($this->contactCollectionFactory, $this->client);
+        $this->checker = $this->getMockBuilder(ContactTombstoneChecker::class)
+            ->setConstructorArgs([$this->contactCollectionFactory, $this->client])
+            ->onlyMethods(['sleep'])
+            ->getMock();
     }
 
     private function contact(int $id, string $email, int $activeCampaignId): Contact
@@ -169,6 +173,73 @@ class ContactTombstoneCheckerTest extends AbstractTestCase
         ]);
 
         $this->contactApi->method('get')->willThrowException(new \RuntimeException('503 backoff'));
+
+        $tally = $this->checker->check(null, 0);
+
+        $this->assertSame(1, $tally[ContactTombstoneChecker::RESULT_ERROR]);
+    }
+
+    /**
+     * Builds a real HttpException carrying the given HTTP status code, so
+     * $e->getCode() returns it (getCode() is final and cannot be mocked).
+     */
+    private function httpExceptionWithCode(int $statusCode): HttpException
+    {
+        $request  = $this->createMock(\Psr\Http\Message\RequestInterface::class);
+        $response = $this->createMock(\Psr\Http\Message\ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn($statusCode);
+
+        return new HttpException('boom', $request, $response);
+    }
+
+    public function testTransientErrorRetriesThenSucceeds(): void
+    {
+        $this->contactCollection->method('addFieldToFilter')->willReturnSelf();
+        $this->contactCollection->method('getItems')->willReturn([
+            $this->contact(1, 'x@example.com', 999),
+        ]);
+
+        $this->contactApi->expects($this->exactly(3))
+            ->method('get')
+            ->willReturnOnConsecutiveCalls(
+                $this->throwException($this->httpExceptionWithCode(429)),
+                $this->throwException($this->httpExceptionWithCode(503)),
+                ['contact' => ['id' => 999]]
+            );
+
+        $tally = $this->checker->check(null, 0);
+
+        $this->assertSame(1, $tally[ContactTombstoneChecker::RESULT_FOUND]);
+        $this->assertSame(0, $tally[ContactTombstoneChecker::RESULT_ERROR]);
+    }
+
+    public function testTransientErrorGivesUpAfterMaxRetries(): void
+    {
+        $this->contactCollection->method('addFieldToFilter')->willReturnSelf();
+        $this->contactCollection->method('getItems')->willReturn([
+            $this->contact(1, 'x@example.com', 999),
+        ]);
+
+        // MAX_TRANSIENT_RETRIES = 3 retries on top of the first attempt = 4 calls total.
+        $this->contactApi->expects($this->exactly(4))
+            ->method('get')
+            ->willThrowException($this->httpExceptionWithCode(429));
+
+        $tally = $this->checker->check(null, 0);
+
+        $this->assertSame(1, $tally[ContactTombstoneChecker::RESULT_ERROR]);
+    }
+
+    public function testNonTransientHttpErrorFailsWithoutRetry(): void
+    {
+        $this->contactCollection->method('addFieldToFilter')->willReturnSelf();
+        $this->contactCollection->method('getItems')->willReturn([
+            $this->contact(1, 'x@example.com', 999),
+        ]);
+
+        $this->contactApi->expects($this->once())
+            ->method('get')
+            ->willThrowException($this->httpExceptionWithCode(401));
 
         $tally = $this->checker->check(null, 0);
 
