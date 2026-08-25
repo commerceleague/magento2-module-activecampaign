@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace CommerceLeague\ActiveCampaign\MessageQueue\Newsletter;
 
 use CommerceLeague\ActiveCampaign\Api\ContactRepositoryInterface;
+use CommerceLeague\ActiveCampaign\Api\Data\ContactInterface;
 use CommerceLeague\ActiveCampaign\Gateway\Client;
 use CommerceLeague\ActiveCampaign\Gateway\Request\ContactBuilder as ContactRequestBuilder;
 use CommerceLeague\ActiveCampaign\Logger\Logger;
@@ -22,6 +23,13 @@ use Magento\Newsletter\Model\Subscriber;
 
 /**
  * Class ExportContactConsumer
+ *
+ * The onXxx() methods below are no-op extension points (not called anywhere
+ * else, protected rather than private specifically so an integrator's
+ * preference-bound subclass can observe each pipeline stage — e.g. an audit
+ * trail — without duplicating this method's control flow). They must never
+ * change what consume() itself does; each is called with the same data the
+ * matching failure/success recording already computed.
  */
 class ExportContactConsumer extends AbstractConsumer implements ConsumerInterface
 {
@@ -29,20 +37,20 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    protected $subscriberFactory;
 
     /**
      * @param SubscriberFactory          $subscriberFactory
      */
     public function __construct(
         SubscriberFactory $subscriberFactory,
-        private readonly ContactRepositoryInterface $contactRepository,
-        private readonly ContactRequestBuilder $contactRequestBuilder,
-        private readonly Client $client,
-        private readonly ManagerInterface $eventManager,
+        protected readonly ContactRepositoryInterface $contactRepository,
+        protected readonly ContactRequestBuilder $contactRequestBuilder,
+        protected readonly Client $client,
+        protected readonly ManagerInterface $eventManager,
         Logger $logger,
-        private readonly FailureRecorder $failureRecorder,
-        private readonly BackoffState $backoffState
+        protected readonly FailureRecorder $failureRecorder,
+        protected readonly BackoffState $backoffState
     ) {
         parent::__construct($logger);
         $this->subscriberFactory     = $subscriberFactory;
@@ -69,6 +77,8 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
             return;
         }
 
+        $this->onConsumeStart($message);
+
         try {
             $contact = $this->contactRepository->getOrCreateByEmail($subscriber->getEmail());
             $request = $this->contactRequestBuilder->buildWithSubscriber($subscriber);
@@ -90,6 +100,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                     );
                     $this->failureRecorder->recordFailure($contact, 'empty_response', null);
                     $this->contactRepository->save($contact);
+                    $this->onEmptyResponse($contact);
                     return;
                 }
 
@@ -97,6 +108,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                 $this->backoffState->reset();
                 $this->failureRecorder->recordSuccess($contact);
                 $this->contactRepository->save($contact);
+                $this->onSuccess($contact, $activeCampaignId);
 
                 // trigger event after contact has been saved
                 $this->eventManager->dispatch(
@@ -114,6 +126,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                 );
                 $this->failureRecorder->recordFailure($contact, 'unknown', $e->getMessage());
                 $this->contactRepository->save($contact);
+                $this->onUnprocessable($contact, $e);
                 return;
             } catch (HttpException $e) {
                 if ($e->getCode() === 503) {
@@ -130,6 +143,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                 $transient = $e->getCode() >= 500 || $e->getCode() === 429;
                 $this->failureRecorder->recordFailure($contact, 'http_error', $e->getMessage(), $transient);
                 $this->contactRepository->save($contact);
+                $this->onHttpError($contact, $e, $transient);
                 return;
             }
         } catch (\Throwable $t) {
@@ -139,6 +153,7 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
                 $this->failureRecorder->recordFailure($contact, 'unexpected_error', $t->getMessage());
                 $this->contactRepository->save($contact);
             }
+            $this->onUnexpectedError($contact ?? null, $t, null);
             return;
         }
     }
@@ -149,5 +164,35 @@ class ExportContactConsumer extends AbstractConsumer implements ConsumerInterfac
     function processDuplicateEntity(array $request, string $key): array
     {
         return [];
+    }
+
+    /**
+     * @param array<mixed> $message the decoded queue message
+     */
+    protected function onConsumeStart(array $message): void
+    {
+    }
+
+    protected function onSuccess(ContactInterface $contact, int $activeCampaignId): void
+    {
+    }
+
+    protected function onEmptyResponse(ContactInterface $contact): void
+    {
+    }
+
+    protected function onUnprocessable(ContactInterface $contact, UnprocessableEntityHttpException $exception): void
+    {
+    }
+
+    protected function onHttpError(ContactInterface $contact, HttpException $exception, bool $transient): void
+    {
+    }
+
+    /**
+     * $contact is null when the failure happened before a Contact could be resolved.
+     */
+    protected function onUnexpectedError(?ContactInterface $contact, \Throwable $exception, mixed $magentoCustomerId): void
+    {
     }
 }

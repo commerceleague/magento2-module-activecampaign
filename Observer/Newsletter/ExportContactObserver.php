@@ -14,11 +14,17 @@ use CommerceLeague\ActiveCampaign\Helper\Config as ConfigHelper;
 
 /**
  * Class ExportContactObserver
+ *
+ * afterPublish() is a no-op extension point (protected rather than private
+ * specifically so an integrator's preference-bound subclass can observe the
+ * publish — e.g. an audit trail — without duplicating execute()).
  */
 class ExportContactObserver implements ObserverInterface
 {
-    public function __construct(private readonly ConfigHelper $configHelper, private readonly PublisherInterface $publisher)
-    {
+    public function __construct(
+        protected readonly ConfigHelper $configHelper,
+        protected readonly PublisherInterface $publisher
+    ) {
     }
 
     /**
@@ -37,9 +43,17 @@ class ExportContactObserver implements ObserverInterface
             return;
         }
 
-        $this->publisher->publish(
-            Topics::NEWSLETTER_CONTACT_EXPORT,
-            json_encode(['email' => $subscriber->getEmail()], JSON_THROW_ON_ERROR)
-        );
+        $payload = ['email' => $subscriber->getEmail()];
+
+        $this->publisher->publish(Topics::NEWSLETTER_CONTACT_EXPORT, json_encode($payload, JSON_THROW_ON_ERROR));
+
+        $this->afterPublish(Topics::NEWSLETTER_CONTACT_EXPORT, $payload);
+    }
+
+    /**
+     * @param array<mixed> $payload the array passed to json_encode before publishing
+     */
+    protected function afterPublish(string $topic, array $payload): void
+    {
     }
 }
